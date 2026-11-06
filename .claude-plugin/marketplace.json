@@ -1,0 +1,14 @@
+{
+  "name": "interactive-lessons",
+  "owner": {
+    "name": "chayapol.par"
+  },
+  "description": "One plugin: building-interactive-lessons, which turns any subject into an interactive lesson page.",
+  "plugins": [
+    {
+      "name": "interactive-lessons",
+      "source": "./",
+      "description": "Turns any subject, docs or a code repo into an interactive lesson page where every result is real."
+    }
+  ]
+}

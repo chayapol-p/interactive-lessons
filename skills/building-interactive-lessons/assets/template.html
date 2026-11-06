@@ -1,0 +1,1654 @@
+<title>__LESSON_TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?__FONT_QUERY__&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Lesson page template for building-interactive-lessons.
+   scripts/build_page.py fills it from the blueprint. Never edit a built page by hand: edit the blueprint and rebuild.
+   Layout: one narrow reading column (phone first), a slim sticky bar, plain sections; only interactive panels get a surface. */
+/* Colour tokens: scripts/theme.py writes them from the blueprint's theme (one accent colour), light and dark.
+   Brand layer (the theme may change it): bg, surface, surface-2, code-bg, ink, muted, line, line-strong, dim,
+   accent, accent-soft, on-accent, ramp-0..5 with ramp-text-0..5. Meaning layer (fixed in every lesson):
+   good and bad (right and wrong), mark (answer shown), each with a soft fill. */
+/*__THEME_TOKENS__*/
+:root {
+  --shadow: 0 1px 2px rgb(15 20 30 / 0.10), 0 6px 18px rgb(15 20 30 / 0.10);
+  --font-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.2rem;
+  --step-2: 1.44rem;
+  --step-3: 2rem;
+  --step-4: 2.5rem;
+  --radius: 10px;
+  --tap: 44px;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 96px; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: var(--step-0); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+.column { max-width: 42rem; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+/* Top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--line); }
+.topbar-row { max-width: 42rem; margin: 0 auto; display: flex; align-items: center; gap: 10px; min-height: var(--tap); }
+.topbar-title { flex: 1; min-width: 0; font-weight: 700; font-size: var(--step--1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: inherit; text-decoration: none; }
+.topbar-where { font-size: var(--step--1); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.progress-track { max-width: 42rem; margin: 8px auto 0; height: 3px; background: var(--line); }
+.progress-fill { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.mode-line { max-width: 42rem; margin: 6px auto 0; font-size: var(--step--1); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mode-line .on { color: var(--mark); font-weight: 600; }
+.where-short { display: none; }
+@media (max-width: 460px) { .where-long { display: none; } .where-short { display: inline; } }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--tap); padding: 0 14px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; font-weight: 500; font-size: 0.9375rem; text-decoration: none; color: var(--ink); }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--accent); padding: 0 8px; }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Chapter header */
+.eyebrow { font-size: var(--step--1); color: var(--muted); font-weight: 600; }
+.chapter-head { display: flex; flex-direction: column; gap: 10px; padding-top: 24px; }
+.chapter-head h1 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.015em; }
+.bridge { font-family: var(--font-read); color: var(--muted); font-style: italic; font-size: var(--step-1); }
+.why { font-size: 0.9375rem; color: var(--muted); }
+
+/* Blocks */
+.block { display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 80px; min-width: 0; }
+.block-label { display: flex; align-items: center; gap: 8px; min-height: 28px; font-size: 0.875rem; font-weight: 600; color: var(--muted); }
+.block-label .tag { font-weight: 400; }
+.block-label .spacer { flex: 1; }
+.question { font-family: var(--font-read); font-size: var(--step-1); line-height: 1.45; }
+.reading { font-family: var(--font-read); font-size: var(--step-1); line-height: 1.6; }
+details.more { border-left: 2px solid var(--line); padding-left: 12px; }
+details.more summary { cursor: pointer; color: var(--accent); font-weight: 500; min-height: var(--tap); display: flex; align-items: center; }
+details.more p { margin-top: 8px; color: var(--muted); }
+.badge { display: inline-block; font-size: 0.8125rem; font-weight: 600; padding: 1px 7px; border-radius: 4px; background: var(--mark-soft); color: var(--mark); }
+.badge.ok { background: var(--good-soft); color: var(--good); }
+.term { font: inherit; color: inherit; background: none; border: 0; padding: 0; border-bottom: 1.5px dotted var(--accent); cursor: help; }
+
+/* Options (predict and check) */
+.quiz { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+.options { display: flex; flex-direction: column; gap: 8px; }
+.option { text-align: left; min-height: var(--tap); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; line-height: 1.4; }
+.option:hover:not(:disabled) { border-color: var(--accent); }
+.option:disabled { cursor: default; }
+.option.right { border-color: var(--good); background: var(--good-soft); }
+.option.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.option.right::before { content: "✓  "; color: var(--good); font-weight: 700; }
+.option.wrong::before { content: "✗  "; color: var(--bad); font-weight: 700; }
+.confidence { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--muted); }
+.confidence button { border: 1px solid var(--line-strong); background: transparent; border-radius: 999px; padding: 4px 14px; cursor: pointer; font-size: 0.875rem; min-height: var(--tap); }
+.confidence button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.feedback { border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 0.9375rem; }
+.feedback.right { background: var(--good-soft); }
+.feedback.wrong { background: var(--bad-soft); }
+.feedback.neutral { background: var(--surface-2); }
+.feedback strong { font-weight: 700; }
+
+/* Code */
+.code-panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.code-panel-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: var(--step--1); color: var(--muted); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.code-panel-head .file { font-family: var(--font-code); color: var(--ink); overflow-wrap: anywhere; }
+textarea.code, pre.code { display: block; width: 100%; margin: 0; border: 0; background: var(--code-bg); color: var(--ink); font-family: var(--font-code); font-size: 0.8125rem; line-height: 1.55; padding: 12px; tab-size: 4; white-space: pre-wrap; overflow-wrap: anywhere; }
+textarea.code { min-height: 8em; resize: vertical; }
+.output { border-top: 1px solid var(--line); }
+.output-label { padding: 8px 12px 0; font-size: 0.875rem; color: var(--muted); font-weight: 600; }
+.output pre { margin: 0; padding: 6px 12px 8px; font-family: var(--font-code); font-size: 0.8125rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.origin-line { padding: 0 12px 10px; font-size: 0.75rem; color: var(--muted); font-family: var(--font-code); }
+.origin-line::before { content: "● "; color: var(--good); }
+.output.error pre { color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
+.plain-error { padding: 8px 12px 0; font-size: 0.875rem; color: var(--bad); }
+.code-actions { padding: 10px 12px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); }
+.notice { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 0.9375rem; }
+.local-run { background: var(--surface-2); border-radius: var(--radius); padding: 10px 12px; font-size: 0.875rem; display: flex; flex-direction: column; gap: 6px; }
+.local-run code { font-family: var(--font-code); font-size: 0.78rem; overflow-wrap: anywhere; }
+.context-note { background: var(--surface-2); border-radius: var(--radius); padding: 10px 12px; font-size: 0.875rem; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.context-note ul { margin: 0; padding-left: 18px; }
+.run-note { padding: 0 12px 10px; font-size: 0.8125rem; color: var(--muted); }
+.result-text { padding: 6px 12px 8px; font-family: var(--font-read); font-size: 1rem; line-height: 1.5; }
+.blank-text { padding: 14px 12px; font-family: var(--font-read); font-size: var(--step-1); line-height: 2.1; }
+.blank-text .blank { font-family: var(--font-ui); font-size: 0.9375rem; }
+.scroll-x { overflow-x: auto; min-width: 0; }
+
+/* Compare */
+.switch { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 10px; overflow-x: auto; }
+.switch button { flex: 1; min-width: max-content; min-height: 40px; border: 0; background: transparent; padding: 8px 12px; border-radius: 7px; cursor: pointer; font-weight: 500; }
+.switch button[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow); }
+.compare-input { font-size: 0.875rem; color: var(--muted); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.steps li::before { content: counter(step); font-family: var(--font-code); font-size: 0.8125rem; color: var(--muted); padding-top: 2px; }
+.steps li.differs { background: var(--mark-soft); margin-inline: -8px; padding-inline: 8px; border-radius: 6px; border-bottom-color: transparent; }
+.steps li.differs::before { color: var(--mark); font-weight: 600; }
+.differs-flag { font-size: 0.75rem; font-weight: 700; color: var(--mark); text-transform: uppercase; letter-spacing: .05em; }
+
+/* Exercises */
+.exercise { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.exercise .code-panel { border: 0; border-radius: 8px; background: var(--code-bg); }
+.exercise .code-panel-head, .exercise .code-actions, .exercise .chooser, .exercise .output { border-color: var(--line); background: transparent; }
+.exercise .blank-text { background: transparent; }
+.exercise ul.instructions, .stretch-body ul.instructions { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+textarea.answer { width: 100%; min-height: 7em; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); padding: 10px; font-family: var(--font-read); font-size: 1rem; line-height: 1.5; resize: vertical; }
+.criteria { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.9375rem; }
+.criteria li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; }
+.self-check { display: flex; flex-direction: column; gap: 6px; }
+.self-check label { display: grid; grid-template-columns: 22px 1fr; gap: 6px; align-items: start; }
+.solution-label { font-size: 0.875rem; font-weight: 600; color: var(--mark); }
+.help-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.help-row .btn[aria-expanded="true"] { background: var(--surface-2); border-color: var(--muted); }
+.solution-panel { border: 1px solid var(--mark); border-radius: var(--radius); background: var(--mark-soft); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.solution-panel pre.code { border-radius: 8px; }
+.solution-panel .reading { font-size: var(--step-0); }
+.solution-note { font-size: 0.875rem; color: var(--muted); }
+.read-along { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0 10px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; font-size: var(--step--1); font-weight: 500; white-space: nowrap; }
+@media (max-width: 420px) { .topbar-where { display: none; } }  /* on a phone the chapter heading shows where you are; the title gets the room */
+.read-along .knob { width: 26px; height: 16px; border-radius: 999px; background: var(--line-strong); position: relative; flex: none; transition: background .2s; }
+.read-along .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); transition: transform .2s; }
+.read-along[aria-pressed="true"] { border-color: var(--mark); color: var(--mark); }
+.read-along[aria-pressed="true"] .knob { background: var(--mark); }
+.read-along[aria-pressed="true"] .knob::after { transform: translateX(10px); }
+pre.blank-code { line-height: 2.5; }
+.blank { position: relative; font: inherit; font-size: 0.8125rem; line-height: 1.4; min-height: 32px; padding: 4px 10px; margin: 0 1px; border-radius: 6px; border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--ink); cursor: pointer; vertical-align: baseline; }
+.blank.empty { border-style: dashed; color: var(--accent); font-family: var(--font-ui); font-weight: 600; }
+.blank.active { outline: 2px solid var(--accent); outline-offset: 1px; }
+.blank.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.blank.right { border-color: var(--good); background: var(--good-soft); }
+.blank::before { content: ""; position: absolute; inset: -6px -2px; }
+.blank.right::after { content: " ✓"; color: var(--good); font-weight: 700; }
+.blank.wrong::after { content: " ✗"; color: var(--bad); font-weight: 700; }
+.chooser { border-top: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
+.chooser-label { font-size: 0.875rem; color: var(--muted); font-weight: 600; }
+.chips { display: flex; flex-direction: column; gap: 8px; }
+.chip { text-align: left; min-height: var(--tap); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--ink); font-family: var(--font-code); font-size: 0.8125rem; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
+.chip:hover { border-color: var(--accent); }
+.chips.text .chip { font-family: var(--font-ui); font-size: 0.9375rem; background: var(--surface); }  /* words, not code */
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+details.stretch { border: 1px dashed var(--line); border-radius: var(--radius); padding: 0 14px; background: var(--surface); }
+details.stretch[open] { padding-bottom: 14px; }
+details.stretch summary { cursor: pointer; min-height: 48px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.stretch-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.side-by-side { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 640px) { .side-by-side { grid-template-columns: 1fr 1fr; } }
+
+/* Pitfall */
+.pitfall { border-left: 3px solid var(--bad); padding: 2px 0 2px 14px; display: flex; flex-direction: column; gap: 8px; }
+.pitfall p { margin: 0; }
+.pitfall .wrong-idea { font-family: var(--font-read); font-size: var(--step-1); }
+.pitfall .lead { font-weight: 600; }
+.pitfall .source { font-size: 0.8125rem; color: var(--muted); }
+
+/* Recap */
+.recap { border-top: 2px solid var(--ink); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.recap .line { font-family: var(--font-read); font-size: var(--step-1); font-weight: 600; }
+
+/* Diagrams. Classes an authored `kind: svg` figure can use: svg-box (hot, dim, ghost), svg-text (small, dim, hot),
+   svg-line (hot, dim), svg-arrowhead (hot, dim), svg-bar (low), svg-grid, svg-overlap, svg-group (dim). */
+.figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.figure-box { overflow-x: auto; padding: 4px 0; }
+.figure svg { display: block; width: 100%; height: auto; min-width: 300px; }
+.figure figcaption { font-size: 0.9375rem; color: var(--muted); font-family: var(--font-read); }
+.frame-caption { margin: 6px 0 0; font-size: 0.9375rem; font-weight: 600; }
+.figure figcaption .toy { font-family: var(--font-ui); font-weight: 600; }
+.svg-box { fill: var(--surface); stroke: var(--line-strong); }
+.svg-box.hot { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+.svg-box.dim { fill: var(--bg); stroke: var(--line); }
+.svg-box.ghost { fill: none; stroke: var(--line); stroke-dasharray: 4 3; }
+.svg-text { fill: var(--ink); font-family: var(--font-ui); font-size: 12px; }
+.svg-text.small { font-size: 10px; fill: var(--muted); }
+.svg-text.dim { fill: var(--muted); }
+.svg-text.small.hot { fill: var(--accent); font-weight: 600; }
+.svg-line { stroke: var(--muted); stroke-width: 1.2; fill: none; }
+.svg-label-mask { fill: var(--bg); }
+.svg-line.hot { stroke: var(--accent); stroke-width: 2; }
+.svg-line.dim { stroke: var(--dim); }
+.svg-arrowhead { fill: var(--muted); }
+.svg-arrowhead.hot { fill: var(--accent); }
+.svg-arrowhead.dim { fill: var(--dim); }
+.svg-line.loop { stroke-dasharray: 5 4; }
+.svg-bar { fill: var(--accent); }
+.svg-bar.low { fill: var(--mark); }
+.svg-grid { stroke: var(--line); stroke-width: 1; }
+.svg-overlap { fill: var(--mark-soft); stroke: var(--mark); stroke-width: 1; }
+.svg-group { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.svg-group.dim { stroke: var(--dim); stroke-width: 1; }
+.token-rows { display: flex; flex-direction: column; gap: 12px; padding: 6px 4px; }
+.token-row-label { font-size: var(--step--1); color: var(--muted); margin-bottom: 6px; }
+.token-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.token-chip { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 8px 4px; border-radius: 4px; background: var(--surface-2); min-width: 2.2em; }
+.token-chip.hot { background: var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent); }
+.token-chip.hot .token-text { font-weight: 600; }
+.token-text { font-family: var(--font-code); font-size: 0.875rem; white-space: pre; }
+.token-space { color: var(--muted); }
+.token-id { font-family: var(--font-code); font-size: 0.6875rem; color: var(--muted); }
+.svg-point { fill: var(--muted); }
+.svg-point.hot { fill: var(--accent); }
+.svg-cell.ramp-0 { fill: var(--ramp-0); } .svg-text.ramp-text-0 { fill: var(--ramp-text-0); }
+.svg-cell.ramp-1 { fill: var(--ramp-1); } .svg-text.ramp-text-1 { fill: var(--ramp-text-1); }
+.svg-cell.ramp-2 { fill: var(--ramp-2); } .svg-text.ramp-text-2 { fill: var(--ramp-text-2); }
+.svg-cell.ramp-3 { fill: var(--ramp-3); } .svg-text.ramp-text-3 { fill: var(--ramp-text-3); }
+.svg-cell.ramp-4 { fill: var(--ramp-4); } .svg-text.ramp-text-4 { fill: var(--ramp-text-4); }
+.svg-cell.ramp-5 { fill: var(--ramp-5); } .svg-text.ramp-text-5 { fill: var(--ramp-text-5); }
+.svg-cell-frame { fill: none; stroke: var(--line); }
+.svg-cell-frame.hot { stroke: var(--ink); stroke-width: 1.5; }
+.frame-control { display: flex; flex-direction: column; gap: 6px; padding: 4px 2px 10px; }
+.frame-control label { font-size: 0.875rem; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.frame-control label strong { color: var(--ink); }
+.frame-control input[type=range] { width: 100%; accent-color: var(--accent); min-height: var(--tap); }
+.switch.frames { overflow-x: visible; }
+.switch.frames button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
+.stage-line { font-size: 0.9375rem; line-height: 1.4; color: var(--muted); }
+.stage-line strong { color: var(--accent); }
+
+/* Start and end pages */
+.hero { padding-top: 28px; display: flex; flex-direction: column; gap: 12px; }
+.hero h1 { font-size: clamp(2rem, 8vw, var(--step-4)); font-weight: 700; letter-spacing: -0.02em; }
+.hero .lede { font-family: var(--font-read); font-size: var(--step-1); color: var(--muted); }
+.section-title { font-size: var(--step-2); font-weight: 700; }
+.first-question { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+details.fold { border-top: 1px solid var(--line); padding-top: 4px; }
+details.fold summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; font-weight: 600; }
+details.fold summary::before { content: "▸"; margin-right: 8px; color: var(--muted); }
+details.fold[open] summary::before { content: "▾"; }
+details.fold summary::-webkit-details-marker { display: none; }
+.tally { font-size: var(--step-1); font-family: var(--font-read); }
+.plain-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.chapter-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.chapter-list li { border-bottom: 1px solid var(--line); }
+.chapter-list a { display: grid; grid-template-columns: 2rem 1fr auto; gap: 8px; padding: 12px 0; text-decoration: none; color: var(--ink); align-items: baseline; }
+.chapter-list .num { font-family: var(--font-code); color: var(--muted); font-size: 0.875rem; }
+.chapter-list .meta { font-size: var(--step--1); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chapter-list .sub { display: block; font-size: var(--step--1); color: var(--muted); }
+.chapter-list .done { color: var(--good); }
+.assumed { background: var(--mark-soft); border-radius: var(--radius); padding: 10px 12px; font-size: 0.875rem; }
+.guide-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.guide-list li { display: grid; grid-template-columns: 2rem 1fr; gap: 8px; }
+.guide-list .num { font-family: var(--font-code); color: var(--muted); }
+.guide-list p { font-family: var(--font-read); }
+.facts ul { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.9375rem; }
+.facts li { list-style: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+
+/* Pager */
+.pager { display: flex; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.pager .btn { flex: 1; max-width: 50%; min-width: 0; }
+.pager .btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Bottom sheets: chapter menu, tutor, glossary */
+.scrim { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); z-index: 20; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-radius: 16px 16px 0 0; box-shadow: var(--shadow); max-height: 85vh; max-height: 85dvh; display: flex; flex-direction: column; padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+@media (min-width: 720px) { .sheet { left: 50%; right: auto; width: 40rem; transform: translateX(-50%); } }
+.sheet-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.sheet-head h2 { flex: 1; font-size: var(--step-1); }
+.sheet-body { overflow-y: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.chat-turn { padding: 10px 12px; border-radius: var(--radius); font-size: 0.9375rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-turn.user { background: var(--accent-soft); align-self: flex-end; max-width: 90%; }
+.chat-turn.assistant { background: var(--surface-2); white-space: normal; display: flex; flex-direction: column; gap: 8px; }
+.chat-turn.assistant p, .chat-turn.assistant ul, .chat-turn.assistant ol, .chat-turn.assistant h4 { margin: 0; }
+.chat-turn.assistant ul, .chat-turn.assistant ol { padding-left: 20px; display: flex; flex-direction: column; gap: 2px; }
+.chat-turn.assistant h4 { font-size: 0.9375rem; }
+.chat-turn.assistant pre { margin: 0; padding: 10px; border-radius: 8px; background: var(--code-bg); font-family: var(--font-code); font-size: 0.8125rem; line-height: 1.5; overflow-x: auto; white-space: pre; }
+.chat-turn.assistant code { font-family: var(--font-code); font-size: 0.85em; background: var(--code-bg); padding: 1px 4px; border-radius: 4px; }
+.chat-turn.assistant pre code { background: none; padding: 0; font-size: inherit; }
+.chat-hint { font-size: 0.75rem; color: var(--muted); padding-top: 4px; }
+.chat-form { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); margin-top: 10px; }
+.chat-form textarea { flex: 1; min-width: 0; min-height: 44px; max-height: 8em; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); padding: 10px; font: inherit; resize: vertical; }
+.tutor-context { font-size: var(--step--1); color: var(--muted); }
+.status-line { font-size: 0.875rem; color: var(--muted); min-height: 1.2em; }
+</style>
+
+<div id="app"></div>
+
+<script>
+"use strict";
+// The blueprint, embedded by scripts/build_page.py. The page reads it as it is; nothing here is lesson-specific.
+const LESSON = /*__LESSON_DATA__*/null;
+const CHAPTERS = LESSON.chapters;
+const MISCONCEPTIONS = Object.fromEntries((LESSON.misconceptions || []).map((m) => [m.id, m]));
+const KNOWN = Object.fromEntries((LESSON.known_ideas || []).map((k) => [k.id, k.idea]));
+const GLOSSARY = LESSON.glossary || [];
+const CARRIED = {};
+CHAPTERS.forEach((chapter) => (chapter.carries_forward || []).forEach((item) => (CARRIED[item.id] = item.idea)));
+const BLOCK_CHAPTER = {};
+const BLOCKS = {};
+CHAPTERS.forEach((chapter) => chapter.blocks.forEach((block) => { BLOCKS[block.id] = block; BLOCK_CHAPTER[block.id] = chapter; }));
+const TOTAL_MINUTES = CHAPTERS.reduce((sum, chapter) => sum + chapter.minutes, 0);
+const SLUG = LESSON.lesson.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "lesson";
+const EXERCISE_TYPES = ["fill_blanks", "explain"];
+const LANGUAGE_NAMES = { python: "Python", javascript: "JavaScript" };
+
+// ---------- Small DOM helpers ----------
+function h(tag, attributes, ...children) {
+  const element = document.createElement(tag);
+  for (const [name, value] of Object.entries(attributes || {})) {
+    if (value === null || value === undefined || value === false) continue;
+    if (name === "class") element.className = value;
+    else if (name.startsWith("on")) element.addEventListener(name.slice(2), value);
+    else element.setAttribute(name, value === true ? "" : value);
+  }
+  for (const child of children.flat(Infinity)) {
+    if (child === null || child === undefined || child === false) continue;
+    element.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return element;
+}
+// replaceChildren() turns null into the text "null", so drop empty children first
+function setChildren(element, ...children) {
+  element.replaceChildren(...children.flat(Infinity).filter((child) => child !== null && child !== undefined && child !== false));
+}
+function svg(tag, attributes, ...children) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [name, value] of Object.entries(attributes || {})) if (value !== null && value !== undefined) element.setAttribute(name, value);
+  for (const child of children.flat(Infinity)) {
+    if (child === null || child === undefined || child === false) continue;
+    element.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return element;
+}
+const trimEnd = (text) => String(text || "").replace(/\n+$/, "");
+
+// ---------- Progress: db per learner when available, browser storage otherwise ----------
+const STORAGE_KEY = `lesson-${SLUG}-progress-v1`;
+let progress = { blocks: {}, visited: [] };
+let progressDocument = null;
+let saveTimer = null;
+let saveInFlight = false;
+let savePending = false;
+
+function readLocalProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    if (saved && saved.blocks) progress = saved;
+  } catch (storageError) { /* storage blocked: start fresh */ }
+}
+function writeLocalProgress() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch (storageError) { /* storage blocked */ }
+}
+function blockState(blockId) {
+  if (!progress.blocks[blockId]) progress.blocks[blockId] = {};
+  return progress.blocks[blockId];
+}
+function saveProgress() {
+  writeLocalProgress();
+  if (!progressDocument) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushProgress, 800);
+}
+async function flushProgress() {
+  if (saveInFlight) { savePending = true; return; }
+  saveInFlight = true;
+  try {
+    await progressDocument.set({ progress: JSON.stringify(progress), updated: Date.now() });
+  } catch (dbError) {
+    progressDocument = null; // a view-only viewer or a lost grant: keep browser storage only
+  } finally {
+    saveInFlight = false;
+    if (savePending) { savePending = false; flushProgress(); }
+  }
+}
+async function connectProgressStore() {
+  if (!window.claude || !window.claude.use) return;
+  try {
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db || !user) return;
+    const learnerId = await user.id();
+    if (!learnerId) return;
+    const candidate = db.doc(`data/users/${learnerId}/progress`);
+    const snapshot = await Promise.race([candidate.get(), new Promise((resolve) => setTimeout(() => resolve(null), 10000))]);
+    if (!snapshot) return;
+    if (snapshot.exists) {
+      const stored = JSON.parse(snapshot.data().progress || "null");
+      if (stored && stored.blocks) { progress = stored; writeLocalProgress(); render(); }
+    }
+    progressDocument = candidate;
+  } catch (dbError) { /* stay on browser storage */ }
+}
+
+// ---------- Read-along mode: per viewer, browser storage only ----------
+const READ_ALONG_KEY = `lesson-${SLUG}-read-along-v1`;
+let readAlong = false;
+try { readAlong = localStorage.getItem(READ_ALONG_KEY) === "on"; } catch (storageError) { /* storage blocked: off */ }
+// ?read-along=on opens every solution for this load only (the screenshot script uses it)
+const forcedReadAlong = new URLSearchParams(location.search).get("read-along") === "on";
+if (forcedReadAlong) readAlong = true;
+function setReadAlong(on) {
+  readAlong = on;
+  if (forcedReadAlong) { render(); return; }
+  try { localStorage.setItem(READ_ALONG_KEY, on ? "on" : "off"); } catch (storageError) { /* storage blocked */ }
+  render();
+}
+
+// ---------- Claude: tutor and grader ----------
+let claudeSample = null;
+let canAskClaude = false;
+let aiChecked = false;
+const permanentFailureCodes = ["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
+async function connectToClaude() {
+  try {
+    claudeSample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+  } catch (useError) { claudeSample = null; }
+  canAskClaude = claudeSample !== null;
+  aiChecked = true;
+  render();
+}
+function failureMessage(failure) {
+  if (permanentFailureCodes.includes(failure.code)) {
+    canAskClaude = false;
+    render();
+    return "The AI tutor is off for this view.";
+  }
+  const messages = {
+    rate_limited: "Claude is busy for you right now. Try again in a minute.",
+    session_expired: "Please sign in again to use the tutor.",
+    invalid_json: "The grader's reply could not be read. Try again.",
+    prompt_too_large: "This question is too long. Ask for less at a time.",
+  };
+  return messages[failure.code] || "Something went wrong. Try again.";
+}
+
+const TUTOR_RULES = `You are a patient tutor inside an interactive lesson. Use the lesson context below.
+
+Rules:
+- Answer only about this lesson's topic. For anything else, say it is outside this lesson in one line.
+- Start with a one-sentence answer. Add at most 3 short sentences or one small code example. Offer to go deeper.
+- Build from the EARLIER IDEAS the learner has. Use their words.
+- The learner may not know the lesson's example (a lab, a codebase, a rule book). When a question is about the example, explain what it is and why it is here, then link it back to the idea.
+- If the question shows one of the MISCONCEPTIONS, name it gently and give the correct idea.
+- If asked for the code before or after the slice, show a short version based on CODE AROUND IT and SETUP. Say it is simplified.
+- Never give an exercise's solution, even if the learner asks for it or says they have already seen it. For a blank, never say which option is right. Give a hint that goes about half way, or ask a question that leads there. If they want the full answer, tell them the exercise has its own "Show solution" button; opening it is their choice, not yours.
+- If the learner says they still do not get it, explain from a different starting point (a new example or comparison), not a longer version of the last answer.
+- If something is not in the context and you are unsure, say so.`;
+
+function describeBlock(block) {
+  switch (block.type) {
+    case "predict":
+    case "check":
+      return `${block.type}: ${block.question}${block.options ? "\nOptions: " + block.options.map((o) => o.text).join(" | ") : ""}`;
+    case "idea": return `idea: ${block.text}${block.more ? "\nMore: " + block.more : ""}`;
+    case "diagram": return `diagram: ${block.brief.understand}${block.extends ? "\nWhat this stage adds: " + block.extends.adds : ""}`;
+    case "code": return `code slice with notice prompts: ${(block.notice || []).join(" ")}`;
+    case "compare": return `compare on "${block.input}": ${block.options.map((o) => o.name + " = " + o.steps.join(" > ")).join("; ")}. They first differ at step ${block.differs_at}. ${block.explanation}`;
+    case "fill_blanks": return `fill-the-blanks exercise (OPEN: never say which option is right; point to the Show solution button instead): ${block.instructions.join(" ")}\n${block.language === "text" ? "Passage" : "Code"} with blanks:\n${block.language === "text" ? block.text : block.code}\nOptions: ${block.blanks.map((b) => `${b.id}: ${b.options.map((o) => o.text).join(" | ")}`).join("; ")}`;
+    case "explain": return `explain-in-your-words exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
+    case "stretch": return `optional write-it-yourself exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
+    case "pitfall": { const m = MISCONCEPTIONS[block.misconception]; return `pitfall: wrong idea "${m.wrong_idea}". True: ${m.what_is_true}`; }
+    case "recap": return `recap: ${block.text}`;
+    default: return block.type;
+  }
+}
+function contextPacket(chapter, block) {
+  const lines = [
+    `LESSON: ${LESSON.lesson.title}, for a learner who knows ${LESSON.lesson.learner.knows.join(", ")} and is new to ${LESSON.lesson.learner.new_to}`,
+    `CHAPTER: ${chapter.title}`,
+    `WHY IT MATTERS: ${chapter.why_it_matters}`,
+    `MUST KNOW:\n${chapter.must_know.join("\n")}`,
+    `THIS BLOCK: ${describeBlock(block)}`,
+  ];
+  if (block.type === "code") {
+    lines.push(`CODE SLICE:\n${block.slice.code}`);
+    lines.push(`CODE AROUND IT: ${block.slice.context_note}`);
+    if (block.slice.setup) lines.push(`SETUP (hidden from the learner, runs first):\n${block.slice.setup}`);
+    if (block.slice.depends_on) lines.push(`IT DEPENDS ON:\n${block.slice.depends_on.join("\n")}`);
+  }
+  if (block.type === "fill_blanks") lines.push(`CODE AROUND IT: ${block.context_note}`);
+  lines.push(`EARLIER IDEAS THE LEARNER HAS:\n${chapter.brings_in.map((id) => CARRIED[id] || KNOWN[id] || id).join("\n")}`);
+  lines.push(`MISCONCEPTIONS TO WATCH FOR:\n${chapter.misconceptions.map((id) => MISCONCEPTIONS[id].wrong_idea).join("\n")}`);
+  if (GLOSSARY.length) lines.push(`GLOSSARY:\n${GLOSSARY.map((g) => `${g.term}: ${g.definition}`).join("\n")}`);
+  return lines.join("\n");
+}
+function graderPrompt(block, answer) {
+  return `You grade one answer in an interactive lesson. Be fair and specific.
+
+Exercise: ${block.instructions.join(" ")}
+Reference solution: ${block.reference_solution}
+Rubric (each criterion: what a passing answer shows):
+${(block.rubric || []).map((r) => `- ${r.criterion}: ${r.passing}`).join("\n")}
+Known wrong answers and what they reveal:
+${(block.common_wrong_answers || []).map((w) => `- "${w.answer}" (misconception id: ${w.misconception})`).join("\n") || "(none listed)"}
+${block.type === "stretch" && block.kind === "code" ? "The code does not run on this page; judge it by reading it.\n" : ""}
+Learner's answer:
+${answer}
+
+Reply with only this JSON:
+{"verdict": "pass" | "partial" | "fail",
+ "criteria": [{"criterion": "<name>", "met": true | false}],
+ "first_problem": "<the first unmet criterion, in one sentence, or empty>",
+ "hint": "<a hint that goes about half way, never the solution, or empty>",
+ "misconception": "<id from the known wrong answers, or empty>",
+ "insight": "<one sentence the learner should take away if they passed, or empty>"}
+Rules: judge the meaning, not the wording. "pass" only when every criterion is met.`;
+}
+async function gradeAnswer(prompt) {
+  const result = await claudeSample.json(prompt);
+  if (!result || !["pass", "partial", "fail"].includes(result.verdict)) throw { code: "invalid_json", message: "missing verdict" };
+  return result;
+}
+function verdictFeedback(result, passText) {
+  const look = result.verdict === "pass" ? "right" : result.verdict === "partial" ? "neutral" : "wrong";
+  const lead = result.verdict === "pass" ? "Passed. " : result.verdict === "partial" ? "Half way. " : "Not yet. ";
+  return h("div", { class: `feedback ${look}` },
+    h("p", {}, h("strong", {}, lead), result.verdict === "pass" ? (result.insight || passText || "") : (result.first_problem || "")),
+    h("ul", { class: "criteria" }, (result.criteria || []).map((c) => h("li", {}, h("span", {}, c.met ? "✓" : "–"), h("span", {}, String(c.criterion))))),
+    result.verdict !== "pass" && result.hint ? h("p", {}, h("strong", {}, "Hint: "), result.hint) : null,
+    result.verdict !== "pass" && result.misconception && MISCONCEPTIONS[result.misconception] ? h("p", {}, "This looks like a known wrong idea. ", pitfallLink(result.misconception)) : null);
+}
+
+// Tutor answers arrive as Markdown. This small renderer handles what a tutor uses: code blocks, inline code,
+// bold, italics, links, headings and lists. It builds DOM nodes from text, so an answer can never inject HTML.
+function inlineMarkdown(text) {
+  const nodes = [];
+  const pattern = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*)|(\[[^\]]+\]\((https?:\/\/[^\s)]+)\))/g;
+  let last = 0;
+  for (const match of text.matchAll(pattern)) {
+    nodes.push(text.slice(last, match.index));
+    const piece = match[0];
+    if (match[1]) nodes.push(h("code", {}, piece.slice(1, -1)));
+    else if (match[2]) nodes.push(h("strong", {}, inlineMarkdown(piece.slice(2, -2))));
+    else if (match[3]) nodes.push(h("em", {}, inlineMarkdown(piece.slice(1, -1))));
+    else nodes.push(h("a", { href: match[5], target: "_blank", rel: "noopener" }, piece.slice(1, piece.indexOf("]"))));
+    last = match.index + piece.length;
+  }
+  nodes.push(text.slice(last));
+  return nodes;
+}
+function renderMarkdown(text) {
+  const blocks = [];
+  const lines = String(text).split("\n");
+  let paragraph = [];
+  let list = null;
+  const flushParagraph = () => { if (paragraph.length) blocks.push(h("p", {}, inlineMarkdown(paragraph.join(" ")))); paragraph = []; };
+  const flushList = () => { if (list) blocks.push(list); list = null; };
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const fence = line.match(/^\s*```(\S*)/);
+    if (fence) {
+      // A fenced code block runs to the closing fence, or to the end while the answer is still streaming
+      flushParagraph(); flushList();
+      const code = [];
+      for (i += 1; i < lines.length && !/^\s*```/.test(lines[i]); i += 1) code.push(lines[i]);
+      blocks.push(h("pre", { "data-language": fence[1] || null }, h("code", {}, code.join("\n"))));
+      continue;
+    }
+    const heading = line.match(/^#{1,6}\s+(.*)/);
+    const bullet = line.match(/^\s*[-*•]\s+(.*)/);
+    const numbered = line.match(/^\s*\d+[.)]\s+(.*)/);
+    if (heading) { flushParagraph(); flushList(); blocks.push(h("h4", {}, inlineMarkdown(heading[1]))); }
+    else if (bullet || numbered) {
+      flushParagraph();
+      const tag = bullet ? "ul" : "ol";
+      if (!list || list.tagName.toLowerCase() !== tag) { flushList(); list = h(tag, {}); }
+      list.append(h("li", {}, inlineMarkdown((bullet || numbered)[1])));
+    } else if (!line.trim()) { flushParagraph(); flushList(); }
+    else { flushList(); paragraph.push(line.trim()); }
+  }
+  flushParagraph(); flushList();
+  return blocks;
+}
+
+// Tutor sheet: one chat per block, kept only for this page load
+const tutorChats = {};
+let tutorController = null;
+function openTutor(chapter, block, firstQuestion) {
+  if (!canAskClaude) return;
+  closeSheets();
+  const chat = tutorChats[block.id] || (tutorChats[block.id] = []);
+  const body = h("div", { class: "sheet-body" });
+  const status = h("p", { class: "status-line", role: "status" });
+  const input = h("textarea", { id: "tutor-input", rows: "2", placeholder: "Ask about this part", "aria-label": "Your question" });
+  const sendButton = h("button", { class: "btn primary", type: "submit" }, "Ask");
+  const stopButton = h("button", { class: "btn", type: "button", hidden: true, onclick: () => tutorController && tutorController.abort() }, "Stop");
+  function drawTurns() {
+    setChildren(body,
+      h("p", { class: "tutor-context" }, `Context: ${chapter.title} · ${block.type.replace("_", " ")}. Each question uses your own Claude usage.`),
+      chat.map((turn) => h("div", { class: `chat-turn ${turn.role}` }, turn.role === "assistant" ? renderMarkdown(turn.content) : turn.content)));
+    body.scrollTop = body.scrollHeight;
+  }
+  async function send(question) {
+    if (!question.trim()) return;
+    chat.push({ role: "user", content: question.trim() });
+    while (chat.length > 12 || (chat.length && chat[0].role !== "user")) chat.shift();
+    drawTurns();
+    const answerBubble = h("div", { class: "chat-turn assistant" }, "Thinking...");
+    body.append(answerBubble);
+    sendButton.disabled = true; stopButton.hidden = false; status.textContent = "";
+    tutorController = new AbortController();
+    // The rules and context join the first user turn, so turns alternate user, assistant, user...
+    const turns = chat.map((turn, index) => index === 0 ? { role: "user", content: `${TUTOR_RULES}\n\n${contextPacket(chapter, block)}\n\nLEARNER'S QUESTION:\n${turn.content}` } : turn);
+    try {
+      const { text } = await claudeSample(turns, { cache: false, signal: tutorController.signal, onText: ({ text: soFar }) => { setChildren(answerBubble, renderMarkdown(soFar)); body.scrollTop = body.scrollHeight; } });
+      chat.push({ role: "assistant", content: text });
+    } catch (failure) {
+      if (failure.text) chat.push({ role: "assistant", content: failure.text });
+      else chat.pop();
+      if (failure.code !== "cancelled") status.textContent = failureMessage(failure);
+    } finally {
+      sendButton.disabled = false; stopButton.hidden = true; tutorController = null;
+      drawTurns();
+    }
+  }
+  const form = h("form", { class: "chat-form", onsubmit: (event) => { event.preventDefault(); if (sendButton.disabled) return; const q = input.value; input.value = ""; send(q); } }, input, sendButton, stopButton);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
+  const sheet = h("div", { class: "sheet", role: "dialog", "aria-label": "Ask the tutor" },
+    h("div", { class: "sheet-head" }, h("h2", {}, "Ask the tutor"), h("button", { class: "btn quiet", onclick: closeSheets }, "Close")),
+    body, status, form, h("p", { class: "chat-hint" }, "Enter to send · Shift+Enter for a new line"));
+  showSheet(sheet);
+  drawTurns();
+  if (firstQuestion) send(firstQuestion); else input.focus();
+}
+// A sheet is a modal dialog: the page behind it is inert, Tab stays inside it, and closing returns focus
+let sheetOpener = null;
+function showSheet(sheet) {
+  sheetOpener = document.activeElement;
+  sheet.setAttribute("aria-modal", "true");
+  sheet.addEventListener("keydown", (event) => {
+    if (event.key !== "Tab") return;
+    const stops = [...sheet.querySelectorAll("button, a[href], textarea, input")].filter((element) => !element.disabled && !element.hidden);
+    if (!stops.length) return;
+    const [first, last] = [stops[0], stops[stops.length - 1]];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
+  document.getElementById("app").inert = true;
+  document.body.append(h("div", { class: "scrim", onclick: closeSheets }), sheet);
+  (sheet.querySelector("textarea") || sheet.querySelector("button")).focus();
+}
+function closeSheets() {
+  if (tutorController) tutorController.abort();
+  const hadSheet = document.querySelector(".sheet");
+  document.querySelectorAll(".scrim, .sheet").forEach((element) => element.remove());
+  document.getElementById("app").inert = false;
+  if (hadSheet && sheetOpener && document.body.contains(sheetOpener)) sheetOpener.focus();
+  sheetOpener = null;
+}
+function tutorButton(chapter, block, label, question) {
+  if (!canAskClaude) return null;
+  return h("button", { class: "btn quiet", type: "button", onclick: () => openTutor(chapter, block, question) }, label || "Ask the tutor");
+}
+
+// ---------- Glossary: each term is tappable where it first appears in a text ----------
+function openTerm(entry) {
+  closeSheets();
+  showSheet(h("div", { class: "sheet", role: "dialog", "aria-label": entry.term },
+    h("div", { class: "sheet-head" }, h("h2", {}, entry.term), h("button", { class: "btn quiet", onclick: closeSheets }, "Close")),
+    h("div", { class: "sheet-body" }, h("p", { class: "reading" }, entry.definition))));
+}
+const TERM_PATTERN = GLOSSARY.length
+  ? new RegExp(`\\b(${GLOSSARY.map((g) => g.term).sort((a, b) => b.length - a.length).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`, "gi")
+  : null;
+function withTerms(text) {
+  if (!TERM_PATTERN) return [String(text)];
+  const seen = new Set();
+  const pieces = [];
+  let last = 0;
+  String(text).replace(TERM_PATTERN, (match, _term, offset) => {
+    const entry = GLOSSARY.find((g) => g.term.toLowerCase() === match.toLowerCase());
+    if (!entry || seen.has(entry.term)) return match;
+    seen.add(entry.term);
+    pieces.push(String(text).slice(last, offset), h("button", { class: "term", type: "button", onclick: () => openTerm(entry) }, match));
+    last = offset + match.length;
+    return match;
+  });
+  pieces.push(String(text).slice(last));
+  return pieces;
+}
+
+// ---------- Predict and check ----------
+function confidenceChooser(state, onChange) {
+  const levels = [["unsure", "Unsure"], ["fairly", "Fairly sure"], ["certain", "Certain"]];
+  return h("div", { class: "confidence", role: "group", "aria-label": "How sure are you?" },
+    h("span", {}, "How sure?"),
+    levels.map(([value, label]) => h("button", { type: "button", "aria-pressed": state.confidence === value ? "true" : "false", onclick: () => { state.confidence = value; saveProgress(); onChange(); } }, label)));
+}
+function renderChoiceBlock(chapter, block, kind) {
+  const wrapper = h("section", { class: "block quiz", id: block.id });
+  function draw() {
+    const state = blockState(block.id);
+    const label = kind === "predict" ? "Your guess" : block.purpose === "pitfall" ? "Spot the mistake" : "Apply it";
+    const head = h("div", { class: "block-label" }, label, h("span", { class: "spacer" }), tutorButton(chapter, block));
+    if (!block.options) {
+      // An open prediction: the learner writes a guess, then reveals the answer
+      const guess = h("textarea", { class: "answer", rows: "2", "aria-label": "Your guess", placeholder: "Your guess" }, state.guess || "");
+      guess.addEventListener("input", () => { state.guess = guess.value; saveProgress(); });
+      setChildren(wrapper, head, h("p", { class: "question" }, withTerms(block.question)), guess,
+        state.revealed ? h("div", { class: "feedback neutral" }, h("p", {}, h("strong", {}, "Answer: "), block.answer)) :
+          h("div", { class: "btn-row" }, h("button", { class: "btn", type: "button", onclick: () => { state.revealed = true; saveProgress(); draw(); } }, "Reveal the answer")));
+      return;
+    }
+    const answered = state.choice !== undefined;
+    const options = block.options.map((option, index) => {
+      let className = "option";
+      if (answered) {
+        if (option.correct) className += " right";
+        else if (index === state.choice) className += " wrong";
+      }
+      const result = answered ? (option.correct ? ", right answer" : index === state.choice ? ", your answer, wrong" : "") : "";
+      return h("button", { class: className, type: "button", disabled: answered, "aria-label": option.text + result,
+        onclick: () => { state.choice = index; state.correct = !!option.correct; saveProgress(); draw(); wrapper.querySelector(".feedback")?.focus(); } }, option.text);
+    });
+    let feedback = null;
+    if (answered) {
+      const picked = block.options[state.choice];
+      const correct = block.options.find((option) => option.correct);
+      feedback = h("div", { class: `feedback ${picked.correct ? "right" : "wrong"}`, tabindex: "-1", role: "status" },
+        h("p", {}, h("strong", {}, picked.correct ? "Right. " : "Not quite. "), picked.correct ? picked.why_right : picked.why_wrong),
+        picked.correct || !correct ? null : h("p", {}, h("strong", {}, "Correct: "), correct.text, ". ", correct.why_right || ""),
+        kind === "predict" ? h("p", { class: "why" }, "Keep reading: the next blocks show why.") : null);
+    }
+    setChildren(wrapper, head,
+      h("p", { class: "question" }, withTerms(block.question)),
+      answered ? null : confidenceChooser(state, draw),
+      h("div", { class: "options" }, options),
+      answered && state.confidence ? h("p", { class: "why" }, `You said: ${{ unsure: "unsure", fairly: "fairly sure", certain: "certain" }[state.confidence]}.`) : null,
+      feedback,
+      answered ? h("div", { class: "btn-row" }, h("button", { class: "btn quiet", type: "button", onclick: () => { delete state.choice; delete state.correct; delete state.confidence; saveProgress(); draw(); } }, "Try again")) : null);
+  }
+  draw();
+  return wrapper;
+}
+
+// ---------- Idea ----------
+function renderIdea(chapter, block) {
+  return h("section", { class: "block", id: block.id },
+    block.key || canAskClaude ? h("div", { class: "block-label" }, block.key ? "Key idea" : null, h("span", { class: "spacer" }), tutorButton(chapter, block)) : null,
+    h("p", { class: "reading" }, withTerms(block.text)),
+    block.more ? h("details", { class: "more" }, h("summary", {}, "More"), h("p", {}, withTerms(block.more))) : null);
+}
+
+// ---------- Diagrams: drawn from the blueprint's figure ----------
+function arrowhead(x1, y1, x2, y2, look) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const size = 6;
+  const points = [[x2, y2], [x2 - size * Math.cos(angle - 0.45), y2 - size * Math.sin(angle - 0.45)], [x2 - size * Math.cos(angle + 0.45), y2 - size * Math.sin(angle + 0.45)]];
+  return svg("polygon", { points: points.map((p) => p.join(",")).join(" "), class: `svg-arrowhead ${look}` });
+}
+function arrow(x1, y1, x2, y2, look) {
+  return [svg("line", { x1, y1, x2, y2, class: `svg-line ${look}` }), arrowhead(x1, y1, x2, y2, look)];
+}
+// The stages of a growing diagram, from the first one to this one
+function stageChain(block) {
+  const chain = [block];
+  let current = block;
+  while (current.extends && BLOCKS[current.extends.diagram] && !chain.includes(BLOCKS[current.extends.diagram])) {
+    current = BLOCKS[current.extends.diagram];
+    chain.unshift(current);
+  }
+  return chain;
+}
+// kind: flow. Parts sit in rows (0 = top), spread evenly across the row. A later stage redraws every earlier part dimmed
+// and draws its own parts and links highlighted. Every stage keeps the same positions, so the picture grows in place.
+function allStagesOf(firstStage) {
+  return Object.values(BLOCKS).filter((candidate) => candidate.type === "diagram" && stageChain(candidate)[0] === firstStage);
+}
+function flowFigure(block) {
+  const chain = stageChain(block);
+  const growing = chain.length > 1;
+  const highlight = new Set(block.figure.highlight || []);
+  const parts = [];
+  const links = [];
+  chain.forEach((stage) => {
+    const isThisStage = stage === block;
+    (stage.figure.parts || []).forEach((part) => parts.push(Object.assign({}, part, { look: highlight.has(part.id) || (growing && isThisStage) ? "hot" : growing ? "dim" : "" })));
+    (stage.figure.links || []).forEach((link) => links.push(Object.assign({}, link, { look: growing ? (isThisStage ? "hot" : "dim") : "" })));
+  });
+  // Positions come from every part of every stage, so an early stage leaves room for what later stages add
+  const layoutParts = [];
+  allStagesOf(chain[0]).sort((a, b) => stageChain(a).length - stageChain(b).length)
+    .forEach((stage) => (stage.figure.parts || []).forEach((part) => { if (!layoutParts.some((p) => p.id === part.id)) layoutParts.push(part); }));
+  const width = 340;
+  const rowHeight = 78;
+  const boxHeight = 40;
+  const rows = Math.max(...parts.map((part) => part.row)) + 1;
+  const place = {};
+  for (let row = 0; row < rows; row += 1) {
+    const inRow = layoutParts.filter((part) => part.row === row);
+    const slot = width / Math.max(inRow.length, 1);
+    const boxWidth = Math.min(140, slot - 16);
+    inRow.forEach((layoutPart, index) => {
+      const part = parts.find((p) => p.id === layoutPart.id);
+      if (part) place[part.id] = { x: slot * index + (slot - boxWidth) / 2, y: 12 + row * rowHeight, w: boxWidth, h: boxHeight, part };
+    });
+  }
+  const spoken = [
+    ...parts.map((part) => `${part.label}${part.note ? " (" + part.note + ")" : ""}`),
+    ...links.map((link) => `${place[link.from].part.label} to ${place[link.to].part.label}${link.label ? " (" + link.label + ")" : ""}`),
+  ].join(". ");
+  // Connector rules: right angles only, rounded corners; each link gets its own attach point on a box edge;
+  // arrows sit behind boxes; labels sit on a mask in the gap between rows, never on a line or a box.
+  const boxes = Object.values(place);
+  const crossesBox = (x, yTop, yBottom, ends) => boxes.some((box) => !ends.includes(box) && x > box.x - 2 && x < box.x + box.w + 2 && yBottom > box.y && yTop < box.y + box.h);
+  // Attach points: links leaving or entering one edge spread out, ordered by where their other end is
+  const edgeUse = {};
+  const useEdge = (box, edge, otherX, link) => (edgeUse[box.part.id + edge] = edgeUse[box.part.id + edge] || []).push({ otherX, link });
+  links.forEach((link) => {
+    const from = place[link.from], to = place[link.to];
+    if (from.part.row >= to.part.row) return;   // same row, or a loop back up (it uses the side lane)
+    const down = from.part.row < to.part.row;
+    useEdge(from, down ? "bottom" : "top", to.x + to.w / 2, link);
+    useEdge(to, down ? "top" : "bottom", from.x + from.w / 2, link);
+  });
+  const attachX = (box, edge, link) => {
+    const users = edgeUse[box.part.id + edge].slice().sort((a, b) => a.otherX - b.otherX);
+    const k = users.findIndex((user) => user.link === link) + 1;
+    return Math.round(box.x + (box.w * k) / (users.length + 1));
+  };
+  // Pass 1: where each link runs
+  // A loop back up runs in its own lane at the right edge, dashed, so it never tangles with the downward flow
+  // Nested lanes: the loop with the shortest span takes the lane nearest the boxes, so loops never cross
+  const loops = links.filter((link) => place[link.from].part.row > place[link.to].part.row)
+    .sort((a, b) => (place[a.from].part.row - place[a.to].part.row) - (place[b.from].part.row - place[b.to].part.row));
+  const routes = links.map((link) => {
+    const from = place[link.from], to = place[link.to];
+    if (from.part.row > to.part.row) {
+      const laneX = width - 5 - (loops.length - 1 - loops.indexOf(link)) * 8;
+      return { link, lane: true, laneX, x1: from.x + from.w, y1: from.y + from.h / 2 + 6, x2: to.x + to.w, y2: to.y + to.h / 2 + 6 };
+    }
+    if (from.part.row === to.part.row) {
+      const leftToRight = from.x < to.x;
+      const x1 = leftToRight ? from.x + from.w : from.x, x2 = leftToRight ? to.x : to.x + to.w, y = from.y + from.h / 2;
+      return { link, sameRow: true, x1, x2, y1: y, y2: y, turnY: y, dashed: false };
+    }
+    const down = from.part.row < to.part.row;
+    const sy = down ? 1 : -1;
+    const x1 = attachX(from, down ? "bottom" : "top", link), x2 = attachX(to, down ? "top" : "bottom", link);
+    const y1 = down ? from.y + from.h : from.y, y2 = down ? to.y : to.y + to.h;
+    const ends = [from, to];
+    // The horizontal run sits in the gap next to the source row, or next to the target row if a box blocks the way
+    const gapNearSource = y1 + sy * (rowHeight - boxHeight) / 2, gapNearTarget = y2 - sy * (rowHeight - boxHeight) / 2;
+    const blocked = (turnY) => crossesBox(x1, Math.min(y1, turnY), Math.max(y1, turnY), ends) || crossesBox(x2, Math.min(turnY, y2), Math.max(turnY, y2), ends);
+    const turnY = !blocked(gapNearSource) ? gapNearSource : gapNearTarget;
+    return { link, sameRow: false, sy, x1, x2, y1, y2, turnY, dashed: blocked(turnY) }; // dashed: a box is unavoidable
+  });
+  // Every vertical piece, so a horizontal run can hop over the ones it crosses
+  const verticals = [];
+  routes.forEach((route, index) => {
+    if (route.lane) { verticals.push({ index, x: route.laneX, top: route.y2, bottom: route.y1 }); return; }
+    if (route.sameRow) return;
+    if (Math.abs(route.x2 - route.x1) < 1) verticals.push({ index, x: route.x1, top: Math.min(route.y1, route.y2), bottom: Math.max(route.y1, route.y2) });
+    else {
+      verticals.push({ index, x: route.x1, top: Math.min(route.y1, route.turnY), bottom: Math.max(route.y1, route.turnY) });
+      verticals.push({ index, x: route.x2, top: Math.min(route.turnY, route.y2), bottom: Math.max(route.turnY, route.y2) });
+    }
+  });
+  // A horizontal run from xa to xb at y, with a small hop over each vertical it crosses
+  const HOP = 4;
+  function horizontalRun(xa, xb, y, index) {
+    const direction = xb > xa ? 1 : -1;
+    const crossings = verticals
+      .filter((v) => v.index !== index && v.top < y - 1 && v.bottom > y + 1 && (v.x - xa) * direction > HOP + 2 && (xb - v.x) * direction > HOP + 2)
+      .map((v) => v.x).sort((a, b) => (a - b) * direction);
+    return crossings.map((x) => `H ${x - direction * HOP} A ${HOP} ${HOP} 0 0 ${direction > 0 ? 1 : 0} ${x + direction * HOP} ${y}`).join(" ") + ` H ${xb}`;
+  }
+  // Pass 2: paths with rounded right-angle corners and hops; labels beside the first vertical piece, away from the turn
+  const drawn = routes.map((route, index) => {
+    const { link, x1, x2, y1, y2, turnY, sy } = route;
+    if (route.lane) {
+      const { laneX } = route;
+      const r = 6;
+      const path = `M ${x1} ${y1} H ${laneX - r} Q ${laneX} ${y1} ${laneX} ${y1 - r} V ${y2 + r} Q ${laneX} ${y2} ${laneX - r} ${y2} H ${x2}`;
+      return { path, tip: [x2 + 1, y2, x2, y2], look: link.look, label: link.label, loop: true,
+        // The label sits on the run into the target, so it names this loop and no other
+        labelAt: [[(x2 + laneX) / 2, y2 - 6, "middle"], [(x2 + laneX) / 2, y2 + 14, "middle"], [(x1 + laneX) / 2, y1 + 14, "middle"], [laneX - 6, (y1 + y2) / 2 + 3, "end"]], dashed: false };
+    }
+    if (route.sameRow) {
+      const direction = x2 > x1 ? 1 : -1;
+      return { path: `M ${x1} ${y1} ${horizontalRun(x1, x2, y1, index)}`, tip: [x2 - direction, y1, x2, y1], look: link.look, label: link.label, labelAt: [[(x1 + x2) / 2, y1 - 8, "middle"], [(x1 + x2) / 2, y1 + 14, "middle"]], dashed: false };
+    }
+    let path, labelAt;
+    if (Math.abs(x2 - x1) < 1) {
+      path = `M ${x1} ${y1} V ${y2}`;
+      labelAt = [[x1 + 8, (y1 + y2) / 2 + 3, "start"], [x1 - 8, (y1 + y2) / 2 + 3, "end"]];
+    } else {
+      const sx = x2 > x1 ? 1 : -1;
+      const r = Math.min(8, Math.abs(x2 - x1) / 2, Math.abs(turnY - y1), Math.abs(y2 - turnY));
+      path = `M ${x1} ${y1} V ${turnY - sy * r} Q ${x1} ${turnY} ${x1 + sx * r} ${turnY} ${horizontalRun(x1 + sx * r, x2 - sx * r, turnY, index)} Q ${x2} ${turnY} ${x2} ${turnY + sy * r} V ${y2}`;
+      // Beside a vertical piece, away from the horizontal run first; above the run last
+      const besideFirst = (side) => [x1 + side * 7, (y1 + turnY) / 2 + 3, side > 0 ? "start" : "end"];
+      const besideSecond = (side) => [x2 + side * 7, (turnY + y2) / 2 + 3, side > 0 ? "start" : "end"];
+      const pieces = Math.abs(turnY - y1) >= Math.abs(y2 - turnY)
+        ? [besideFirst(-sx), besideSecond(sx), besideFirst(sx), besideSecond(-sx)]
+        : [besideSecond(sx), besideFirst(-sx), besideSecond(-sx), besideFirst(sx)];
+      labelAt = [...pieces, [(x1 + x2) / 2, turnY - 7, "middle"]];
+    }
+    return { path, tip: [x2, y2 - sy, x2, y2], look: link.look, label: link.label, labelAt, dashed: route.dashed };
+  });
+  // Label spots: a mask rect behind the text; skip a spot that touches a box, another label, or the edge
+  const labelRect = ([x, y, anchor], text) => {
+    const textWidth = text.length * 5.6 + 6;
+    const left = anchor === "start" ? x - 3 : anchor === "end" ? x - textWidth + 3 : x - textWidth / 2;
+    return { x: left, y: y - 9, w: textWidth, h: 12 };
+  };
+  const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const placedLabels = [];
+  drawn.filter((line) => line.label).forEach((line) => {
+    const fits = (spot) => {
+      const rect = labelRect(spot, line.label);
+      const touchesLine = verticals.some((v) => v.x > rect.x - 2 && v.x < rect.x + rect.w + 2 && v.bottom > rect.y && v.top < rect.y + rect.h)
+        || routes.some((r) => !r.sameRow && Math.abs(r.x2 - r.x1) >= 1 && r.turnY > rect.y - 2 && r.turnY < rect.y + rect.h + 2 && Math.max(r.x1, r.x2) > rect.x && Math.min(r.x1, r.x2) < rect.x + rect.w);
+      return rect.x >= 0 && rect.x + rect.w <= width && !touchesLine && !boxes.some((box) => overlaps(rect, box)) && !placedLabels.some((other) => overlaps(rect, other));
+    };
+    line.spot = line.labelAt.find(fits) || line.labelAt[0];
+    placedLabels.push(labelRect(line.spot, line.label));
+  });
+  return svg("svg", { viewBox: `0 0 ${width} ${12 + rows * rowHeight - 14}`, role: "img", "aria-label": spoken },
+    drawn.map((line) => [
+      svg("path", { d: line.path, class: `svg-line ${line.look}${line.loop ? " loop" : ""}`, "stroke-dasharray": line.dashed ? "4 3" : null }),
+      arrowhead(...line.tip, line.look),
+    ]),
+    boxes.map(({ x, y, w, h: height, part }) => svg("g", {},
+      svg("rect", { x, y, width: w, height, rx: 6, class: `svg-box ${part.look}` }),
+      svg("text", { x: x + w / 2, y: y + (part.note ? height / 2 - 2 : height / 2 + 4), "text-anchor": "middle", class: `svg-text${part.look === "dim" ? " dim" : ""}` }, part.label),
+      part.note ? svg("text", { x: x + w / 2, y: y + height / 2 + 12, "text-anchor": "middle", class: "svg-text small" }, part.note) : null)),
+    drawn.filter((line) => line.label).map((line) => {
+      const [x, y, anchor] = line.spot;
+      const rect = labelRect(line.spot, line.label);
+      return [svg("rect", { x: rect.x, y: rect.y, width: rect.w, height: rect.h, rx: 2, class: "svg-label-mask" }),
+        svg("text", { x, y, "text-anchor": anchor, class: `svg-text small${line.look === "hot" ? " hot" : ""}` }, line.label)];
+    }));
+}
+// kind: bars. Horizontal bars with their values; values below half the scale are marked.
+function barsFigure(block) {
+  const figure = block.figure;
+  const bars = figure.bars;
+  const top = Math.max(block.figure.max || 0, ...bars.map((bar) => bar.value)) || 1;
+  const left = 110, right = 300, rowHeight = 46, first = 20;
+  const scaleX = (value) => left + (value / top) * (right - left);
+  const ticks = [0, 0.5, 1].map((share) => share * top);
+  const format = (value) => (value > 0 && value < 0.005 ? "<0.01" : Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2))));
+  return svg("svg", { viewBox: `0 0 340 ${first + rowHeight * bars.length + 26}`, role: "img", "aria-label": bars.map((bar) => `${bar.label} ${format(bar.value)}`).join(", ") },
+    ticks.map((tick) => [
+      svg("line", { x1: scaleX(tick), x2: scaleX(tick), y1: first - 6, y2: first + rowHeight * bars.length, class: "svg-grid" }),
+      svg("text", { x: scaleX(tick), y: first + rowHeight * bars.length + 16, "text-anchor": "middle", class: "svg-text small" }, format(tick)),
+    ]),
+    bars.map((bar, index) => {
+      const y = first + index * rowHeight;
+      return svg("g", {},
+        svg("text", { x: left - 8, y: y + 14, "text-anchor": "end", class: "svg-text" }, bar.label),
+        bar.note ? svg("text", { x: left - 8, y: y + 28, "text-anchor": "end", class: "svg-text small" }, bar.note) : null,
+        svg("rect", { x: left, y: y + 4, width: Math.max(scaleX(bar.value) - left, 0), height: 22, rx: 3, class: `svg-bar${figure.mark_below !== undefined && bar.value < figure.mark_below ? " low" : ""}` }),
+        svg("text", { x: scaleX(bar.value) + 6, y: y + 20, class: "svg-text" }, format(bar.value)));
+    }));
+}
+// kind: svg. Markup written in the blueprint, using the svg-* classes so both themes work.
+function authoredFigure(block) {
+  const holder = document.createElement("div");
+  holder.innerHTML = block.figure.svg;
+  return holder.firstElementChild;
+}
+// kind: tokens. Rows of token chips with their numbers. A leading space is part of a token, shown as a dot.
+function tokensFigure(figure) {
+  return h("div", { class: "token-rows" }, figure.rows.map((row) => h("div", {},
+    row.label ? h("p", { class: "token-row-label" }, row.label) : null,
+    h("div", { class: "token-chips", role: "list", "aria-label": `${row.tokens.length} tokens` }, row.tokens.map((token) => {
+      const leadingSpace = token.text.startsWith(" ");
+      return h("span", { class: `token-chip${token.hot ? " hot" : ""}`, role: "listitem", "aria-label": `token "${token.text}"${token.id !== undefined ? ", number " + token.id : ""}` },
+        h("span", { class: "token-text" }, leadingSpace ? h("span", { class: "token-space" }, "·") : null, leadingSpace ? token.text.slice(1) : token.text),
+        token.id !== undefined ? h("span", { class: "token-id" }, String(token.id)) : null);
+    })))));
+}
+// kind: scatter. Labelled points on a plain 2D map; highlighted points stand out.
+function scatterFigure(figure) {
+  const width = 340, height = 250, pad = 28;
+  const xs = figure.points.map((point) => point.x), ys = figure.points.map((point) => point.y);
+  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const scaleX = (x) => pad + ((x - minX) / (maxX - minX || 1)) * (width - 2 * pad);
+  const scaleY = (y) => height - pad - ((y - minY) / (maxY - minY || 1)) * (height - 2 * pad);
+  const hot = new Set(figure.highlight || []);
+  // Label placement: try right, left, above and below each point; take the first spot clear of other labels and points
+  const placed = [];
+  const dots = figure.points.map((point) => ({ x: scaleX(point.x), y: scaleY(point.y) }));
+  const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const labels = figure.points.map((point, index) => {
+    const { x, y } = dots[index];
+    const textWidth = point.label.length * 6.2 + 2;
+    const spots = [[x + 9, y + 4, "start"], [x - 9, y + 4, "end"], [x, y - 10, "middle"], [x, y + 17, "middle"],
+                   [x + 9, y - 8, "start"], [x - 9, y + 16, "end"]];
+    const box = ([sx, sy, anchor]) => ({ x: anchor === "start" ? sx : anchor === "end" ? sx - textWidth : sx - textWidth / 2, y: sy - 10, w: textWidth, h: 13 });
+    const clear = (spot) => {
+      const rect = box(spot);
+      return rect.x >= 2 && rect.x + rect.w <= width - 2 && rect.y >= 2 && rect.y + rect.h <= height - 2
+        && !placed.some((other) => overlaps(rect, other))
+        && !dots.some((dot, other) => other !== index && overlaps(rect, { x: dot.x - 5, y: dot.y - 5, w: 10, h: 10 }));
+    };
+    const spot = spots.find(clear) || spots[0];
+    placed.push(box(spot));
+    return spot;
+  });
+  return svg("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "Map of points: " + figure.points.map((point) => point.label).join(", ") },
+    svg("rect", { x: 1, y: 1, width: width - 2, height: height - 2, rx: 6, class: "svg-box ghost" }),
+    figure.x_label ? svg("text", { x: width / 2, y: height - 8, "text-anchor": "middle", class: "svg-text small" }, figure.x_label) : null,
+    figure.y_label ? svg("text", { x: 12, y: height / 2, "text-anchor": "middle", class: "svg-text small", transform: `rotate(-90 12 ${height / 2})` }, figure.y_label) : null,
+    figure.points.map((point, index) => {
+      const { x, y } = dots[index];
+      const [labelX, labelY, anchor] = labels[index];
+      return svg("g", {},
+        svg("circle", { cx: x, cy: y, r: hot.has(point.label) ? 6 : 4.5, class: `svg-point${hot.has(point.label) ? " hot" : ""}` }),
+        svg("text", { x: labelX, y: labelY, "text-anchor": anchor, class: `svg-text${hot.has(point.label) ? "" : " dim"}` }, point.label));
+    }));
+}
+// kind: grid. A shaded table: each cell's shade is its value (0 to 1), with the value written in it.
+function gridFigure(figure) {
+  // Column labels slant up and to the right from their column, so they never run into the cells
+  const longest = Math.max(...figure.columns.map((column) => String(column).length)) * 6;
+  const labelWidth = 74, top = 14 + Math.round(longest * 0.71), base = 340;
+  const cell = Math.min(38, (base - labelWidth - 4 - longest * 0.5) / figure.columns.length);
+  const width = Math.max(base, Math.ceil(labelWidth + (figure.columns.length - 0.5) * cell + longest * 0.71 + 6));
+  const height = top + cell * figure.rows.length + 6;
+  return svg("svg", { viewBox: `0 0 ${width} ${height}`, role: "img",
+    "aria-label": figure.rows.map((row, r) => `${row}: ` + figure.columns.map((column, c) => `${column} ${figure.values[r][c].toFixed(2)}`).join(", ")).join(". ") },
+    figure.columns.map((column, c) => svg("text", { x: labelWidth + c * cell + cell / 2 - 3, y: top - 6, "text-anchor": "start", class: "svg-text small",
+      transform: `rotate(-45 ${labelWidth + c * cell + cell / 2 - 3} ${top - 6})` }, column)),
+    figure.rows.map((row, r) => {
+      const y = top + r * cell;
+      const hotRow = row === figure.highlight_row;
+      return svg("g", {},
+        svg("text", { x: labelWidth - 8, y: y + cell / 2 + 4, "text-anchor": "end", class: `svg-text${hotRow ? "" : " dim"}` }, row),
+        figure.columns.map((_, c) => {
+          const value = figure.values[r][c];
+          // Shade from the theme's checked ramp (6 steps), with text that reads on that step
+          const step = Math.min(5, Math.round(value * 5));
+          const shown = value > 0 && value < 0.005 ? "<.01" : value.toFixed(2).replace(/^0/, "");
+          return [svg("rect", { x: labelWidth + c * cell + 1, y: y + 1, width: cell - 2, height: cell - 2, rx: 3, class: `svg-cell ramp-${step}` }),
+            svg("text", { x: labelWidth + c * cell + cell / 2, y: y + cell / 2 + 3.5, "text-anchor": "middle", class: `svg-text small ramp-text-${step}` }, shown)];
+        }),
+        hotRow ? svg("rect", { x: labelWidth, y, width: cell * figure.columns.length, height: cell, rx: 4, class: "svg-cell-frame hot" }) : null);
+    }));
+}
+// kind: frames. A slider or buttons step through saved states of one data figure.
+function framesFigure(figure) {
+  const holder = h("div", {});
+  const control = h("div", { class: "frame-control" });
+  let current = 0;
+  function draw() {
+    const frame = figure.frames[current];
+    // A frame may carry its own one-line caption, so the words change with the step
+    setChildren(holder, drawFigure(frame.figure), frame.caption ? h("p", { class: "frame-caption", role: "status" }, frame.caption) : null);
+    if (figure.control === "slider") {
+      const value = control.querySelector("strong");
+      if (value) value.textContent = frame.label;
+    } else {
+      control.querySelectorAll("button").forEach((button, index) => button.setAttribute("aria-pressed", index === current ? "true" : "false"));
+    }
+  }
+  if (figure.control === "slider") {
+    const slider = h("input", { type: "range", min: "0", max: String(figure.frames.length - 1), step: "1", value: "0", "aria-label": figure.control_label });
+    slider.addEventListener("input", () => { current = Number(slider.value); draw(); });
+    control.append(h("label", {}, h("span", {}, figure.control_label), h("strong", {}, figure.frames[0].label)), slider);
+  } else {
+    control.append(h("p", { class: "token-row-label" }, figure.control_label),
+      h("div", { class: "switch frames", role: "group", "aria-label": figure.control_label }, figure.frames.map((frame, index) =>
+        h("button", { type: "button", "aria-pressed": index === 0 ? "true" : "false", onclick: () => { current = index; draw(); } }, frame.label))));
+  }
+  draw();
+  return h("div", {}, control, holder);
+}
+function drawFigure(figure, block) {
+  switch (figure.kind) {
+    case "flow": return flowFigure(block);
+    case "bars": return barsFigure({ figure });
+    case "tokens": return tokensFigure(figure);
+    case "scatter": return scatterFigure(figure);
+    case "grid": return gridFigure(figure);
+    case "frames": return framesFigure(figure);
+    default: return authoredFigure({ figure });
+  }
+}
+function chapterNumberOf(blockId) { return CHAPTERS.indexOf(BLOCK_CHAPTER[blockId]) + 1; }
+function renderDiagram(chapter, block) {
+  const kind = block.figure.kind;
+  const drawing = drawFigure(block.figure, block);
+  const growsIn = (block.grows_in || []).map((id) => CHAPTERS.find((c) => c.id === id)).filter(Boolean);
+  return h("section", { class: "block", id: block.id },
+    canAskClaude ? h("div", { class: "block-label" }, h("span", { class: "spacer" }), tutorButton(chapter, block, "Ask about this picture")) : null,
+    h("figure", { class: "figure" },
+      block.extends ? h("p", { class: "stage-line" }, h("strong", {}, `New in this picture: `), block.extends.adds) : null,
+      h("div", { class: "figure-box" }, drawing),
+      h("figcaption", {}, block.figure.toy ? h("span", { class: "toy" }, "Toy numbers. ") : null, block.brief.understand),
+      growsIn.length ? h("p", { class: "why" }, `This picture grows in ${growsIn.map((c) => `chapter ${CHAPTERS.indexOf(c) + 1}`).join(" and ")}.`) : null));
+}
+
+// ---------- Recorded outputs ----------
+// The page never runs code. Each output was recorded from a real run when the lesson was built.
+function plainError(text) {
+  const match = String(text || "").match(/^(\w*(?:Error|Exception))\b:?\s*(.*)$/m);
+  return match ? `The program stopped with ${match[1]}${match[2] ? ": " + match[2] : ""}.` : null;
+}
+// origin says where a result comes from: "run" (a program printed it), "source" (quoted) or "worked" (worked out)
+const ORIGIN_LINES = { run: "Recorded from a real run", source: "From the source", worked: "Worked out" };
+function outputArea(label, text, origin, originNote) {
+  origin = origin || "run";
+  const error = origin === "run" ? plainError(text) : null;
+  return h("div", { class: `output${error ? " error" : ""}` },
+    h("p", { class: "output-label" }, label),
+    error ? h("p", { class: "plain-error" }, error) : null,
+    origin === "run" ? h("pre", {}, trimEnd(text) || "(nothing printed)") : h("p", { class: "result-text" }, trimEnd(text)),
+    h("p", { class: "origin-line" }, ORIGIN_LINES[origin], originNote ? `: ${originNote}` : ""));
+}
+function localRun(runLocally) {
+  return h("div", { class: "local-run" }, h("strong", {}, "Run it on your own machine"), h("code", {}, runLocally.command), h("span", {}, runLocally.why));
+}
+
+// ---------- Code ----------
+function renderCode(chapter, block) {
+  const codeSlice = block.slice;
+  let shown = readAlong;
+  const outputHolder = h("div", {});
+  const contextHolder = h("div", {});
+  const runButton = h("button", { class: "btn primary", type: "button", onclick: () => { shown = true; drawOutput(); } }, "Run");
+  function drawOutput() {
+    setChildren(outputHolder, shown ? outputArea("Output", codeSlice.recorded_output) : null);
+    runButton.hidden = shown;
+  }
+  const contextNote = () => h("div", { class: "context-note" }, h("p", {}, h("strong", {}, "The code around this. "), codeSlice.context_note),
+    codeSlice.depends_on ? h("ul", {}, codeSlice.depends_on.map((line) => h("li", {}, line))) : null,
+    codeSlice.setup ? [h("p", {}, h("strong", {}, "Setup that runs first:")), h("pre", { class: "code" }, trimEnd(codeSlice.setup))] : null);
+  const showAround = canAskClaude
+    ? h("button", { class: "btn", type: "button", onclick: () => openTutor(chapter, block, "Show me the code around this slice: what comes before it and after it.") }, "Show the code around this")
+    : h("button", { class: "btn", type: "button", onclick: () => setChildren(contextHolder, contextHolder.childElementCount ? null : contextNote()) }, "Show the code around this");
+  drawOutput();
+  return h("section", { class: "block", id: block.id },
+    h("div", { class: "block-label" }, "Real code", h("span", { class: "spacer" }), tutorButton(chapter, block)),
+    h("div", { class: "code-panel" },
+      h("div", { class: "code-panel-head" }, h("span", { class: "file" }, codeSlice.source), h("span", {}, LANGUAGE_NAMES[codeSlice.language] || codeSlice.language)),
+      h("div", { class: "scroll-x" }, h("pre", { class: "code" }, trimEnd(codeSlice.code))),
+      outputHolder,
+      h("div", { class: "code-actions" }, runButton, showAround)),
+    contextHolder,
+    block.notice ? h("ul", { class: "notice" }, block.notice.map((line) => h("li", {}, line))) : null,
+    codeSlice.run_locally ? localRun(codeSlice.run_locally) : null);
+}
+
+// ---------- Compare ----------
+function renderCompare(chapter, block) {
+  const wrapper = h("section", { class: "block", id: block.id });
+  const differsAt = block.differs_at - 1;
+  let selected = 0;
+  function draw() {
+    const option = block.options[selected];
+    setChildren(wrapper,
+      h("div", { class: "block-label" }, "Compare", h("span", { class: "spacer" }), tutorButton(chapter, block)),
+      h("p", { class: "compare-input" }, `Same input for every option: ${block.input}`),
+      h("div", { class: "switch", role: "group", "aria-label": "Choose an option" }, block.options.map((choice, index) => h("button", { type: "button", "aria-pressed": index === selected ? "true" : "false", onclick: () => { selected = index; draw(); } }, choice.name))),
+      h("ol", { class: "steps" }, option.steps.map((step, index) => h("li", { class: index === differsAt ? "differs" : "" }, h("div", {}, index === differsAt ? h("div", { class: "differs-flag" }, "The options differ here") : null, step)))),
+      h("p", {}, block.explanation));
+  }
+  draw();
+  return wrapper;
+}
+
+// ---------- Exercise helpers ----------
+function insightFor(chapter, block) {
+  const goal = chapter.must_get_right.find((item) => item.tested_by.includes(block.id));
+  return goal ? `You can now: ${goal.can_do}` : "";
+}
+function pitfallLink(misconceptionId) {
+  for (const chapter of CHAPTERS) {
+    const block = chapter.blocks.find((b) => b.type === "pitfall" && b.misconception === misconceptionId);
+    if (block) return h("a", { href: `#${chapter.id}`, onclick: () => setTimeout(() => document.getElementById(block.id)?.scrollIntoView(), 50) }, "See the common mistake");
+  }
+  return null;
+}
+// Hint and Show solution: two independent toggles, always available. Read-along opens the solution.
+function helpControls(chapter, block, state, solutionBody) {
+  let hintLevel = 0;
+  let solutionOpen = readAlong;
+  const hintsHolder = h("div", {});
+  const solutionHolder = h("div", {});
+  const hints = block.hints || [];
+  const hintButton = h("button", { class: "btn", type: "button", "aria-expanded": "false", onclick: () => { hintLevel = hintLevel >= hints.length ? 0 : hintLevel + 1; draw(); } }, "Hint");
+  const solutionButton = h("button", { class: "btn", type: "button", "aria-expanded": "false", onclick: () => { solutionOpen = !solutionOpen; if (solutionOpen && !readAlong) { state.solutionShown = true; saveProgress(); } draw(); } }, "Show solution");
+  function draw() {
+    hintButton.setAttribute("aria-expanded", String(hintLevel > 0));
+    hintButton.textContent = hintLevel === 0 ? "Hint" : hintLevel < hints.length ? "Another hint" : "Hide hints";
+    solutionButton.setAttribute("aria-expanded", String(solutionOpen));
+    solutionButton.textContent = solutionOpen ? "Hide solution" : "Show solution";
+    setChildren(hintsHolder, hintLevel ? h("div", { class: "feedback neutral" }, hints.slice(0, hintLevel).map((hint, index) => h("p", {}, h("strong", {}, `Hint ${index + 1}. `), hint))) : null);
+    setChildren(solutionHolder, solutionOpen ? h("div", { class: "solution-panel" }, solutionBody()) : null);
+  }
+  draw();
+  return { row: h("div", { class: "help-row" }, hintButton, solutionButton), hintsHolder, solutionHolder };
+}
+
+// ---------- Fill the blanks ----------
+const BLANK_PATTERN = /\{\{([a-z0-9][a-z0-9-]*)\}\}/g;
+function renderFillBlanks(chapter, block) {
+  const wrapper = h("section", { class: "block", id: block.id });
+  const state = blockState(block.id);
+  // A code exercise runs; a text exercise is a sentence, a rule or a formula whose results come from a source or worked steps
+  const isText = block.language === "text";
+  const passage = isText ? block.text : block.code;
+  // Blanks are numbered in the order they appear in the passage
+  const blanks = [...passage.matchAll(BLANK_PATTERN)].map((match) => block.blanks.find((blank) => blank.id === match[1]));
+  const rightPicks = blanks.map((blank) => blank.options.findIndex((option) => option.correct));
+  // picks[i] is the chosen option index for blank i, or null
+  let picks = readAlong ? rightPicks.slice() : blanks.map((_, i) => (state.picks && Number.isInteger(state.picks[i]) ? state.picks[i] : null));
+  let active = readAlong ? -1 : picks.findIndex((pick) => pick === null);
+  let showRun = readAlong;
+  let marks = null; // null, or per blank: true (right) / false (wrong)
+  const codeHolder = h("div", { class: "scroll-x" });
+  const chooserHolder = h("div", {});
+  const resultHolder = h("div", {});
+  const feedbackHolder = h("div", { role: "status" });
+
+  function remember() { if (!readAlong) { state.picks = picks.slice(); saveProgress(); } }
+  function drawCode() {
+    const pre = isText ? h("p", { class: "blank-text" }) : h("pre", { class: "code blank-code" });
+    const pieces = trimEnd(passage).split(BLANK_PATTERN);
+    pieces.forEach((piece, pieceIndex) => {
+      if (pieceIndex % 2 === 0) { pre.append(piece); return; }
+      const i = blanks.findIndex((blank) => blank.id === piece);
+      const pick = picks[i];
+      const mark = marks ? (marks[i] ? " right" : " wrong") : "";
+      pre.append(h("button", {
+        type: "button", class: `blank${pick === null ? " empty" : ""}${i === active ? " active" : ""}${mark}`, "data-focus": `blank-${i}`,
+        "aria-label": `Blank ${i + 1}${pick === null ? ", empty" : ": " + blanks[i].options[pick].text}${marks ? (marks[i] ? ", right" : ", wrong") : ""}`,
+        onclick: () => { active = i; drawAll(`chip-${i}-${Math.max(picks[i] ?? 0, 0)}`); },
+      }, pick === null ? `blank ${i + 1}` : blanks[i].options[pick].text));
+    });
+    setChildren(codeHolder, pre);
+  }
+  function drawChooser() {
+    if (active < 0) return setChildren(chooserHolder);
+    setChildren(chooserHolder, h("div", { class: "chooser" },
+      h("p", { class: "chooser-label" }, `Blank ${active + 1} of ${blanks.length} · pick one`),
+      h("div", { class: `chips${isText ? " text" : ""}` }, blanks[active].options.map((option, optionIndex) => h("button", {
+        type: "button", class: "chip", "aria-pressed": picks[active] === optionIndex ? "true" : "false", "data-focus": `chip-${active}-${optionIndex}`,
+        onclick: () => {
+          const filled = active;
+          picks[active] = optionIndex; marks = null; showRun = false; remember(); active = picks.findIndex((pick) => pick === null);
+          drawAll(active >= 0 ? `chip-${active}-0` : `blank-${filled}`);
+        },
+      }, option.text)))));
+  }
+  // Every option's output was recorded with every other blank right. With two or more wrong blanks no combined
+  // output exists, so show the first wrong blank's own output and say so. Never invent a combined output.
+  function drawResult() {
+    if (!showRun) return setChildren(resultHolder);
+    const wrong = picks.map((pick, i) => (pick !== rightPicks[i] ? i : -1)).filter((i) => i >= 0);
+    let option, label, note = null;
+    if (!wrong.length) { option = blanks[0].options[rightPicks[0]]; label = isText ? "What this leads to" : "Output"; }
+    else {
+      const first = wrong[0];
+      option = blanks[first].options[picks[first]];
+      label = isText ? "What this choice leads to" : "What this choice prints";
+      if (wrong.length > 1) note = `Fix one blank at a time: this is what happens with only blank ${first + 1} changed.`;
+    }
+    setChildren(resultHolder, h("div", { class: "code-panel" },
+      outputArea(label, option.output, isText ? option.output_from : "run", isText ? option.output_source : null),
+      note ? h("p", { class: "run-note" }, note) : null));
+  }
+  function drawFeedback() {
+    if (!marks) {
+      if (state.passed && !readAlong && picks.every((pick, i) => pick === rightPicks[i])) return setChildren(feedbackHolder, h("div", { class: "feedback right" }, h("p", {}, h("strong", {}, "Solved. "), insightFor(chapter, block))));
+      return setChildren(feedbackHolder);
+    }
+    if (marks.every(Boolean)) {
+      return setChildren(feedbackHolder, h("div", { class: "feedback right" },
+        h("p", {}, h("strong", {}, "Correct. "), blanks.map((blank, i) => blank.options[rightPicks[i]].why_right).join(" ")),
+        insightFor(chapter, block) ? h("p", {}, insightFor(chapter, block)) : null));
+    }
+    setChildren(feedbackHolder, h("div", { class: "feedback wrong" },
+      blanks.map((blank, i) => {
+        if (marks[i]) return null;
+        const option = blank.options[picks[i]];
+        return h("p", {}, h("strong", {}, blanks.length > 1 ? `Blank ${i + 1}: ` : "Not quite: "), option.why_wrong, " ", option.misconception ? pitfallLink(option.misconception) : null);
+      })));
+  }
+  // Every redraw replaces the buttons, so put focus back where the learner was (or where they go next)
+  function drawAll(focusKey) {
+    const kept = focusKey || (wrapper.contains(document.activeElement) ? document.activeElement.getAttribute("data-focus") : null);
+    drawCode(); drawChooser(); drawResult(); drawFeedback();
+    if (kept) wrapper.querySelector(`[data-focus="${kept}"]`)?.focus();
+  }
+  function allPicked() {
+    if (picks.every((pick) => pick !== null)) return true;
+    active = picks.findIndex((pick) => pick === null);
+    setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Fill every blank first.")));
+    drawCode(); drawChooser();
+    return false;
+  }
+  function runIt() { if (!allPicked()) return; showRun = true; active = -1; drawAll(); }
+  function check() {
+    if (!allPicked()) return;
+    marks = picks.map((pick, i) => pick === rightPicks[i]);
+    active = -1;
+    if (!readAlong) {
+      if (marks.every(Boolean)) state.passed = true;
+      else state.attempts = (state.attempts || 0) + 1;
+      saveProgress();
+    }
+    drawAll();
+  }
+  function useSolution() {
+    picks = rightPicks.slice(); active = -1; marks = null; showRun = false; remember();
+    drawAll();
+    codeHolder.scrollIntoView({ block: "nearest" });
+  }
+  const solutionCode = () => trimEnd(passage).replace(BLANK_PATTERN, (_, id) => {
+    const i = blanks.findIndex((blank) => blank.id === id);
+    return blanks[i].options[rightPicks[i]].text;
+  });
+  const help = helpControls(chapter, block, state, () => [
+    h("p", { class: "solution-label" }, "Solution"),
+    isText ? h("p", { class: "reading" }, solutionCode()) : h("div", { class: "scroll-x" }, h("pre", { class: "code" }, solutionCode())),
+    h("div", { class: "btn-row" }, h("button", { class: "btn primary", type: "button", onclick: useSolution }, "Use this"), h("span", { class: "solution-note" }, "Fills the blanks with the right picks.")),
+  ]);
+  wrapper.append(
+    h("div", { class: "block-label" }, "Try it", h("span", { class: "spacer" }), tutorButton(chapter, block)),
+    h("div", { class: "exercise" },
+      h("ul", { class: "instructions" }, block.instructions.map((line) => h("li", {}, line)), h("li", {}, "Tap a blank, then pick what goes there.")),
+      h("div", { class: "code-panel" },
+        h("div", { class: "code-panel-head" }, h("span", { class: isText ? "" : "file" }, block.source), h("span", {}, `· ${isText ? "" : (LANGUAGE_NAMES[block.language] || block.language) + " · "}${blanks.length} blank${blanks.length > 1 ? "s" : ""}`)),
+        codeHolder, chooserHolder,
+        h("div", { class: "code-actions" },
+          h("button", { class: "btn", type: "button", onclick: runIt }, isText ? "See result" : "Run"),
+          h("button", { class: "btn primary", type: "button", onclick: check }, "Check"),
+          h("button", { class: "btn", type: "button", onclick: () => { picks = blanks.map(() => null); active = 0; marks = null; showRun = false; if (!readAlong) delete state.passed; remember(); drawAll(); } }, "Reset"))),
+      resultHolder, feedbackHolder, help.row, help.hintsHolder, help.solutionHolder,
+      block.run_locally ? localRun(block.run_locally) : null));
+  drawAll();
+  return wrapper;
+}
+
+// ---------- Explain in your own words (AI-graded; a rubric self-check without AI) ----------
+function selfCheck(block) {
+  return h("div", { class: "feedback neutral" },
+    h("p", {}, h("strong", {}, "Check yourself. "), "Tick each point your answer covers, then compare with Show solution."),
+    h("div", { class: "self-check" }, block.rubric.map((criterion, index) => h("label", {}, h("input", { type: "checkbox", id: `${block.id}-criterion-${index}` }), h("span", {}, h("strong", {}, criterion.criterion + ": "), criterion.passing)))));
+}
+function rubricSolution(block) {
+  return [
+    h("p", { class: "solution-label" }, "Model answer"),
+    block.type === "stretch" && block.kind === "code"
+      ? h("div", { class: "scroll-x" }, h("pre", { class: "code" }, trimEnd(block.reference_solution)))
+      : h("p", { class: "reading" }, block.reference_solution),
+    h("p", { class: "solution-note" }, h("strong", {}, "What a passing answer shows")),
+    h("ul", { class: "criteria" }, block.rubric.map((criterion) => h("li", {}, h("span", {}, "✓"), h("span", {}, h("strong", {}, criterion.criterion + ": "), criterion.passing)))),
+  ];
+}
+function renderExplain(chapter, block) {
+  const wrapper = h("section", { class: "block", id: block.id });
+  const state = blockState(block.id);
+  const editor = h("textarea", { class: "answer", id: `answer-${block.id}`, "aria-label": "Your answer", placeholder: "Write your answer here" }, state.answer || "");
+  editor.addEventListener("input", () => { state.answer = editor.value; saveProgress(); });
+  const feedbackHolder = h("div", { role: "status" });
+  const extrasHolder = h("div", { class: "btn-row" });
+  function drawExtras() {
+    setChildren(extrasHolder, !state.passed && (state.attempts || 0) >= 2 && canAskClaude
+      ? h("button", { class: "btn quiet", type: "button", onclick: () => openTutor(chapter, block, "I still don't get this. Explain the idea behind this exercise another way, from a different starting point. Don't give me the solution.") }, "Explain it another way") : null);
+  }
+  async function submit() {
+    const answer = editor.value.trim();
+    if (!answer) { setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Write an answer first."))); return; }
+    if (!canAskClaude) { state.attempts = (state.attempts || 0) + 1; saveProgress(); setChildren(feedbackHolder, selfCheck(block)); return; }
+    submitButton.disabled = true;
+    setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Grading…")));
+    try {
+      const result = await gradeAnswer(graderPrompt(block, answer));
+      if (result.verdict === "pass") state.passed = true;
+      else state.attempts = (state.attempts || 0) + 1;
+      setChildren(feedbackHolder, verdictFeedback(result, insightFor(chapter, block)));
+    } catch (failure) {
+      setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, failureMessage(failure))));
+    } finally {
+      submitButton.disabled = false;
+      saveProgress(); drawExtras();
+    }
+  }
+  const submitButton = h("button", { class: "btn primary", type: "button", onclick: submit }, canAskClaude ? "Submit for grading" : "Submit");
+  const help = helpControls(chapter, block, state, () => rubricSolution(block));
+  wrapper.append(
+    h("div", { class: "block-label" }, "In your own words", h("span", { class: "spacer" }), tutorButton(chapter, block)),
+    h("div", { class: "exercise" },
+      h("ul", { class: "instructions" }, block.instructions.map((line) => h("li", {}, line))),
+      editor, h("div", { class: "btn-row" }, submitButton),
+      feedbackHolder, help.row, help.hintsHolder, help.solutionHolder, extrasHolder));
+  if (state.passed) setChildren(feedbackHolder, h("div", { class: "feedback right" }, h("p", {}, h("strong", {}, "Passed. "), insightFor(chapter, block))));
+  drawExtras();
+  return wrapper;
+}
+
+// ---------- Stretch: write it yourself (optional, collapsed) ----------
+function renderStretch(chapter, block) {
+  const state = blockState(block.id);
+  const isCode = block.kind === "code";
+  const editor = h("textarea", { class: isCode ? "code" : "answer", id: `stretch-${block.id}`, spellcheck: isCode ? "false" : "true", autocapitalize: "off", rows: "8", "aria-label": "Your answer" }, state.answer || "");
+  editor.addEventListener("input", () => { state.answer = editor.value; saveProgress(); });
+  const feedbackHolder = h("div", { role: "status" });
+  function compare() {
+    setChildren(feedbackHolder, h("div", { class: "side-by-side" },
+      h("div", { class: "context-note" }, h("strong", {}, "Yours"), isCode ? h("pre", { class: "code" }, editor.value || "(empty)") : h("p", {}, editor.value || "(empty)")),
+      h("div", { class: "context-note" }, h("strong", {}, "Solution"), isCode ? h("pre", { class: "code" }, trimEnd(block.reference_solution)) : h("p", {}, block.reference_solution))),
+      canAskClaude ? null : selfCheck(block));
+    if (!readAlong) { state.solutionShown = true; saveProgress(); }
+  }
+  async function grade() {
+    if (!editor.value.trim()) { setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Write something first."))); return; }
+    gradeButton.disabled = true;
+    setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Grading…")));
+    try {
+      const result = await gradeAnswer(graderPrompt(block, editor.value));
+      if (result.verdict === "pass") { state.passed = true; saveProgress(); }
+      setChildren(feedbackHolder, verdictFeedback(result));
+    } catch (failure) {
+      setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, failureMessage(failure))));
+    } finally { gradeButton.disabled = false; }
+  }
+  const gradeButton = h("button", { class: "btn primary", type: "button", onclick: grade }, "Grade it");
+  const help = helpControls(chapter, block, state, () => rubricSolution(block));
+  return h("details", { class: "stretch", id: block.id },
+    h("summary", {}, h("span", {}, "Stretch: write it yourself"), h("span", { class: "badge" }, "optional")),
+    h("div", { class: "stretch-body" },
+      h("ul", { class: "instructions" }, block.instructions.map((line) => h("li", {}, line))),
+      editor,
+      h("div", { class: "btn-row" }, canAskClaude ? gradeButton : null, h("button", { class: "btn", type: "button", onclick: compare }, "Compare with solution")),
+      feedbackHolder, help.row, help.hintsHolder, help.solutionHolder));
+}
+
+// ---------- Pitfall and recap ----------
+function renderPitfall(chapter, block) {
+  const misconception = MISCONCEPTIONS[block.misconception];
+  const inferred = /inferred|own knowledge/i.test(misconception.source);
+  return h("section", { class: "block", id: block.id },
+    h("div", { class: "block-label" }, "Common mistake", h("span", { class: "spacer" }), tutorButton(chapter, block)),
+    h("div", { class: "pitfall" },
+      h("p", { class: "wrong-idea" }, h("span", { class: "lead" }, "People often think: "), misconception.wrong_idea),
+      h("p", {}, h("span", { class: "lead" }, "Why people believe it: "), misconception.why_people_believe_it),
+      h("p", {}, h("span", { class: "lead" }, "What is true: "), misconception.what_is_true),
+      h("p", { class: "source" }, inferred ? [h("span", { class: "badge" }, "Inferred"), " "] : null, misconception.source)));
+}
+function renderRecap(chapter, block) {
+  return h("section", { class: "block", id: block.id },
+    h("div", { class: "recap" }, h("div", { class: "eyebrow" }, "Remember"), h("p", { class: "line" }, withTerms(block.text)), h("p", { class: "bridge" }, chapter.bridge_out.text)));
+}
+const RENDERERS = {
+  predict: (c, b) => renderChoiceBlock(c, b, "predict"),
+  check: (c, b) => renderChoiceBlock(c, b, "check"),
+  idea: renderIdea, diagram: renderDiagram, code: renderCode, compare: renderCompare,
+  fill_blanks: renderFillBlanks, explain: renderExplain, stretch: renderStretch,
+  pitfall: renderPitfall, recap: renderRecap,
+};
+
+// ---------- Pages ----------
+function chapterIndex(id) { return CHAPTERS.findIndex((chapter) => chapter.id === id); }
+// Progress means work done: the share of exercises passed, across the lesson
+function solvedShare() {
+  const exercises = CHAPTERS.flatMap(exercisesOf);
+  return exercises.length ? exercises.filter((b) => (progress.blocks[b.id] || {}).passed).length / exercises.length : 0;
+}
+function topBar(where, shortWhere) {
+  const modes = [];
+  if (readAlong) modes.push(h("span", { class: "on" }, "Read-along: solutions open"));
+  if (aiChecked && !canAskClaude) modes.push("Tutor off in this view");
+  return h("header", { class: "topbar" },
+    h("div", { class: "topbar-row" },
+      h("a", { class: "topbar-title", href: "#start" }, LESSON.lesson.title),
+      h("span", { class: "topbar-where" }, h("span", { class: "where-long" }, where), h("span", { class: "where-short" }, shortWhere || "")),
+      h("button", { class: "read-along", type: "button", id: "read-along-toggle", "aria-pressed": readAlong ? "true" : "false", title: "Show every exercise's solution", "aria-label": "Read-along", onclick: () => setReadAlong(!readAlong) }, h("span", { class: "knob", "aria-hidden": "true" }), h("span", { class: "read-along-label" }, "Read-along")),
+      h("button", { class: "btn", type: "button", onclick: openChapterMenu, "aria-haspopup": "dialog" }, "Chapters")),
+    h("div", { class: "progress-track", role: "img", "aria-label": `${Math.round(solvedShare() * 100)}% of exercises solved` }, h("div", { class: "progress-fill", style: `width:${Math.round(solvedShare() * 100)}%` })),
+    modes.length ? h("p", { class: "mode-line" }, modes.map((mode, index) => [index ? " · " : "", mode])) : null);
+}
+function exercisesOf(chapter) { return chapter.blocks.filter((b) => EXERCISE_TYPES.includes(b.type)); }
+function chapterDone(chapter) { return exercisesOf(chapter).every((b) => (progress.blocks[b.id] || {}).passed); }
+function chapterSubline(chapter) {
+  return chapter.source_section ? `Prepares for ${chapter.source_section}` : chapter.why_it_matters;
+}
+function chapterListItems() {
+  return CHAPTERS.map((chapter, index) => h("li", {}, h("a", { href: `#${chapter.id}`, onclick: closeSheets },
+    h("span", { class: "num" }, String(index + 1)),
+    h("span", {}, chapter.title, h("span", { class: "sub" }, chapterSubline(chapter))),
+    h("span", { class: "meta" }, chapterDone(chapter) ? h("span", { class: "done" }, "done · ") : null, `${chapter.minutes} min`))));
+}
+function openChapterMenu() {
+  closeSheets();
+  showSheet(h("div", { class: "sheet", role: "dialog", "aria-label": "Chapters" },
+    h("div", { class: "sheet-head" }, h("h2", {}, "Chapters"), h("button", { class: "btn quiet", onclick: closeSheets }, "Close")),
+    h("div", { class: "sheet-body" }, h("ul", { class: "chapter-list" },
+      h("li", {}, h("a", { href: "#start", onclick: closeSheets }, h("span", { class: "num" }, "·"), h("span", {}, "Start"), h("span", { class: "meta" }, ""))),
+      chapterListItems(),
+      h("li", {}, h("a", { href: "#field-guide", onclick: closeSheets }, h("span", { class: "num" }, "·"), h("span", {}, "Field guide"), h("span", { class: "meta" }, "")))))));
+}
+function pager(previous, next) {
+  return h("nav", { class: "pager", "aria-label": "Chapter navigation" },
+    previous ? h("a", { class: "btn", href: previous.href }, h("span", {}, "← " + previous.label)) : h("span", {}),
+    next ? h("a", { class: "btn primary", href: next.href }, h("span", {}, next.label + " →")) : h("span", {}));
+}
+const ROLE_LINES = {
+  "before-hands-on": "A primer: read it before you do the hands-on work.",
+  "after-hands-on": "A review: work through it after the hands-on work.",
+  standalone: null,
+};
+// The first chapter's prediction, as a teaser: a real question to hold before anything is explained
+function firstQuestion() {
+  const predict = CHAPTERS[0].blocks.find((b) => b.type === "predict");
+  if (!predict) return null;
+  return h("section", { class: "first-question" },
+    h("p", { class: "eyebrow" }, "Your first question"),
+    h("p", { class: "question" }, predict.question),
+    h("div", { class: "btn-row" }, h("a", { class: "btn primary", href: `#${CHAPTERS[0].id}` }, "Answer it in chapter 1")));
+}
+function startPage() {
+  const learner = LESSON.lesson.learner;
+  const hasStretch = CHAPTERS.some((chapter) => chapter.blocks.some((b) => b.type === "stretch"));
+  return [
+    topBar(`${TOTAL_MINUTES} min`, `${TOTAL_MINUTES} min`),
+    h("main", { class: "column" },
+      h("div", { class: "hero" },
+        h("div", { class: "eyebrow" }, `${CHAPTERS.length} chapters, about ${TOTAL_MINUTES} minutes`),
+        h("h1", {}, LESSON.lesson.title),
+        h("p", { class: "lede" }, `For anyone new to ${learner.new_to}.`),
+        ROLE_LINES[LESSON.lesson.role] ? h("p", { class: "why" }, ROLE_LINES[LESSON.lesson.role]) : null),
+      h("section", { class: "block" }, h("h2", { class: "section-title" }, "After this lesson, you can"), h("ul", { class: "plain-list" }, LESSON.lesson.objectives.map((o) => h("li", {}, o.text.replace(/^After this, you can /i, ""))))),
+      firstQuestion(),
+      learner.assumed ? h("p", { class: "assumed" }, h("strong", {}, "About this lesson: "), learner.assumption_note || "") : null,
+      h("section", { class: "block" }, h("h2", { class: "section-title" }, "How it works"),
+        h("p", {}, "Each chapter opens with a prediction, teaches one idea at a time, and asks you to fill the blanks in real material. Every result you see, right or wrong, is real: measured, worked out, or quoted from a source."),
+        h("p", {}, "Every exercise has a Hint and a Show solution button you can open at any time.", hasStretch ? " Some chapters end with an optional stretch: write it yourself." : "", " To read through with every solution open, turn on Read-along at the top.")),
+      h("section", { class: "block" }, h("h2", { class: "section-title" }, "Chapters"), h("ul", { class: "chapter-list" }, chapterListItems())),
+      h("details", { class: "fold" }, h("summary", {}, "Who this lesson is for"),
+        h("ul", { class: "plain-list" }, h("li", {}, `You know: ${learner.knows.join("; ")}.`), h("li", {}, `New to you: ${learner.new_to}.`), h("li", {}, `You want to: ${learner.wants_to}.`))),
+      pager(null, { href: `#${CHAPTERS[0].id}`, label: "Start chapter 1" })),
+  ];
+}
+function chapterPage(chapter) {
+  const index = chapterIndex(chapter.id);
+  if (!progress.visited.includes(chapter.id)) { progress.visited.push(chapter.id); saveProgress(); }
+  const previous = index === 0 ? { href: "#start", label: "Start" } : { href: `#${CHAPTERS[index - 1].id}`, label: `Ch ${index}` };
+  const next = index === CHAPTERS.length - 1 ? { href: "#field-guide", label: "Field guide" } : { href: `#${CHAPTERS[index + 1].id}`, label: `Next: chapter ${index + 2}` };
+  const eyebrow = [`Chapter ${index + 1}`, `${chapter.minutes} min`];
+  if (chapter.source_section) eyebrow.push(`prepares for ${chapter.source_section}${chapter.source_minutes ? ` (${chapter.source_minutes} min hands-on)` : ""}`);
+  return [
+    topBar(`Chapter ${index + 1} of ${CHAPTERS.length}`, `${index + 1} of ${CHAPTERS.length}`),
+    h("main", { class: "column" },
+      h("div", { class: "chapter-head" },
+        h("div", { class: "eyebrow" }, eyebrow.join(" · ")),
+        h("h1", {}, chapter.title),
+        h("p", { class: "bridge" }, chapter.bridge_in.text),
+        h("p", { class: "why" }, h("strong", {}, "Why it matters: "), chapter.why_it_matters)),
+      chapter.blocks.map((block) => (RENDERERS[block.type] || (() => null))(chapter, block)),
+      pager(previous, next)),
+  ];
+}
+function fieldGuidePage() {
+  const confidentWrong = [];
+  const exercises = [];
+  const localRuns = [];
+  CHAPTERS.forEach((chapter) => chapter.blocks.forEach((block) => {
+    const state = progress.blocks[block.id] || {};
+    if ((block.type === "predict" || block.type === "check") && state.correct === false && (state.confidence === "fairly" || state.confidence === "certain")) confidentWrong.push({ chapter, block, state });
+    if (EXERCISE_TYPES.includes(block.type) && (state.passed || state.solutionShown)) exercises.push({ chapter, block, state });
+    const runLocally = block.type === "code" ? block.slice.run_locally : block.run_locally;
+    if (runLocally) localRuns.push({ chapter, runLocally });
+  }));
+  const recaps = CHAPTERS.map((chapter) => ({ chapter, text: (chapter.blocks.find((b) => b.type === "recap") || {}).text }));
+  const jump = (chapter, block) => () => setTimeout(() => document.getElementById(block.id)?.scrollIntoView(), 50);
+  return [
+    topBar("Field guide", "Guide"),
+    h("main", { class: "column" },
+      h("div", { class: "hero" }, h("div", { class: "eyebrow" }, "Keep this page"), h("h1", {}, "Field guide"), h("p", { class: "lede" }, CHAPTERS[CHAPTERS.length - 1].bridge_out.text)),
+      h("p", { class: "tally" }, (() => {
+        const all = CHAPTERS.flatMap(exercisesOf);
+        const solved = all.filter((b) => (progress.blocks[b.id] || {}).passed).length;
+        const guesses = CHAPTERS.flatMap((c) => c.blocks.filter((b) => b.type === "predict" || b.type === "check"));
+        const right = guesses.filter((b) => (progress.blocks[b.id] || {}).correct === true).length;
+        return `You solved ${solved} of ${all.length} exercises and got ${right} of ${guesses.length} questions right.`;
+      })()),
+      h("section", { class: "block" }, h("ol", { class: "guide-list" }, recaps.map((recap, index) => h("li", {}, h("span", { class: "num" }, String(index + 1)), h("div", {}, h("p", {}, recap.text), h("a", { href: `#${recap.chapter.id}`, class: "why" }, recap.chapter.title)))))),
+      h("section", { class: "block" }, h("h2", { class: "section-title" }, "Confident but wrong"),
+        confidentWrong.length
+          ? h("ul", { class: "plain-list" }, confidentWrong.map(({ chapter, block, state }) => h("li", {}, h("a", { href: `#${chapter.id}`, onclick: jump(chapter, block) }, block.question), ` (you were ${state.confidence === "certain" ? "certain" : "fairly sure"})`)))
+          : h("p", { class: "why" }, "Nothing yet. When you answer a prediction or quiz wrongly while fairly sure or certain, it shows up here, so you can go back to it.")),
+      exercises.length ? h("section", { class: "block" }, h("h2", { class: "section-title" }, "Your exercises"),
+        h("ul", { class: "plain-list" }, exercises.map(({ chapter, block, state }) => h("li", {}, h("a", { href: `#${chapter.id}`, onclick: jump(chapter, block) }, block.instructions[0]), ` · ${state.passed && !state.solutionShown ? "solved" : state.passed ? "solved after reading the solution" : "read the solution"}`)))) : null,
+      localRuns.length ? h("section", { class: "block" }, h("h2", { class: "section-title" }, "Run these on your own machine"),
+        localRuns.map(({ chapter, runLocally }) => h("div", { class: "local-run" }, h("strong", {}, chapter.title), h("code", {}, runLocally.command), h("span", {}, runLocally.why)))) : null,
+      GLOSSARY.length ? h("details", { class: "fold facts" }, h("summary", {}, "Words used in this lesson"),
+        h("ul", {}, GLOSSARY.map((entry) => h("li", {}, h("strong", {}, entry.term), h("span", { class: "why" }, entry.definition))))) : null,
+      h("details", { class: "fold facts" }, h("summary", {}, "Where the facts come from"),
+        h("ul", {}, (LESSON.facts || []).map((fact) => h("li", {}, h("span", {}, fact.status === "inferred" ? [h("span", { class: "badge" }, "Inferred"), " "] : null, fact.statement), fact.source ? h("span", { class: "why" }, fact.source) : null)))),
+      pager({ href: `#${CHAPTERS[CHAPTERS.length - 1].id}`, label: `Ch ${CHAPTERS.length}` }, null)),
+  ];
+}
+
+// ---------- Router ----------
+function currentView() {
+  const name = location.hash.replace(/^#/, "");
+  if (name === "field-guide") return { kind: "guide" };
+  const chapter = CHAPTERS.find((c) => c.id === name);
+  return chapter ? { kind: "chapter", chapter } : { kind: "start" };
+}
+let lastViewKey = null;
+function render() {
+  const view = currentView();
+  const viewKey = view.kind === "chapter" ? view.chapter.id : view.kind;
+  const app = document.getElementById("app");
+  const scrollY = window.scrollY;
+  setChildren(app, view.kind === "chapter" ? chapterPage(view.chapter) : view.kind === "guide" ? fieldGuidePage() : startPage());
+  if (viewKey !== lastViewKey) window.scrollTo(0, 0); else window.scrollTo(0, scrollY);
+  lastViewKey = viewKey;
+}
+window.addEventListener("hashchange", () => { closeSheets(); render(); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeSheets(); });
+readLocalProgress();
+render();
+connectToClaude();
+connectProgressStore();
+</script>

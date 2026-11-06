@@ -1,0 +1,1385 @@
+# Example with no code: How LLMs Work, by intuition. One sentence followed from text to the next token.
+# Text blanks, token chips, a word map, an attention grid and a temperature slider; every number is computed.
+
+lesson:
+  title: How LLMs Work
+  role: standalone
+  learner:
+    knows: ["RAG in practice: chunks, embeddings as vectors, vector search", "building with LLMs: prompts, tool calls, agent loops, context limits", "ML basics: training lowers a model's error", vector maths]
+    new_to: what happens inside an LLM between the prompt and the reply
+    wants_to: build an intuition for how LLMs work, to reason about their behaviour and limits
+    time_minutes: 60
+    assumed: false
+  objectives:
+    - id: predict-tokens
+      text: After this, you can predict how a model splits text into tokens, and why that makes spelling and some languages harder.
+    - id: explain-context
+      text: After this, you can explain how attention lets a word's meaning change with the words around it.
+    - id: predict-sampling
+      text: After this, you can predict how temperature changes which next token a model picks.
+    - id: explain-limits
+      text: After this, you can explain why a model can hallucinate, and why it cannot see text outside its context window.
+  source: "Vaswani et al. 2017; Mikolov et al. 2013; Ouyang et al. 2022; OpenAI 2025; Hugging Face text-generation guide; Claude context-window docs; a real tokenizer run"
+
+theme:
+  name: Circuit violet
+  accent: "#5b3cc4"
+  why: A violet from the world of chips and circuits, drafted for this AI lesson; confirm or change it.
+
+glossary:
+  - term: token
+    definition: A piece of text the model reads as one unit, such as a word, part of a word or a punctuation mark. Each token has a number.
+  - term: embedding
+    definition: A list of numbers that places a token as a point in a space of meaning; nearby points mean similar things.
+  - term: attention
+    definition: The step where each token looks at the other tokens and blends in what it needs from them.
+  - term: layer
+    definition: One round of attention followed by a small per-token refinement. A model stacks many.
+  - term: temperature
+    definition: A setting that sharpens or flattens the model's odds before it picks the next token.
+  - term: context window
+    definition: All the text a model can see at once, including its own reply. Its working memory.
+  - term: pretraining
+    definition: Training on huge amounts of text to predict the next token.
+  - term: fine-tuning
+    definition: Further training on example answers, so the model follows instructions.
+  - term: RLHF
+    definition: Reinforcement learning from human feedback; people rank answers, and the model is trained toward the preferred ones.
+  - term: hallucination
+    definition: A fluent, confident statement that is false.
+
+known_ideas:
+  - id: known-rag-embeddings
+    idea: In RAG, an embedding model turns each chunk into a vector, and nearby vectors mean similar text.
+  - id: known-prompting
+    idea: You send a prompt, and the model writes a reply within a context limit.
+  - id: known-training
+    idea: A model learns by adjusting its numbers to lower its error on training examples.
+
+facts:
+  - id: fact-tokenizer-run
+    statement: "A real tokenizer splits 'The bank by the river was flooded.' into 8 tokens, gives ' bank' the number 5657 in both example sentences, and splits 'strawberry' into st, raw, berry."
+    status: confirmed
+    source: the tokenizer bundled with the Anthropic Python SDK 0.25.0 (65,000 tokens), run for this lesson
+  - id: fact-tokenizer-old
+    statement: That tokenizer was built for older Claude models; current models use their own tokenizers, so exact splits and numbers differ.
+    status: inferred
+    source: written for this lesson
+  - id: fact-thai-bytes
+    statement: "The same tokenizer needs 2 tokens for 'Bangkok' and 14 tokens for its Thai name 'กรุงเทพ' (7 characters)."
+    status: confirmed
+    source: the same tokenizer run
+  - id: fact-word-vectors
+    statement: "In learned word vectors, 'King − Man + Woman' lands very close to 'Queen'."
+    status: confirmed
+    source: "Mikolov, Yih and Zweig (2013), Linguistic Regularities in Continuous Space Word Representations, NAACL"
+  - id: fact-self-attention
+    statement: Self-attention relates different positions of a single sequence; the Transformer is based solely on attention, without recurrence.
+    status: confirmed
+    source: "Vaswani et al. (2017), Attention Is All You Need, abstract and section 2"
+  - id: fact-six-layers
+    statement: The original Transformer stacks 6 identical layers, and generates one token at a time, feeding each output back in.
+    status: confirmed
+    source: "Vaswani et al. (2017), sections 3 and 3.1"
+  - id: fact-temperature
+    statement: Lowering the temperature makes the distribution sharper; as it approaches 0, sampling becomes greedy decoding.
+    status: confirmed
+    source: Hugging Face blog, How to generate text
+  - id: fact-rlhf-steps
+    statement: "InstructGPT was trained in 3 steps: supervised fine-tuning on demonstrations, a reward model from ranked comparisons, then reinforcement learning (PPO); its 1.3B model was preferred to the 175B GPT-3."
+    status: confirmed
+    source: "Ouyang et al. (2022), Training language models to follow instructions with human feedback, sections 1 and 3.1"
+  - id: fact-hallucination
+    statement: Arbitrary low-frequency facts, like a pet's birthday, cannot be predicted from patterns alone, and grading only accuracy encourages guessing.
+    status: confirmed
+    source: "OpenAI (5 Sep 2025), Why language models hallucinate"
+  - id: fact-context-window
+    statement: The context window is all the text a model can reference when generating a response, including the response itself; a working memory, separate from training data.
+    status: confirmed
+    source: "Claude docs, Context windows"
+  - id: fact-toy-model
+    statement: The word map, the attention grid and the next-token odds come from a toy model with 3 made-up meaning directions; real models learn thousands of numbers per token, so real values differ.
+    status: inferred
+    source: written for this lesson (toy_llm)
+
+misconceptions:
+  - id: reads-letters
+    wrong_idea: The model reads text letter by letter, or word by word, like we do.
+    why_people_believe_it: The reply comes back as normal text, so it feels like the model saw normal text.
+    what_is_true: It receives a list of token numbers. A word can be several tokens, and the letters inside a token are not visible to it.
+    source: the tokenizer run (strawberry is st, raw, berry)
+  - id: same-cost-every-language
+    wrong_idea: Every language costs about the same number of tokens per word.
+    why_people_believe_it: A word is a word, whatever the language.
+    what_is_true: Tokenizers learn common pieces from their training text. Languages it saw less, such as Thai here, split into many more tokens, which costs more and fills the context window faster.
+    source: the tokenizer run (Bangkok 2 tokens, กรุงเทพ 14)
+  - id: number-is-meaning
+    wrong_idea: A token's number carries its meaning, so nearby numbers mean similar things.
+    why_people_believe_it: Numbers next to each other feel related.
+    what_is_true: The number is only a row in a table. The meaning lives in the embedding that row holds.
+    source: inferred from how embedding tables work
+  - id: looks-alike-means-alike
+    wrong_idea: Words that are spelled alike sit close together in the embedding space.
+    why_people_believe_it: Search engines often match on spelling.
+    what_is_true: Positions are learned from how words are used, so 'loan' sits near 'money', not near 'loam'.
+    source: "inferred; consistent with Mikolov et al. (2013)"
+  - id: one-fixed-meaning
+    wrong_idea: Each token has one fixed meaning inside the model.
+    why_people_believe_it: A dictionary gives a word one entry.
+    what_is_true: The embedding is only the starting point. Attention moves it, so 'bank' ends up near water in one sentence and near money in another.
+    source: inferred from self-attention (Vaswani et al. 2017)
+  - id: nearest-word-matters-most
+    wrong_idea: A word is mostly shaped by the word right next to it.
+    why_people_believe_it: Older models read text in order, one word after another.
+    what_is_true: Attention lets each token look at every other token in the window at once, weighted by relevance, not distance.
+    source: "Vaswani et al. (2017), section 2"
+  - id: layers-are-programmed
+    wrong_idea: Engineers program what each layer does.
+    why_people_believe_it: Software is normally written step by step.
+    what_is_true: Engineers set the shape (how many layers, how big). What each layer does is learned in training; researchers study it afterwards.
+    source: inferred
+  - id: looks-up-answer
+    wrong_idea: The model looks up the right answer and then writes it out.
+    why_people_believe_it: Replies sound like retrieved facts.
+    what_is_true: It writes one token at a time, each picked from odds over every token, so the same prompt can give different replies.
+    source: "Vaswani et al. (2017), section 3; Hugging Face, How to generate text"
+  - id: temperature-is-intelligence
+    wrong_idea: A higher temperature makes the model smarter or more knowledgeable.
+    why_people_believe_it: Higher temperature is sold as more creative.
+    what_is_true: Temperature only reshapes the same odds. It adds variety, not knowledge; low temperature makes the top token win more often.
+    source: Hugging Face blog, How to generate text
+  - id: hallucination-is-database-error
+    wrong_idea: A hallucination is a wrong entry in the model's database.
+    why_people_believe_it: We picture the model as a search engine over facts.
+    what_is_true: There is no database. The model predicts likely text, and a rare fact has no pattern to predict from, so it guesses fluently.
+    source: "OpenAI (2025), Why language models hallucinate"
+  - id: model-remembers-chats
+    wrong_idea: The model remembers your earlier chats and learns from each conversation.
+    why_people_believe_it: A long chat feels like talking to someone who remembers.
+    what_is_true: It sees only what is in its context window right now. Chatting does not change its trained numbers; apps that remember do it by putting saved notes back into the window.
+    source: "Claude docs, Context windows; the rest inferred"
+
+shared_modules:
+  toy_llm: |
+    """A toy model for the lesson's pictures. The vectors and scores are made up to show the idea; a real model
+    learns thousands of numbers per token. Every number in the pictures is computed from these."""
+    import math
+
+    # Each word's toy meaning along 3 named directions: about water, about money, about a place
+    MEANING = {
+        "The": [0.0, 0.0, 0.1], "bank": [0.5, 0.5, 0.2], "by": [0.0, 0.0, 0.3], "the": [0.0, 0.0, 0.1],
+        "river": [1.0, 0.0, 0.6], "was": [0.0, 0.0, 0.0], "flooded": [0.9, 0.0, 0.1],
+        "raised": [0.0, 0.6, 0.0], "its": [0.0, 0.0, 0.0], "interest": [0.0, 1.0, 0.0], "rate": [0.0, 0.8, 0.0],
+        "water": [0.8, 0.2, 0.2], "boat": [0.65, 0.1, 0.3], "money": [0.15, 1.0, 0.1], "loan": [0.1, 0.9, 0.0],
+    }
+    RIVER = ["The", "bank", "by", "the", "river", "was", "flooded"]
+    MONEY = ["The", "bank", "raised", "its", "interest", "rate"]
+
+    def dot(left, right):
+        return sum(a * b for a, b in zip(left, right))
+
+    def softmax(scores, temperature=1.0):
+        """Turn scores into chances that add up to 1. Temperature divides the scores first."""
+        scaled = [score / temperature for score in scores]
+        biggest = max(scaled)
+        weights = [math.exp(score - biggest) for score in scaled]
+        return [weight / sum(weights) for weight in weights]
+
+    def attention_row(word, words, sharpness=5.0):
+        """How much `word` looks at each word: a softmax of how much their meanings overlap."""
+        return softmax([sharpness * dot(MEANING[word], MEANING[other]) for other in words])
+
+    def after_attention(word, words):
+        """The word's new meaning: every word's meaning blended in, weighted by attention."""
+        weights = attention_row(word, words)
+        return [sum(weight * MEANING[other][axis] for weight, other in zip(weights, words)) for axis in range(3)]
+
+    # Toy scores for the word after "The bank by the river was"
+    NEXT_SCORES = {"flooded": 3.0, "closed": 1.8, "muddy": 1.4, "open": 0.8, "robbed": 0.2}
+
+chapters:
+
+  # ---------------------------------------------------------------- 1
+  - id: text-to-tokens
+    title: Text becomes tokens
+    minutes: 8
+    why_it_matters: Everything a model does, it does to tokens. Spelling slips, odd costs and context limits all start here.
+    must_know:
+      - A model receives a list of token numbers, not letters or words.
+      - Common words are one token; rare words and some languages split into many.
+    must_get_right:
+      - id: count-tokens
+        can_do: Predict what the model receives for a sentence, and why letter-level questions are hard.
+        evidence: The learner picks what the model receives; each wrong pick shows what the model really gets.
+        objective: predict-tokens
+        tested_by: [what-model-receives, token-key-check]
+      - id: token-cost
+        can_do: Spot why the same text can cost more tokens in another language.
+        evidence: A pitfall check on a new language case.
+        objective: predict-tokens
+        tested_by: [cost-check]
+    brings_in: [known-prompting]
+    carries_forward:
+      - id: tokens-are-numbers
+        idea: The model receives text as a list of token numbers.
+        used_in: [tokens-to-meaning]
+        shown_by: [token-idea, real-tokens]
+    misconceptions: [reads-letters, same-cost-every-language]
+    bridge_in:
+      text: You send a prompt and get a reply. Between the two, the prompt is first cut into pieces the model can count.
+      recalls: [known-prompting]
+    bridge_out:
+      text: Next, each token number is swapped for an embedding, a point where meaning becomes distance.
+      points_to: tokens-to-meaning
+    blocks:
+      - id: predict-strawberry
+        type: predict
+        question: Models often miscount the letter r in "strawberry". What do you think the model actually receives for that word?
+        options:
+          - {text: "10 letters, one at a time", correct: false, why_wrong: "If it saw letters, counting them would be easy."}
+          - {text: "A few pieces of the word, each as a number", correct: true, why_right: "It gets 3 pieces, st, raw and berry, and never sees the letters inside them."}
+          - {text: "The whole word as one picture", correct: false, why_wrong: "Text models receive numbers, not images of words."}
+      - id: example-idea
+        type: idea
+        text: "This lesson follows one sentence through a model: \"The bank by the river was flooded.\" A second sentence, \"The bank raised its interest rate.\", uses the same word bank with another meaning. Watch what happens to bank in each."
+      - id: token-idea
+        type: idea
+        key: true
+        text: "Before the model sees anything, a tokenizer cuts the text into tokens: common words, parts of rare words, and punctuation. Each token is swapped for its number in a fixed list, so the model receives only a list of numbers. Bank is the same number in both sentences, so nothing yet tells the two meanings apart."
+        more: "The tokenizer used here has 65,000 tokens. It is an older Claude tokenizer, so today's models split text a little differently."
+      - id: real-tokens
+        type: diagram
+        shape: structure
+        brief:
+          understand: The model receives a list of numbered pieces, and bank gets the same number whatever it means.
+          how_it_helps: "Each sentence drawn as chips, one per token, with its number under it; bank is highlighted in both rows. A third row splits strawberry."
+          clearer_than_text: Seeing ' bank' as 5657 in both rows shows the meaning problem that later chapters solve.
+        figure:
+          kind: tokens
+          computed_by:
+            language: python
+            run_locally:
+              command: "pip download --no-deps anthropic==0.25.0, unzip tokenizer.json, pip install tokenizers, then run this code"
+              why: needs the tokenizer file, which is not part of the lesson
+            code: |
+              import json
+              from tokenizers import Tokenizer
+              tokenizer = Tokenizer.from_file("tokenizer.json")   # bundled with anthropic 0.25.0
+              rows = []
+              for label, text in [("River sentence", "The bank by the river was flooded."),
+                                  ("Money sentence", "The bank raised its interest rate."), ("One long word", "strawberry")]:
+                  encoded = tokenizer.encode(text)
+                  rows.append({"label": label, "tokens": [dict({"text": token.replace("Ġ", " "), "id": number}, **({"hot": True} if token == "Ġbank" else {}))
+                                                          for token, number in zip(encoded.tokens, encoded.ids)]})
+              print(json.dumps({"rows": rows}))
+          rows:
+            - label: River sentence
+              tokens:
+                - {text: "The", id: 773}
+                - {text: " bank", id: 5657, hot: true}
+                - {text: " by", id: 546}
+                - {text: " the", id: 279}
+                - {text: " river", id: 10674}
+                - {text: " was", id: 504}
+                - {text: " flooded", id: 45098}
+                - {text: ".", id: 18}
+            - label: Money sentence
+              tokens:
+                - {text: "The", id: 773}
+                - {text: " bank", id: 5657, hot: true}
+                - {text: " raised", id: 6933}
+                - {text: " its", id: 1195}
+                - {text: " interest", id: 2952}
+                - {text: " rate", id: 3702}
+                - {text: ".", id: 18}
+            - label: One long word
+              tokens:
+                - {text: "st", id: 275}
+                - {text: "raw", id: 1266}
+                - {text: "berry", id: 17574}
+      - id: pipeline-tokens
+        type: diagram
+        shape: flow
+        brief:
+          understand: Splitting into tokens is the first step of a pipeline this lesson builds one step at a time.
+          how_it_helps: "Two boxes: your text, then tokens. Each later chapter adds one step below."
+          clearer_than_text: The picture fixes where each later idea sits, so the chapters add up to one machine.
+        figure:
+          kind: flow
+          parts:
+            - {id: text, label: Your text, row: 0}
+            - {id: tokens, label: Tokens, note: numbered pieces, row: 1}
+          links:
+            - {from: text, to: tokens, label: split}
+          highlight: [tokens]
+        grows_in: [tokens-to-meaning, attention, layers, next-token]
+      - id: what-model-receives
+        type: fill_blanks
+        instructions:
+          - Fill the blank with what the model receives for the river sentence.
+          - See where each choice leads.
+        language: text
+        source: the river sentence
+        context_note: The sentence from the token picture above.
+        text: "For \"The bank by the river was flooded.\", the model receives {{unit}}."
+        blanks:
+          - id: unit
+            options:
+              - text: 8 token numbers
+                correct: true
+                why_right: Seven words and the full stop are 8 tokens, each sent as its number.
+                output: "8 numbers: 773, 5657, 546, 279, 10674, 504, 45098, 18. Nothing else reaches the model."
+                output_from: source
+                output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence
+              - text: 34 letters
+                correct: false
+                why_wrong: The letters never reach the model; it gets the token numbers only.
+                misconception: reads-letters
+                output: "The letters stay with the tokenizer. The model gets 8 numbers, so counting letters means recalling how each token is spelled."
+                output_from: source
+                output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence
+              - text: 7 words
+                correct: false
+                why_wrong: The full stop is a token too, and a rare word would split into several.
+                misconception: reads-letters
+                output: "8 tokens, not 7 words: the full stop is its own token. A rare word such as strawberry would add 3."
+                output_from: source
+                output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence and on strawberry
+        hints:
+          - Count the chips in the river row of the picture.
+      - id: letters-pitfall
+        type: pitfall
+        misconception: reads-letters
+      - id: token-key-check
+        type: check
+        purpose: key
+        tests: token-idea
+        question: A model is asked to reverse the letters of "unbelievable" and makes a mistake. What is the best explanation?
+        options:
+          - {text: "It received a few token pieces, not the letters, so it must recall how each piece is spelled", correct: true, why_right: "The letters are hidden inside tokens; reversing them takes a memory of spelling, not a look."}
+          - {text: "The word is too long for the context window", correct: false, why_wrong: "One word is a handful of tokens; the window holds many thousands."}
+          - {text: "It was not trained on English", correct: false, why_wrong: "It knows the word well; the problem is that it never sees its letters."}
+      - id: cost-pitfall
+        type: pitfall
+        misconception: same-cost-every-language
+      - id: cost-check
+        type: check
+        purpose: pitfall
+        tests: same-cost-every-language
+        question: "The same tokenizer needs 2 tokens for \"Bangkok\" and 14 for the city's Thai name. A Thai support bot and an English one answer the same questions. What do you expect?"
+        options:
+          - {text: "The Thai bot uses many more tokens, so it costs more and fills its context window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
+          - {text: "Both cost the same, because the meaning is the same", correct: false, why_wrong: "Cost counts tokens, not meaning."}
+          - {text: "The Thai bot is cheaper, because Thai words are shorter", correct: false, why_wrong: "Fewer characters can still mean far more tokens."}
+      - id: tokens-recap
+        type: recap
+        text: The model receives a list of token numbers; rare words and less-seen languages split into more tokens.
+        sums_up: [token-idea, real-tokens]
+
+  # ---------------------------------------------------------------- 2
+  - id: tokens-to-meaning
+    title: Tokens become points of meaning
+    minutes: 10
+    why_it_matters: A token number says nothing by itself. The embedding is where meaning first appears, and every later step works on it.
+    must_know:
+      - Each token number picks a learned embedding, a point in a space of meaning.
+      - Nearby points mean similar things, learned from how words are used.
+    must_get_right:
+      - id: find-neighbours
+        can_do: Predict which words sit near each other in an embedding space.
+        evidence: The learner places a word on the map; each wrong place shows what the map really holds.
+        objective: explain-context
+        tested_by: [place-loan, embedding-key-check]
+    brings_in: [tokens-are-numbers, known-rag-embeddings]
+    carries_forward:
+      - id: embedding-is-start
+        idea: Each token starts as an embedding, a fixed point in a space of meaning, the same in every sentence.
+        used_in: [attention]
+        shown_by: [embedding-idea, meaning-map]
+    misconceptions: [number-is-meaning, looks-alike-means-alike]
+    bridge_in:
+      text: The model now holds a list of token numbers. You have met the next idea in RAG, where vectors place text so that similar text sits close.
+      recalls: [tokens-are-numbers, known-rag-embeddings]
+    bridge_out:
+      text: Next, attention moves each token's embedding using the words around it, which is how bank finds its meaning.
+      points_to: attention
+    blocks:
+      - id: predict-neighbour
+        type: predict
+        question: Token numbers 5657 and 5658 sit next to each other in the list. Do they mean similar things?
+        options:
+          - {text: "Yes, nearby numbers mean similar things", correct: false, why_wrong: "The list is ordered by how the tokenizer was built, not by meaning."}
+          - {text: "No, the number is only a position in a table", correct: true, why_right: "Meaning lives in the embedding that the number points to."}
+      - id: embedding-idea
+        type: idea
+        key: true
+        text: "Each token number picks one row from a large table, and that row is the token's embedding: a long list of numbers that places it as a point in a space of meaning. Training puts tokens that are used alike close together, the same idea as your RAG embeddings, but for every token, inside the model. In real word vectors, King − Man + Woman lands near Queen, so even directions carry meaning."
+        more: "Real embeddings have hundreds or thousands of numbers. The map below uses only 2 of the toy model's 3 directions, so you can see it."
+      - id: meaning-map
+        type: diagram
+        shape: space
+        brief:
+          understand: Tokens used alike sit close together, and bank starts halfway between the water words and the money words.
+          how_it_helps: "A 2D map: water words on one side, money words on the other, bank highlighted in the middle. A toy sketch."
+          clearer_than_text: Bank sitting in the middle shows why one fixed point cannot hold both of its meanings.
+        figure:
+          kind: scatter
+          toy: true
+          x_label: about water
+          y_label: about money
+          highlight: [bank]
+          computed_by:
+            language: python
+            code: |
+              import json
+              from toy_llm import MEANING
+              words = ["river", "water", "boat", "flooded", "money", "loan", "interest", "rate", "bank"]
+              print(json.dumps({"points": [{"label": w, "x": MEANING[w][0], "y": MEANING[w][1]} for w in words]}))
+          points:
+            - label: river
+              x: 1.0
+              y: 0.0
+            - label: water
+              x: 0.8
+              y: 0.2
+            - label: boat
+              x: 0.65
+              y: 0.1
+            - label: flooded
+              x: 0.9
+              y: 0.0
+            - label: money
+              x: 0.15
+              y: 1.0
+            - label: loan
+              x: 0.1
+              y: 0.9
+            - label: interest
+              x: 0.0
+              y: 1.0
+            - label: rate
+              x: 0.0
+              y: 0.8
+            - label: bank
+              x: 0.5
+              y: 0.5
+      - id: pipeline-meaning
+        type: diagram
+        shape: flow
+        brief:
+          understand: The embedding step sits right after splitting, turning each token number into a point of meaning.
+          how_it_helps: The chapter 1 pipeline with one new box under tokens, highlighted.
+          clearer_than_text: It shows that every later step works on points of meaning, not on text.
+        figure:
+          kind: flow
+          parts:
+            - {id: vectors, label: Embeddings, note: points of meaning, row: 2}
+          links:
+            - {from: tokens, to: vectors, label: look up}
+        extends:
+          diagram: pipeline-tokens
+          adds: "an embedding for each token, picked from a table by its number."
+      - id: number-pitfall
+        type: pitfall
+        misconception: number-is-meaning
+      - id: place-loan
+        type: fill_blanks
+        instructions:
+          - Fill the blank with where loan sits on the map of meaning.
+        language: text
+        source: the toy map of meaning
+        context_note: The toy map above, with loan added.
+        text: "On the map of meaning, loan sits {{place}}."
+        blanks:
+          - id: place
+            options:
+              - text: next to money and interest
+                correct: true
+                why_right: Loan is used in the same kind of sentences as money and interest, so training puts it beside them.
+                output: "In the toy map, loan is at (0.1, 0.9), right beside money at (0.15, 1.0) and interest at (0.0, 1.0)."
+                output_from: worked
+                output_source: read from the toy map's numbers
+              - text: next to loam, which is spelled almost the same
+                correct: false
+                why_wrong: Positions come from how words are used, not from how they are spelled.
+                misconception: looks-alike-means-alike
+                output: "Spelling plays no part in the position. Loam is used with soil and gardens, so it would sit far from loan."
+                output_from: worked
+                output_source: follows from how embeddings are trained (used alike, placed alike)
+              - text: next to the token whose number comes right after it
+                correct: false
+                why_wrong: A token's number is only its row in the table; neighbouring rows are unrelated.
+                misconception: number-is-meaning
+                output: "The next number is just the next row of the table, usually an unrelated piece of text. Meaning is in the embedding, not the number."
+                output_from: worked
+                output_source: follows from how an embedding table is looked up
+        hints:
+          - Is the position about spelling, about the number, or about how the word is used?
+      - id: spelling-pitfall
+        type: pitfall
+        misconception: looks-alike-means-alike
+      - id: embedding-key-check
+        type: check
+        purpose: key
+        tests: embedding-idea
+        question: In a model's embedding space, which word would you expect to sit closest to "doctor"?
+        options:
+          - {text: "nurse", correct: true, why_right: "Doctor and nurse appear in the same kind of sentences, so their points sit close."}
+          - {text: "doctrine", correct: false, why_wrong: "It shares letters, but it is used in very different sentences."}
+          - {text: "whichever token has the next number", correct: false, why_wrong: "Numbers are table rows; they say nothing about meaning."}
+      - id: meaning-recap
+        type: recap
+        text: Each token number picks an embedding, a learned point where words used alike sit close together.
+        sums_up: [embedding-idea, meaning-map]
+
+  # ---------------------------------------------------------------- 3
+  - id: attention
+    title: "Attention: words look at each other"
+    minutes: 12
+    why_it_matters: Bank starts as the same point in both sentences. Attention is the step that gives it the right meaning, and it is the core of every modern LLM.
+    must_know:
+      - Each token looks at every other token and weighs how relevant each is.
+      - It then blends in their meanings, so its point moves with its context.
+    must_get_right:
+      - id: read-attention
+        can_do: Predict which words a token attends to, and where its meaning moves.
+        evidence: The learner fills both blanks; each wrong pick shows the real attention numbers.
+        objective: explain-context
+        tested_by: [bank-attends, attention-key-check]
+      - id: not-nearest
+        can_do: Explain why attention is not about the nearest word.
+        evidence: A pitfall check in a new sentence.
+        objective: explain-context
+        tested_by: [nearest-check]
+    brings_in: [embedding-is-start]
+    carries_forward:
+      - id: meaning-in-context
+        idea: After attention, each token's embedding reflects its context, so bank ends near water in one sentence and near money in the other.
+        used_in: [layers, next-token]
+        shown_by: [attention-idea, attention-grid, bank-moves]
+    misconceptions: [one-fixed-meaning, nearest-word-matters-most]
+    bridge_in:
+      text: Every token now has an embedding, a fixed starting point that is the same in every sentence. Bank sits halfway between water and money.
+      recalls: [embedding-is-start]
+    bridge_out:
+      text: Next, a model repeats attention in many layers, each one refining the last.
+      points_to: layers
+    blocks:
+      - id: predict-bank
+        type: predict
+        question: In "The bank by the river was flooded", which word should matter most for what bank means?
+        options:
+          - {text: "the, the word right before it", correct: false, why_wrong: "The word next to it says nothing about money or water."}
+          - {text: "river, four words later", correct: true, why_right: "River is what tells you this bank is land beside water."}
+      - id: attention-idea
+        type: idea
+        key: true
+        text: "In attention, each token asks how relevant every other token is, and gets a share for each, adding up to 1. It then blends in those tokens' meanings by their shares, so its embedding moves. Bank gives a large share to river and flooded, and its point moves toward water; in the money sentence it moves toward money."
+        more: "All tokens do this at the same time, and every token can look at every other one in the window, near or far. That is what the 2017 Transformer paper meant by relating different positions of one sequence."
+      - id: attention-grid
+        type: diagram
+        shape: comparison
+        brief:
+          understand: Bank gives most of its attention to the words about its meaning, not to the words beside it.
+          how_it_helps: "A grid: one row per token, one column per token it looks at, darker for a bigger share. The bank row is outlined. A switch shows the money sentence."
+          clearer_than_text: The bank row's dark cells under river and flooded, and under interest and rate, show context choosing meaning.
+        figure:
+          kind: frames
+          toy: true
+          control: buttons
+          control_label: Sentence
+          computed_by:
+            language: python
+            code: |
+              import json
+              from toy_llm import RIVER, MONEY, attention_row
+              frames = []
+              for label, words in [("River", RIVER), ("Money", MONEY)]:
+                  values = [[round(share, 3) for share in attention_row(word, words)] for word in words]
+                  frames.append({"label": label, "figure": {"kind": "grid", "rows": words, "columns": words,
+                                                             "values": values, "highlight_row": "bank"}})
+              print(json.dumps({"frames": frames}))
+          frames:
+            - label: River
+              figure:
+                kind: grid
+                rows:
+                  - The
+                  - bank
+                  - by
+                  - the
+                  - river
+                  - was
+                  - flooded
+                columns:
+                  - The
+                  - bank
+                  - by
+                  - the
+                  - river
+                  - was
+                  - flooded
+                values:
+                  -   - 0.135
+                      - 0.142
+                      - 0.15
+                      - 0.135
+                      - 0.174
+                      - 0.129
+                      - 0.135
+                  -   - 0.021
+                      - 0.285
+                      - 0.026
+                      - 0.021
+                      - 0.426
+                      - 0.019
+                      - 0.201
+                  -   - 0.118
+                      - 0.137
+                      - 0.159
+                      - 0.118
+                      - 0.249
+                      - 0.101
+                      - 0.118
+                  -   - 0.135
+                      - 0.142
+                      - 0.15
+                      - 0.135
+                      - 0.174
+                      - 0.129
+                      - 0.135
+                  -   - 0.001
+                      - 0.021
+                      - 0.002
+                      - 0.001
+                      - 0.857
+                      - 0.001
+                      - 0.116
+                  -   - 0.143
+                      - 0.143
+                      - 0.143
+                      - 0.143
+                      - 0.143
+                      - 0.143
+                      - 0.143
+                  -   - 0.005
+                      - 0.053
+                      - 0.006
+                      - 0.005
+                      - 0.618
+                      - 0.005
+                      - 0.307
+                highlight_row: bank
+            - label: Money
+              figure:
+                kind: grid
+                rows:
+                  - The
+                  - bank
+                  - raised
+                  - its
+                  - interest
+                  - rate
+                columns:
+                  - The
+                  - bank
+                  - raised
+                  - its
+                  - interest
+                  - rate
+                values:
+                  -   - 0.171
+                      - 0.18
+                      - 0.162
+                      - 0.162
+                      - 0.162
+                      - 0.162
+                  -   - 0.027
+                      - 0.363
+                      - 0.109
+                      - 0.024
+                      - 0.297
+                      - 0.18
+                  -   - 0.023
+                      - 0.103
+                      - 0.139
+                      - 0.023
+                      - 0.46
+                      - 0.253
+                  -   - 0.167
+                      - 0.167
+                      - 0.167
+                      - 0.167
+                      - 0.167
+                      - 0.167
+                  -   - 0.004
+                      - 0.051
+                      - 0.085
+                      - 0.004
+                      - 0.625
+                      - 0.23
+                  -   - 0.01
+                      - 0.074
+                      - 0.111
+                      - 0.01
+                      - 0.548
+                      - 0.246
+                highlight_row: bank
+      - id: bank-moves
+        type: diagram
+        shape: space
+        brief:
+          understand: Attention moves bank's point toward water or toward money, depending on the sentence.
+          how_it_helps: "The chapter 2 map, with buttons for before attention, after the river sentence, and after the money sentence. Bank is highlighted."
+          clearer_than_text: The same token landing in two different places is what context-dependent meaning looks like.
+        figure:
+          kind: frames
+          toy: true
+          control: buttons
+          control_label: Where bank sits
+          computed_by:
+            language: python
+            code: |
+              import json
+              from toy_llm import MEANING, RIVER, MONEY, after_attention
+              words = ["river", "water", "boat", "flooded", "money", "loan", "interest", "rate"]
+              frames = []
+              for label, bank in [("Before", MEANING["bank"]), ("River", after_attention("bank", RIVER)),
+                                  ("Money", after_attention("bank", MONEY))]:
+                  points = [{"label": w, "x": MEANING[w][0], "y": MEANING[w][1]} for w in words]
+                  points.append({"label": "bank", "x": round(bank[0], 2), "y": round(bank[1], 2)})
+                  frames.append({"label": label, "figure": {"kind": "scatter", "points": points, "highlight": ["bank"],
+                                                             "x_label": "about water", "y_label": "about money"}})
+              print(json.dumps({"frames": frames}))
+          frames:
+            - label: Before
+              figure:
+                kind: scatter
+                points:
+                  - label: river
+                    x: 1.0
+                    y: 0.0
+                  - label: water
+                    x: 0.8
+                    y: 0.2
+                  - label: boat
+                    x: 0.65
+                    y: 0.1
+                  - label: flooded
+                    x: 0.9
+                    y: 0.0
+                  - label: money
+                    x: 0.15
+                    y: 1.0
+                  - label: loan
+                    x: 0.1
+                    y: 0.9
+                  - label: interest
+                    x: 0.0
+                    y: 1.0
+                  - label: rate
+                    x: 0.0
+                    y: 0.8
+                  - label: bank
+                    x: 0.5
+                    y: 0.5
+                highlight:
+                  - bank
+                x_label: about water
+                y_label: about money
+            - label: River
+              figure:
+                kind: scatter
+                points:
+                  - label: river
+                    x: 1.0
+                    y: 0.0
+                  - label: water
+                    x: 0.8
+                    y: 0.2
+                  - label: boat
+                    x: 0.65
+                    y: 0.1
+                  - label: flooded
+                    x: 0.9
+                    y: 0.0
+                  - label: money
+                    x: 0.15
+                    y: 1.0
+                  - label: loan
+                    x: 0.1
+                    y: 0.9
+                  - label: interest
+                    x: 0.0
+                    y: 1.0
+                  - label: rate
+                    x: 0.0
+                    y: 0.8
+                  - label: bank
+                    x: 0.75
+                    y: 0.14
+                highlight:
+                  - bank
+                x_label: about water
+                y_label: about money
+            - label: Money
+              figure:
+                kind: scatter
+                points:
+                  - label: river
+                    x: 1.0
+                    y: 0.0
+                  - label: water
+                    x: 0.8
+                    y: 0.2
+                  - label: boat
+                    x: 0.65
+                    y: 0.1
+                  - label: flooded
+                    x: 0.9
+                    y: 0.0
+                  - label: money
+                    x: 0.15
+                    y: 1.0
+                  - label: loan
+                    x: 0.1
+                    y: 0.9
+                  - label: interest
+                    x: 0.0
+                    y: 1.0
+                  - label: rate
+                    x: 0.0
+                    y: 0.8
+                  - label: bank
+                    x: 0.18
+                    y: 0.69
+                highlight:
+                  - bank
+                x_label: about water
+                y_label: about money
+      - id: pipeline-attention
+        type: diagram
+        shape: flow
+        brief:
+          understand: Attention comes after the embeddings, and it is where context changes each token's meaning.
+          how_it_helps: The chapter 2 pipeline with an attention box added under the embeddings, highlighted.
+          clearer_than_text: It shows that tokens leave the embedding step with fixed points and leave attention with points that fit their sentence.
+        figure:
+          kind: flow
+          parts:
+            - {id: attend, label: Attention, note: words look at each other, row: 3}
+          links:
+            - {from: vectors, to: attend, label: blend}
+        extends:
+          diagram: pipeline-meaning
+          adds: "attention, where each token blends in the meanings of the tokens it finds relevant."
+      - id: bank-attends
+        type: fill_blanks
+        instructions:
+          - Fill both blanks for the river sentence, using the attention grid.
+        language: text
+        source: the toy attention grid
+        context_note: The river sentence from the grid above.
+        text: "In \"The bank by the river was flooded\", bank gives its biggest share of attention to {{word}}, so its meaning moves toward {{side}}."
+        blanks:
+          - id: word
+            options:
+              - text: river
+                correct: true
+                why_right: River gets the biggest share after bank itself, because their meanings overlap most.
+                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: the, right before it
+                correct: false
+                why_wrong: Attention goes by relevance, not distance; the gets almost nothing.
+                misconception: nearest-word-matters-most
+                output: "The word before bank gets only 0.02 of its attention. Distance does not matter; overlap of meaning does."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: was
+                correct: false
+                why_wrong: Was carries no meaning about water or money, so it gets almost no share.
+                misconception: nearest-word-matters-most
+                output: "Was gets 0.02, the same as the. Words that say nothing about bank's meaning are almost ignored."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+          - id: side
+            options:
+              - text: water
+                correct: true
+                why_right: River and flooded are about water, so blending them in moves bank toward water.
+                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: money
+                correct: false
+                why_wrong: That is bank in the money sentence; here its neighbours are about water.
+                misconception: one-fixed-meaning
+                output: "Bank moves toward money only in \"The bank raised its interest rate\" (money 0.69). Here it ends at money 0.14."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: nowhere, its meaning is fixed
+                correct: false
+                why_wrong: The embedding is only the start; attention moves it.
+                misconception: one-fixed-meaning
+                output: "Bank starts at water 0.50, money 0.50, and leaves attention at water 0.75, money 0.14. It moved."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+        hints:
+          - Look at the outlined bank row. Which column is darkest, apart from bank itself?
+      - id: fixed-meaning-pitfall
+        type: pitfall
+        misconception: one-fixed-meaning
+      - id: attention-key-check
+        type: check
+        purpose: key
+        tests: attention-idea
+        question: "In \"She put the glass on the table and it broke\", which word should it attend to most?"
+        options:
+          - {text: "glass, because glass is what breaks", correct: true, why_right: "Attention weighs relevance: the thing that can break gets the share."}
+          - {text: "table, because it is the nearest noun", correct: false, why_wrong: "Nearness does not decide attention; relevance does."}
+          - {text: "and, the word right before it", correct: false, why_wrong: "And says nothing about what broke."}
+      - id: nearest-pitfall
+        type: pitfall
+        misconception: nearest-word-matters-most
+      - id: nearest-check
+        type: check
+        purpose: pitfall
+        tests: nearest-word-matters-most
+        question: "A teammate says: an LLM understands a word mostly from the word right before it. What is wrong with that?"
+        options:
+          - {text: "Each token can look at every token in the window, near or far, by relevance", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
+          - {text: "Nothing; the previous word decides the meaning", correct: false, why_wrong: "In the river sentence, the word before bank gets 0.02 of its attention."}
+          - {text: "It is the word right after that matters most", correct: false, why_wrong: "Neither side wins by position; relevance wins."}
+      - id: attention-recap
+        type: recap
+        text: In attention, each token weighs every other token by relevance and blends in their meanings, so its embedding fits its sentence.
+        sums_up: [attention-idea, attention-grid, bank-moves]
+
+  # ---------------------------------------------------------------- 4
+  - id: layers
+    title: Layers stack up understanding
+    minutes: 8
+    why_it_matters: One round of attention links words in pairs. Real understanding, such as working out what it refers to, comes from many rounds stacked.
+    must_know:
+      - A layer is attention followed by a small per-token refinement, and models stack many layers.
+      - What each layer does is learned in training, not programmed.
+    must_get_right:
+      - id: why-many-layers
+        can_do: Explain why a model needs many layers, not one.
+        evidence: The grader checks the answer names building on the previous layer's result.
+        objective: explain-context
+        tested_by: [explain-layers, layers-key-check]
+    brings_in: [meaning-in-context]
+    carries_forward:
+      - id: refined-meaning
+        idea: After many layers, each token's embedding holds a refined, context-aware meaning that the last step reads.
+        used_in: [next-token]
+        shown_by: [layers-idea, pipeline-layers]
+    misconceptions: [layers-are-programmed]
+    bridge_in:
+      text: One round of attention moves each token's embedding to fit its sentence, as bank moved toward water.
+      recalls: [meaning-in-context]
+    bridge_out:
+      text: Next, the last layer's embedding is turned into odds for the next token, and one token is picked.
+      points_to: next-token
+    blocks:
+      - id: predict-it
+        type: predict
+        question: "\"The trophy didn't fit in the suitcase because it was too big.\" What is too big, and could one quick look at the words settle it?"
+        options:
+          - {text: "The trophy, and it takes combining several clues", correct: true, why_right: "You need fit, too big and which thing goes inside the other, together."}
+          - {text: "The suitcase, the nearest noun", correct: false, why_wrong: "A suitcase that is too big would hold the trophy fine."}
+      - id: layers-idea
+        type: idea
+        key: true
+        text: "A layer is one round of attention followed by a small refinement of each token on its own. Models stack many layers, and each works on the embeddings the previous layer produced, so later layers combine clues that early ones linked in pairs. The 2017 Transformer had 6 layers; today's large models have many more."
+        more: "Engineers choose how many layers and how big they are. What each layer ends up doing is learned in training, and researchers study it afterwards, much as you would study a trained model's features."
+      - id: pipeline-layers
+        type: diagram
+        shape: flow
+        brief:
+          understand: Attention and refinement form one layer, and the arrow back up shows the layer repeating many times.
+          how_it_helps: The chapter 3 pipeline with a refine box under attention and an arrow back up labelled repeat.
+          clearer_than_text: The loop shows that depth, not a single step, builds understanding.
+        figure:
+          kind: flow
+          parts:
+            - {id: refine, label: Refine, note: each token alone, row: 4}
+          links:
+            - {from: attend, to: refine}
+            - {from: refine, to: attend, label: repeat}
+        extends:
+          diagram: pipeline-attention
+          adds: "a refine step after attention. Together they make one layer, and the layer repeats many times."
+      - id: explain-layers
+        type: explain
+        instructions:
+          - In two sentences, explain why a model stacks many layers instead of doing one big round of attention.
+        reference_solution: Each layer works on the result of the one before, so later layers can combine links that earlier layers made, such as joining it, too big and fit to work out that the trophy is too big. One round can only link tokens in pairs from their starting meanings.
+        rubric:
+          - {criterion: "Builds on the previous layer", passing: "Says each layer works on the output of the layer before."}
+          - {criterion: "Combines clues", passing: "Says later layers combine several links into a fuller meaning."}
+        hints:
+          - What does the second layer get as its input?
+        common_wrong_answers:
+          - {answer: "Each layer is programmed for a different grammar job.", misconception: layers-are-programmed, hint: "Who decides what a layer does: an engineer, or training?"}
+      - id: programmed-pitfall
+        type: pitfall
+        misconception: layers-are-programmed
+      - id: layers-key-check
+        type: check
+        purpose: key
+        tests: layers-idea
+        question: A smaller model with fewer layers misreads which person a pronoun points to in long sentences. What does that suggest?
+        options:
+          - {text: "It has fewer rounds to combine the clues that settle the pronoun", correct: true, why_right: "Depth is what lets clues be combined step by step."}
+          - {text: "Its tokenizer split the pronoun wrongly", correct: false, why_wrong: "Pronouns are short, common tokens; the problem is combining clues."}
+          - {text: "Its layers were programmed without a pronoun rule", correct: false, why_wrong: "Nobody programs such rules; layers learn what they do."}
+      - id: layers-recap
+        type: recap
+        text: A layer is attention plus a per-token refinement; stacking many layers builds meaning from combined clues.
+        sums_up: [layers-idea, pipeline-layers]
+
+  # ---------------------------------------------------------------- 5
+  - id: next-token
+    title: The next token is a probability
+    minutes: 12
+    why_it_matters: Every reply is built one token at a time from odds. That explains why answers vary, and what temperature really changes.
+    must_know:
+      - The model gives odds to every token for the next position, picks one, adds it, and repeats.
+      - Temperature sharpens or flattens those odds; it adds no knowledge.
+    must_get_right:
+      - id: read-temperature
+        can_do: Predict how lowering or raising the temperature changes the pick.
+        evidence: The learner picks the effect; each wrong pick shows the real odds.
+        objective: predict-sampling
+        tested_by: [temperature-blank, sampling-key-check]
+      - id: not-lookup
+        can_do: Explain why the same prompt can give different replies.
+        evidence: A pitfall check in a new case.
+        objective: predict-sampling
+        tested_by: [lookup-check]
+    brings_in: [refined-meaning, tokens-are-numbers]
+    carries_forward:
+      - id: one-token-at-a-time
+        idea: A reply is built one token at a time, each picked from odds over every token, shaped by temperature.
+        used_in: [training-and-limits]
+        shown_by: [odds-idea, odds-bars]
+    misconceptions: [looks-up-answer, temperature-is-intelligence]
+    bridge_in:
+      text: After the last layer, the final token's embedding holds a refined meaning of everything before it. The model still has to turn that into one of its token numbers.
+      recalls: [refined-meaning, tokens-are-numbers]
+    bridge_out:
+      text: Last, where the odds come from in training, and the limits that training leaves, such as hallucination and the context window.
+      points_to: training-and-limits
+    blocks:
+      - id: predict-same-prompt
+        type: predict
+        question: You send the same prompt twice and get two different replies. Is something broken?
+        options:
+          - {text: "Yes, a model should always give the same answer", correct: false, why_wrong: "Variety is built in: each token is picked from odds."}
+          - {text: "No, each token is picked from odds, so picks can differ", correct: true, why_right: "Two runs can take different paths from the same odds."}
+      - id: odds-idea
+        type: idea
+        key: true
+        text: "The last layer's embedding for the final position becomes a score for every token in the list, and the scores become odds that add up to 1. The model picks one token, adds it to the text, and runs again for the next. Temperature reshapes the odds before the pick: low makes the top token win almost always, high gives the others more chance."
+        more: "As temperature gets close to 0, the model always takes the top token. The odds below come from the toy model's made-up scores for the word after \"The bank by the river was\"."
+      - id: odds-bars
+        type: diagram
+        shape: quantity
+        brief:
+          understand: Temperature changes how the same odds are shared out, from one clear winner to a spread.
+          how_it_helps: "Bars for 5 candidate next words, with a temperature slider from 0.2 to 1.5."
+          clearer_than_text: Dragging the slider shows flooded's bar shrink and the others grow, with no new word appearing.
+        figure:
+          kind: frames
+          toy: true
+          control: slider
+          control_label: Temperature
+          computed_by:
+            language: python
+            code: |
+              import json
+              from toy_llm import NEXT_SCORES, softmax
+              frames = []
+              for temperature in [0.2, 0.7, 1.0, 1.5]:
+                  odds = softmax(list(NEXT_SCORES.values()), temperature)
+                  frames.append({"label": str(temperature), "figure": {"kind": "bars", "max": 1,
+                                 "bars": [{"label": word, "value": round(share, 3)} for word, share in zip(NEXT_SCORES, odds)]}})
+              print(json.dumps({"frames": frames}))
+          frames:
+            - label: '0.2'
+              figure:
+                kind: bars
+                max: 1
+                bars:
+                  - label: flooded
+                    value: 0.997
+                  - label: closed
+                    value: 0.002
+                  - label: muddy
+                    value: 0.0
+                  - label: open
+                    value: 0.0
+                  - label: robbed
+                    value: 0.0
+            - label: '0.7'
+              figure:
+                kind: bars
+                max: 1
+                bars:
+                  - label: flooded
+                    value: 0.744
+                  - label: closed
+                    value: 0.134
+                  - label: muddy
+                    value: 0.076
+                  - label: open
+                    value: 0.032
+                  - label: robbed
+                    value: 0.014
+            - label: '1.0'
+              figure:
+                kind: bars
+                max: 1
+                bars:
+                  - label: flooded
+                    value: 0.597
+                  - label: closed
+                    value: 0.18
+                  - label: muddy
+                    value: 0.121
+                  - label: open
+                    value: 0.066
+                  - label: robbed
+                    value: 0.036
+            - label: '1.5'
+              figure:
+                kind: bars
+                max: 1
+                bars:
+                  - label: flooded
+                    value: 0.459
+                  - label: closed
+                    value: 0.206
+                  - label: muddy
+                    value: 0.158
+                  - label: open
+                    value: 0.106
+                  - label: robbed
+                    value: 0.071
+      - id: pipeline-next
+        type: diagram
+        shape: flow
+        brief:
+          understand: The odds and the pick close the loop, because the picked token goes back in as the next input.
+          how_it_helps: "The chapter 4 pipeline with two new boxes: odds for every token, then pick one, with an arrow back up to tokens."
+          clearer_than_text: The arrow back to tokens shows that a reply is the whole pipeline run once per token.
+        figure:
+          kind: flow
+          parts:
+            - {id: odds, label: Odds, note: for every token, row: 5}
+            - {id: pick, label: Pick one, note: shaped by temperature, row: 5}
+          links:
+            - {from: refine, to: odds}
+            - {from: odds, to: pick}
+            - {from: pick, to: tokens, label: add + repeat}
+        extends:
+          diagram: pipeline-layers
+          adds: "odds for every token and the pick. The picked token goes back in, and the whole pipeline runs again."
+      - id: temperature-blank
+        type: fill_blanks
+        instructions:
+          - Fill the blank using the temperature slider.
+        language: text
+        source: the toy next-token odds
+        context_note: The odds for the word after "The bank by the river was".
+        text: "Turning the temperature down from 1.0 to 0.2 makes flooded {{effect}}."
+        blanks:
+          - id: effect
+            options:
+              - text: almost certain to be picked
+                correct: true
+                why_right: Low temperature sharpens the odds, so the top token takes nearly all of them.
+                output: "Flooded's chance goes from 0.60 at temperature 1.0 to 1.00 at 0.2 (rounded)."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: less likely, because the model is less confident
+                correct: false
+                why_wrong: Low temperature makes the top token more likely, not less.
+                misconception: temperature-is-intelligence
+                output: "The opposite happens: flooded rises from 0.60 to 1.00. At 1.5 it falls to 0.46."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: smarter, so it picks a better word than flooded
+                correct: false
+                why_wrong: Temperature only reshapes the same odds; no new or better word appears.
+                misconception: temperature-is-intelligence
+                output: "The same 5 words keep the same order at every temperature; only their shares change."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+        hints:
+          - Slide to 0.2 and read flooded's bar.
+      - id: temperature-pitfall
+        type: pitfall
+        misconception: temperature-is-intelligence
+      - id: sampling-key-check
+        type: check
+        purpose: key
+        tests: odds-idea
+        question: You want a classifier prompt to give the same label every time it sees the same text. What setting helps most?
+        options:
+          - {text: "A temperature near 0, so the top token is nearly always picked", correct: true, why_right: "Sharp odds mean the same pick on every run."}
+          - {text: "A high temperature, so the model thinks harder", correct: false, why_wrong: "High temperature spreads the odds and adds variety, not thought."}
+          - {text: "A longer reply, so the label is checked twice", correct: false, why_wrong: "Each extra token is another pick from odds; length adds no consistency."}
+      - id: lookup-pitfall
+        type: pitfall
+        misconception: looks-up-answer
+      - id: lookup-check
+        type: check
+        purpose: pitfall
+        tests: looks-up-answer
+        question: "A teammate says: the model found the answer in its memory, so asking again should give the same words. What is wrong with that?"
+        options:
+          - {text: "The reply is built token by token from odds, so a second run can pick differently", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
+          - {text: "Nothing; replies should match word for word", correct: false, why_wrong: "Only a temperature near 0 makes repeat runs nearly identical."}
+          - {text: "The model forgets everything after each word", correct: false, why_wrong: "It sees all earlier tokens in the window; the variety comes from the pick."}
+      - id: next-recap
+        type: recap
+        text: A reply is built one token at a time from odds over every token; temperature reshapes the odds but adds no knowledge.
+        sums_up: [odds-idea, odds-bars]
+
+  # ---------------------------------------------------------------- 6
+  - id: training-and-limits
+    title: Training, and the limits it leaves
+    minutes: 10
+    why_it_matters: The model's strengths and its two best-known limits, hallucination and the context window, both follow from how it is trained and run.
+    must_know:
+      - Pretraining teaches next-token prediction on huge text; fine-tuning and RLHF shape it into an assistant.
+      - A hallucination is a fluent guess where no pattern gives the answer; the model sees only its context window.
+    must_get_right:
+      - id: explain-hallucination
+        can_do: Predict when a model is likely to hallucinate, and why.
+        evidence: The learner fills the blank; each wrong pick shows what really happens.
+        objective: explain-limits
+        tested_by: [rare-fact-blank, training-key-check]
+      - id: explain-window
+        can_do: Explain why a model cannot use text outside its context window.
+        evidence: The grader checks the answer names the window as all the model can see.
+        objective: explain-limits
+        tested_by: [explain-window-answer]
+    brings_in: [one-token-at-a-time, known-training]
+    carries_forward:
+      - id: limits-from-training
+        idea: Hallucination and the context window follow from next-token prediction, so check facts and put what the model needs into its window.
+        used_in: [beyond]
+        shown_by: [training-idea, limits-idea]
+    misconceptions: [hallucination-is-database-error, model-remembers-chats]
+    bridge_in:
+      text: A reply is built one token at a time from odds. Training, which adjusts the model's numbers to lower its error, is where those odds come from.
+      recalls: [one-token-at-a-time, known-training]
+    bridge_out:
+      text: "With this picture, you can reason about any model's behaviour: why a RAG prompt helps, why answers vary, and when to double-check."
+      points_to: beyond
+    blocks:
+      - id: predict-birthday
+        type: predict
+        question: You ask a model for the birthday of a little-known local author. It has no reliable source in its training. What does it most likely do?
+        options:
+          - {text: "Says it does not know", correct: false, why_wrong: "Training to predict likely text, and tests that reward right answers, both push it to guess."}
+          - {text: "Gives a plausible, confident date", correct: true, why_right: "A likely-looking date is exactly what next-token prediction produces."}
+      - id: training-idea
+        type: idea
+        key: true
+        text: "Pretraining shows the model huge amounts of text and adjusts its numbers to predict each next token better. Fine-tuning on example answers, then RLHF, where people rank replies and the model is trained toward the preferred ones, turn that predictor into an assistant. InstructGPT, trained this way, was preferred to a model more than 100 times larger."
+        more: "Most knowledge comes from pretraining. Fine-tuning and RLHF mostly shape behaviour: following instructions, tone, refusing."
+      - id: limits-idea
+        type: idea
+        text: "A hallucination is next-token prediction where no pattern gives the answer: a rare fact, such as a birthday, cannot be predicted, so the model writes a fluent guess. The context window is all the text the model can see at once, its working memory. Anything outside it, including earlier chats, does not exist for the model unless it is put back in."
+      - id: training-flow
+        type: diagram
+        shape: flow
+        brief:
+          understand: Knowledge comes in at pretraining, and the later stages shape behaviour.
+          how_it_helps: "Five boxes top to bottom: lots of text, pretraining, fine-tuning, RLHF, assistant. Pretraining and RLHF are highlighted."
+          clearer_than_text: The order shows that the assistant is a next-token predictor first, which is where hallucination comes from.
+        figure:
+          kind: flow
+          parts:
+            - {id: corpus, label: Lots of text, row: 0}
+            - {id: pretrain, label: Pretraining, note: predict the next token, row: 1}
+            - {id: finetune, label: Fine-tuning, note: example answers, row: 2}
+            - {id: rlhf, label: RLHF, note: people rank replies, row: 3}
+            - {id: assistant, label: Assistant, row: 4}
+          links:
+            - {from: corpus, to: pretrain}
+            - {from: pretrain, to: finetune}
+            - {from: finetune, to: rlhf}
+            - {from: rlhf, to: assistant}
+          highlight: [pretrain, rlhf]
+      - id: rare-fact-blank
+        type: fill_blanks
+        instructions:
+          - Fill the blank with what a model most likely does with a rare fact it never learned.
+        language: text
+        source: the birthday question above
+        context_note: A little-known author's birthday, with no reliable source in training.
+        text: "Asked for the birthday of a little-known author, a model most likely {{act}}."
+        blanks:
+          - id: act
+            options:
+              - text: writes a plausible, confident date
+                correct: true
+                why_right: A rare fact has no pattern to predict from, so the model writes a likely-looking guess.
+                output: "Rare facts like a birthday cannot be predicted from patterns alone, so the model produces a fluent guess."
+                output_from: source
+                output_source: "OpenAI (2025), Why language models hallucinate"
+              - text: looks it up in its database and finds an error
+                correct: false
+                why_wrong: There is no database; the reply is predicted token by token.
+                misconception: hallucination-is-database-error
+                output: "There is nothing to look up. The date is predicted text, which is why it can look right and be wrong."
+                output_from: source
+                output_source: "OpenAI (2025), Why language models hallucinate"
+              - text: remembers asking you last week and repeats your answer
+                correct: false
+                why_wrong: It sees only its context window, not earlier chats.
+                misconception: model-remembers-chats
+                output: "Last week's chat is outside the context window, so the model cannot see it unless an app puts it back in."
+                output_from: source
+                output_source: "Claude docs, Context windows"
+        hints:
+          - Is there any pattern in text that would predict this one author's birthday?
+      - id: database-pitfall
+        type: pitfall
+        misconception: hallucination-is-database-error
+      - id: explain-window-answer
+        type: explain
+        instructions:
+          - "In two sentences, explain to a teammate why a model 'forgot' the instructions given at the very start of a very long chat."
+        reference_solution: The model sees only what is in its context window, its working memory, and a very long chat can push the early instructions out, or leave them as a small share of what attention weighs. Nothing is stored between turns except the text in the window, so put key instructions back in, or keep them in the system prompt.
+        rubric:
+          - {criterion: "Names the window", passing: "Says the model sees only the text in its context window."}
+          - {criterion: "Gives a fix", passing: "Says to restate the instructions, shorten the chat, or keep them in the system prompt."}
+        hints:
+          - Where does the model keep anything between turns?
+        common_wrong_answers:
+          - {answer: "It got tired of following them.", misconception: model-remembers-chats, hint: "What can the model see right now?"}
+      - id: remembers-pitfall
+        type: pitfall
+        misconception: model-remembers-chats
+      - id: training-key-check
+        type: check
+        purpose: key
+        tests: training-idea
+        question: A model gives a fluent but wrong answer about a niche product launched after its training data was collected. Which fix goes after the cause?
+        options:
+          - {text: "Put the product's real documentation into the context window, as RAG does", correct: true, why_right: "The fact was never in pretraining, so it has to come in through the window."}
+          - {text: "Ask it to try harder", correct: false, why_wrong: "Effort cannot predict a fact the model never saw."}
+          - {text: "Raise the temperature", correct: false, why_wrong: "Temperature reshapes the same odds; it adds no knowledge."}
+      - id: limits-recap
+        type: recap
+        text: Pretraining teaches next-token prediction, so rare facts become fluent guesses; the model sees only its context window.
+        sums_up: [training-idea, limits-idea]

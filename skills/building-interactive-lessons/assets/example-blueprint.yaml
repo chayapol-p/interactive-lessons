@@ -1,0 +1,429 @@
+# A complete small blueprint: a 3-chapter lesson on splitting text into chunks for search.
+# It passes scripts/check_blueprint.py --run-tests and shows every block type at least once.
+
+lesson:
+  title: Splitting text into chunks for search
+  role: standalone
+  learner:
+    knows: [basic Python, lists and slicing, loops]
+    new_to: search and retrieval
+    wants_to: choose chunk settings for a search project
+    time_minutes: 30
+    assumed: false
+  objectives:
+    - id: explain-why-chunk
+      text: After this, you can explain why search works on chunks instead of whole pages.
+    - id: predict-chunk-count
+      text: After this, you can predict where chunks start and how many a page gives for a size and overlap.
+    - id: choose-chunk-size
+      text: After this, you can choose a chunk size for a kind of question and defend the choice.
+
+glossary:
+  - term: chunk
+    definition: A slice of a page's tokens that search compares with the question.
+  - term: stride
+    definition: How far each new chunk starts after the last one; chunk size minus overlap.
+  - term: overlap
+    definition: The tokens two neighbouring chunks share.
+
+known_ideas:
+  - id: known-slicing
+    idea: A Python list can be sliced with a start and an end position.
+  - id: known-loops
+    idea: range(start, stop, step) counts in steps.
+
+facts:
+  - id: fact-stride
+    statement: Each new chunk starts size minus overlap tokens after the previous one.
+    status: confirmed
+    source: the chunker in chapter 2, run on a 1,200-token page
+  - id: fact-small-chunks-precise
+    statement: Smaller chunks match narrow questions more precisely but lose surrounding context.
+    status: inferred
+    source: common retrieval practice; not measured in this lesson
+
+misconceptions:
+  - id: whole-page-is-fine
+    wrong_idea: Search can just compare the question with whole pages.
+    why_people_believe_it: Web search returns pages, so pages feel like the natural unit.
+    what_is_true: A long page matches every question a little and no question strongly; a chunk can match one question well.
+    source: inferred from common beginner questions
+  - id: overlap-adds-tokens
+    wrong_idea: Overlap adds extra tokens to each chunk.
+    why_people_believe_it: The word overlap sounds like something added on.
+    what_is_true: Chunk size stays fixed; overlap only moves the next start back.
+    source: inferred from common beginner questions
+  - id: bigger-is-safer
+    wrong_idea: Bigger chunks are always safer because they keep more context.
+    why_people_believe_it: More context sounds like more chance of containing the answer.
+    what_is_true: Big chunks dilute the match, so the right passage can rank below a vaguely related one.
+    source: inferred from common retrieval practice
+
+chapters:
+
+  - id: why-chunk
+    title: Why search works on chunks
+    minutes: 7
+    why_it_matters: If search compares a question with whole pages, long pages match everything weakly and the answer gets lost.
+    must_know:
+      - Search compares the question with each chunk, not each page.
+      - A chunk is a slice of a page.
+    must_get_right:
+      - id: say-why-chunk
+        can_do: Explain in their own words why a long page is a poor unit for search.
+        evidence: The answer names the dilution of a long page, judged against a rubric, not recalled wording.
+        objective: explain-why-chunk
+        tested_by: [explain-why-chunk-answer, page-vs-chunk-check]
+    brings_in: [known-slicing]
+    carries_forward:
+      - id: chunk-is-slice
+        idea: A chunk is a slice of a page's tokens, from a start to an end position.
+        used_in: [size-and-overlap]
+        shown_by: [chunk-idea, search-pipeline]
+    misconceptions: [whole-page-is-fine]
+    bridge_in:
+      text: You already know how to slice a Python list. Search needs the same move on pages of text.
+      recalls: [known-slicing]
+    bridge_out:
+      text: Next you will decide how big each slice is and how much neighbouring slices share.
+      points_to: size-and-overlap
+    blocks:
+      - id: predict-page-match
+        type: predict
+        question: A 7,000-token page covers twenty topics. A question asks about one of them. How well does the whole page match?
+        options:
+          - {text: "Strongly, because the answer is on the page", correct: false, why_wrong: "The answer is there, but nineteen other topics dilute the match."}
+          - {text: "Weakly, because most of the page is about other things", correct: true, why_right: "The one relevant part is a small share of the page, so the overall match is weak."}
+      - id: chunk-idea
+        type: idea
+        key: true
+        text: Search compares your question with pieces of text and returns the best pieces. A whole long page is mostly about other things, so its match is weak. We cut pages into chunks, slices short enough to be mostly about one thing.
+        more: A book index works the same way. It sends you to page 212, not to the book.
+      - id: search-pipeline
+        type: diagram
+        shape: flow
+        brief:
+          understand: Search never sees a page, only the chunks cut from it, so the question is matched chunk by chunk.
+          how_it_helps: "Boxes from top to bottom: page, chunks, match (where the question comes in), best chunk. The chunks box is highlighted."
+          clearer_than_text: The page drops out of the picture after the cut, which is why a chunk can win where the page loses.
+        figure:
+          kind: flow
+          parts:
+            - {id: page, label: Page, row: 0}
+            - {id: chunks, label: Chunks, note: cut from the page, row: 1}
+            - {id: match, label: Match, note: chunk by chunk, row: 2}
+            - {id: question, label: Question, row: 2}
+            - {id: best-chunk, label: Best chunk, row: 3}
+          links:
+            - {from: page, to: chunks, label: cut}
+            - {from: chunks, to: match}
+            - {from: question, to: match}
+            - {from: match, to: best-chunk}
+          highlight: [chunks]
+        grows_in: [size-and-overlap]
+      - id: chunk-key-check
+        type: check
+        purpose: key
+        tests: chunk-idea
+        question: A FAQ page answers 30 short questions. Which unit gives search the best chance of matching one of them?
+        options:
+          - {text: "One chunk per question and its answer", correct: true, why_right: "Each chunk is about one thing, so the right one can match strongly."}
+          - {text: "The whole FAQ page as one entry", correct: false, why_wrong: "29 other answers dilute the match for any one question."}
+          - {text: "One chunk per sentence", correct: false, why_wrong: "A question and its answer would be split apart, so no single chunk holds both."}
+      - id: explain-why-chunk-answer
+        type: explain
+        instructions:
+          - In one or two sentences, explain why search works better on chunks than on whole pages.
+        reference_solution: A whole page covers many topics, so it matches any one question only weakly. A chunk is short enough to be mostly about one topic, so the right chunk can match strongly.
+        rubric:
+          - {criterion: "Names dilution", passing: "Says a long page mixes many topics, so a single match is weak."}
+          - {criterion: "Names the benefit of chunks", passing: "Says a chunk can focus on one topic and match strongly."}
+        hints:
+          - Think about what share of a long page is about your question.
+          - A page about twenty topics is mostly about other things. What does that do to the match?
+        common_wrong_answers:
+          - {answer: "Chunks are faster to search.", misconception: whole-page-is-fine, hint: "Speed is not the main reason. Think about how well the page matches."}
+      - id: page-vs-chunk-pitfall
+        type: pitfall
+        misconception: whole-page-is-fine
+      - id: page-vs-chunk-check
+        type: check
+        purpose: pitfall
+        tests: whole-page-is-fine
+        question: A teammate says "just store each docs page as one entry, it keeps everything together". What goes wrong?
+        options:
+          - {text: "Nothing, as long as the pages fit the embedding model", correct: false, why_wrong: "Fitting is not the issue. A long page still matches each question weakly."}
+          - {text: "Long pages match every question a little and none strongly", correct: true, why_right: "Mixing many topics dilutes the match, so the right page can lose to a vaguely related one."}
+          - {text: "Search becomes slower", correct: false, why_wrong: "Fewer entries is usually faster. The problem is match quality."}
+      - id: why-chunk-recap
+        type: recap
+        text: Search matches chunks, not pages, because a long page matches everything weakly.
+        sums_up: [chunk-idea, search-pipeline]
+
+  - id: size-and-overlap
+    title: Size and overlap
+    minutes: 12
+    why_it_matters: Size and overlap decide how many chunks you store and whether a sentence gets cut in half at a boundary.
+    must_know:
+      - Each new chunk starts one stride after the previous one.
+      - Stride is size minus overlap.
+    must_get_right:
+      - id: compute-stride
+        can_do: Predict the starts and the chunk count for a size and overlap not shown in the chapter.
+        evidence: The learner picks the stride expression from options built on real mistakes, and a quiz uses settings the chapter did not show.
+        objective: predict-chunk-count
+        tested_by: [fix-stride, stride-check]
+    brings_in: [chunk-is-slice, known-loops]
+    carries_forward:
+      - id: stride-rule
+        idea: Stride equals size minus overlap, and the last chunk of a page is usually short.
+        used_in: [choosing-a-size]
+        shown_by: [stride-idea, run-chunker]
+    misconceptions: [overlap-adds-tokens]
+    bridge_in:
+      text: Last chapter you saw why search needs chunks. Now you decide how big they are and how much they share.
+      recalls: [chunk-is-slice]
+    bridge_out:
+      text: Next you will use the stride rule to weigh small chunks against big ones.
+      points_to: choosing-a-size
+    blocks:
+      - id: predict-count
+        type: predict
+        question: A 1,200-token page, chunk size 500, overlap 50. How many chunks?
+        options:
+          - {text: "2", correct: false, why_wrong: "That counts only full chunks. The short last chunk still counts."}
+          - {text: "3", correct: true, why_right: "Chunks start at 0, 450 and 900. The last one is short."}
+          - {text: "4", correct: false, why_wrong: "That treats overlap as extra tokens added to each chunk."}
+      - id: stride-idea
+        type: idea
+        key: true
+        text: Each new chunk starts one stride after the last one. The stride is the chunk size minus the overlap. The overlap is the stretch two neighbours share, so a sentence cut at a boundary is whole in one of them.
+      - id: window-diagram
+        type: diagram
+        shape: change-over-time
+        brief:
+          understand: Each chunk starts one stride after the last, so the shared stretch between neighbours is the overlap.
+          how_it_helps: Chunks drawn as bars on two alternating lanes along the page, with the shared stretch coloured.
+          clearer_than_text: The window steps back further as overlap grows, which adds chunks, and the last chunk is short.
+        figure:
+          kind: svg
+          svg: |
+            <svg viewBox="0 0 340 150" role="img" aria-label="A 1,200-token page. Chunk 1 covers 0 to 500, chunk 2 covers 450 to 950, chunk 3 covers 900 to 1,200. Each pair shares 50 tokens.">
+              <rect x="20" y="20" width="300" height="16" rx="3" class="svg-box"/>
+              <text x="170" y="14" text-anchor="middle" class="svg-text small">page: 1,200 tokens</text>
+              <rect x="20" y="52" width="125" height="22" rx="3" class="svg-box hot"/>
+              <text x="82" y="67" text-anchor="middle" class="svg-text">chunk 1: 0–500</text>
+              <rect x="132" y="84" width="125" height="22" rx="3" class="svg-box hot"/>
+              <text x="195" y="99" text-anchor="middle" class="svg-text">chunk 2: 450–950</text>
+              <rect x="245" y="52" width="75" height="22" rx="3" class="svg-box hot"/>
+              <text x="289" y="67" text-anchor="middle" class="svg-text">900–1,200</text>
+              <rect x="132" y="48" width="13" height="62" class="svg-overlap"/>
+              <rect x="245" y="48" width="12" height="62" class="svg-overlap"/>
+              <text x="138" y="128" text-anchor="middle" class="svg-text small">50 shared</text>
+              <text x="251" y="142" text-anchor="middle" class="svg-text small">50 shared</text>
+            </svg>
+      - id: search-pipeline-settings
+        type: diagram
+        shape: flow
+        brief:
+          understand: Size and overlap are dials on the cutting step, so they change every chunk that search later matches.
+          how_it_helps: "The chapter 1 pipeline, with two dials (size, overlap) attached to the chunks box. Everything else greys out."
+          clearer_than_text: The settings act before search runs, so a bad setting cannot be fixed by a better search.
+        figure:
+          kind: flow
+          parts:
+            - {id: settings, label: "Size, overlap", note: set before search, row: 1}
+          links:
+            - {from: settings, to: chunks, label: dials}
+        extends:
+          diagram: search-pipeline
+          adds: Size and overlap dials on the chunks box.
+      - id: run-chunker
+        type: code
+        slice:
+          language: python
+          source: example chunker written for this lesson
+          depends_on:
+            - tokens is a list of words made by a tokenizer earlier in the pipeline
+          context_note: Before this, the page text is split into tokens. After this, each chunk is turned into a vector and stored.
+          setup: |
+            tokens = [f"word{i}" for i in range(1200)]   # a 1,200-token page
+          code: |
+            chunk_size = 500
+            overlap = 50
+            stride = chunk_size - overlap                  # how far each new chunk moves
+
+            # Step through the page one stride at a time and slice out each chunk
+            starts = list(range(0, len(tokens), stride))
+            chunks = [tokens[start:start + chunk_size] for start in starts]
+
+            # Drop a final chunk that only repeats the overlap of the one before it
+            if len(chunks) > 1 and len(chunks[-1]) <= overlap:
+                chunks.pop()
+                starts.pop()
+
+            print("starts:", starts)
+            print("lengths:", [len(chunk) for chunk in chunks])   # the last one is short
+          recorded_output: |
+            starts: [0, 450, 900]
+            lengths: [500, 500, 300]
+        notice:
+          - Look at how far apart the starts are.
+          - Look at the length of the last chunk.
+      - id: compare-overlap
+        type: compare
+        input: A 1,200-token page, chunk size 500
+        options:
+          - {name: "Overlap 0", steps: ["start 0", "start 500", "start 1000"]}
+          - {name: "Overlap 50", steps: ["start 0", "start 450", "start 900"]}
+          - {name: "Overlap 200", steps: ["start 0", "start 300", "start 600", "start 900"]}
+        differs_at: 2
+        explanation: Overlap does not change a chunk's size. It shortens the step, so every later chunk starts earlier, and a large overlap adds a whole extra chunk.
+      - id: fix-stride
+        type: fill_blanks
+        instructions:
+          - Fill the blank so each chunk shares 50 tokens with the one before it.
+          - Press Run to see what each choice prints.
+        language: python
+        source: the chunker from Run above
+        context_note: The same chunker as above, with the line that sets the step left blank.
+        setup: |
+          tokens = [f"word{i}" for i in range(1200)]   # a 1,200-token page
+        code: |
+          chunk_size = 500
+          overlap = 50
+          stride = {{stride}}                              # how far each new chunk moves
+          starts = list(range(0, len(tokens), stride))    # one start per stride along the page
+          print("starts:", starts[:3])                    # the first three starts
+        blanks:
+          - id: stride
+            options:
+              - text: chunk_size - overlap
+                correct: true
+                why_right: Each chunk moves forward its size, minus the part it shares with the next one.
+                output: "starts: [0, 450, 900]"
+              - text: overlap
+                correct: false
+                why_wrong: That moves only 50 tokens, so every chunk is nearly a copy of the last.
+                misconception: overlap-adds-tokens
+                output: "starts: [0, 50, 100]"
+              - text: chunk_size + overlap
+                correct: false
+                why_wrong: Adding the overlap moves the window further, so 50 tokens between chunks are never stored.
+                misconception: overlap-adds-tokens
+                output: "starts: [0, 550, 1100]"
+        hints:
+          - The step is the chunk size, adjusted by the part two chunks share. Should the shared part make the step longer or shorter?
+      - id: write-chunk-starts
+        type: stretch
+        kind: code
+        language: python
+        instructions:
+          - "Write chunk_starts(page_length, chunk_size, overlap) that returns every start position."
+          - Drop a last chunk that would only repeat the overlap.
+        reference_solution: |
+          def chunk_starts(page_length, chunk_size, overlap):
+              stride = chunk_size - overlap                      # how far each chunk moves
+              starts = list(range(0, page_length, stride))       # one start per stride
+              # A last chunk shorter than the overlap holds nothing new
+              if len(starts) > 1 and page_length - starts[-1] <= overlap:
+                  starts.pop()
+              return starts
+        rubric:
+          - {criterion: "Uses the stride", passing: "Steps by chunk_size minus overlap."}
+          - {criterion: "Handles the end of the page", passing: "Drops a last start whose chunk would only repeat the overlap."}
+        hints:
+          - Start from the chunker above and turn it into a function of the page length.
+      - id: overlap-pitfall
+        type: pitfall
+        misconception: overlap-adds-tokens
+      - id: stride-check
+        type: check
+        purpose: key
+        tests: stride-idea
+        question: Size 800, overlap 100, a 2,000-token page. Where does the third chunk start?
+        options:
+          - {text: "1,400", correct: true, why_right: "The stride is 700, so starts are 0, 700 and 1,400."}
+          - {text: "1,600", correct: false, why_wrong: "That steps by the full size and ignores the overlap."}
+          - {text: "1,800", correct: false, why_wrong: "That adds the overlap instead of subtracting it."}
+      - id: stride-recap
+        type: recap
+        text: Stride equals size minus overlap. More overlap means more chunks, never bigger ones.
+        sums_up: [stride-idea, compare-overlap]
+
+  - id: choosing-a-size
+    title: Choosing a chunk size
+    minutes: 8
+    why_it_matters: The same documents can give good or poor search results depending only on chunk size.
+    must_know:
+      - Small chunks match narrow questions well but lose context.
+      - Big chunks keep context but dilute the match.
+    must_get_right:
+      - id: pick-size-for-question
+        can_do: Choose a size for a kind of question and give the trade-off behind the choice.
+        evidence: The learner picks a size for a new scenario and explains the trade-off; the grader checks both parts against a rubric.
+        objective: choose-chunk-size
+        tested_by: [defend-size-choice, bigger-is-safer-check]
+    brings_in: [stride-rule, chunk-is-slice]
+    carries_forward:
+      - id: size-trade-off
+        idea: Chunk size trades match precision against context; measure it on your own questions.
+        used_in: [beyond]
+        shown_by: [trade-off-idea, defend-size-choice]
+    misconceptions: [bigger-is-safer]
+    bridge_in:
+      text: You can now predict how settings change the chunks. The question left is which setting serves your questions.
+      recalls: [stride-rule, chunk-is-slice]
+    bridge_out:
+      text: In your own project, test two sizes on a handful of real questions before choosing.
+      points_to: beyond
+    blocks:
+      - id: predict-size
+        type: predict
+        question: Users ask exact questions like "What is the default timeout?". Which chunk size probably finds the answer best?
+        options:
+          - {text: "200 tokens", correct: true, why_right: "A short chunk around the setting is mostly about it, so it matches strongly."}
+          - {text: "2,000 tokens", correct: false, why_wrong: "A long chunk holds many settings, which dilutes the match for one of them."}
+      - id: trade-off-idea
+        type: idea
+        key: true
+        text: Small chunks match narrow questions strongly, but they can cut off the context that explains the answer. Big chunks keep context but mix topics, so the match gets weaker. The right size depends on the questions people ask.
+        more: With a fixed overlap, a smaller size means a smaller stride, so the same page gives many more chunks to store and search. This lesson does not measure the trade-off; treat it as a starting rule (inferred) and test it on your own questions.
+      - id: trade-off-check
+        type: check
+        purpose: key
+        tests: trade-off-idea
+        question: Questions are short lookups such as "max file size?". Answers are one line. What size do you start with?
+        options:
+          - {text: "Small, around 200 tokens", correct: true, why_right: "One-line answers need little context, and small chunks match lookups strongly."}
+          - {text: "Big, around 1,500 tokens", correct: false, why_wrong: "Big chunks would mix many settings and weaken the match."}
+          - {text: "It does not matter for lookups", correct: false, why_wrong: "Size changes how focused each chunk is, which matters most for lookups."}
+      - id: defend-size-choice
+        type: explain
+        instructions:
+          - Your users ask "how do I…" questions whose answers take a full paragraph.
+          - Pick small (200), medium (500) or big (1,500) chunks, and explain the trade-off in two sentences.
+        reference_solution: Medium chunks, around 500 tokens. A paragraph-length answer needs its context kept together, which rules out small chunks, but big chunks would mix several how-tos and weaken the match.
+        rubric:
+          - {criterion: "Fits the question type", passing: "The choice keeps a paragraph-length answer in one chunk."}
+          - {criterion: "States the trade-off", passing: "Names both the context gained and the precision lost or kept."}
+        hints:
+          - How long is a typical answer? Would a 200-token chunk hold it, and what else would a 1,500-token chunk hold?
+        common_wrong_answers:
+          - {answer: "Big, because more context is always safer.", misconception: bigger-is-safer, hint: "Ask what else ends up in a 1,500-token chunk besides the answer."}
+      - id: bigger-is-safer-pitfall
+        type: pitfall
+        misconception: bigger-is-safer
+      - id: bigger-is-safer-check
+        type: check
+        purpose: pitfall
+        tests: bigger-is-safer
+        question: Search keeps ranking a vaguely related chunk above the one with the exact answer. Chunks are 2,000 tokens. What is the most likely cause?
+        options:
+          - {text: "The chunks are too big, so the exact answer is a small part of its chunk", correct: true, why_right: "The answer's chunk is mostly about other things, so its match is diluted."}
+          - {text: "The chunks are too small to hold the answer", correct: false, why_wrong: "2,000 tokens easily holds an answer. Size is causing dilution, not cut-offs."}
+          - {text: "The overlap is too large", correct: false, why_wrong: "Overlap changes how many chunks there are, not how focused each one is."}
+      - id: size-recap
+        type: recap
+        text: Pick chunk size from the questions people ask; small is precise, big keeps context.
+        sums_up: [trade-off-idea, predict-size]

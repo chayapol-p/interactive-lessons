@@ -1,0 +1,10 @@
+{
+  "name": "interactive-lessons",
+  "version": "0.3.1",
+  "description": "Turns any subject, docs or a code repo into an interactive lesson page where every result is real: predictions, fill-in-the-blank exercises, an AI tutor and grading.",
+  "author": {
+    "name": "chayapol.par"
+  },
+  "license": "MIT",
+  "keywords": ["learning", "lesson", "tutorial", "education", "interactive", "quiz"]
+}

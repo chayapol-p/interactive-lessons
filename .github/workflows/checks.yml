@@ -1,0 +1,28 @@
+name: checks
+on: [pull_request, push]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml ruamel.yaml
+      - name: Example blueprints pass every check
+        run: |
+          python3 skills/building-interactive-lessons/scripts/check_blueprint.py skills/building-interactive-lessons/assets/example-blueprint.yaml --run-tests
+          python3 skills/building-interactive-lessons/scripts/check_blueprint.py skills/building-interactive-lessons/assets/example-concepts-blueprint.yaml --run-tests
+          python3 skills/building-interactive-lessons/scripts/check_blueprint.py skills/building-interactive-lessons/assets/example-monty-blueprint.yaml --run-tests
+      - name: The checker catches every deliberate break
+        run: python3 tests/check_catches_breaks.py
+      - name: Skill and plugin versions match
+        run: |
+          python3 - <<'PY'
+          import json, re, sys
+          plugin = json.load(open(".claude-plugin/plugin.json"))["version"]
+          skill = re.search(r"^\s*version:\s*(\S+)", open("skills/building-interactive-lessons/SKILL.md").read(), re.M).group(1)
+          if plugin != skill:
+              sys.exit(f"plugin.json says {plugin}, SKILL.md says {skill}")
+          print("versions match:", plugin)
+          PY

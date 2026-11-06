@@ -1,0 +1,611 @@
+# Small example with no code: the Monty Hall problem, in 3 chapters (about 20 minutes).
+# It teaches why switching wins 2 in 3: every case listed, the chance moving onto one door, and what the host knows.
+# Every chance is worked out by code; the two case tables are drawn by assets/example-monty-cases.py; a seeded simulation checks the reasoning at the end.
+
+lesson:
+  title: Stay or Switch?
+  role: standalone
+  learner:
+    knows: [basic chance, such as a coin landing heads half the time]
+    new_to: the Monty Hall puzzle, three doors and a game-show host
+    wants_to: understand why switching wins in the Monty Hall game, well enough to explain it to a friend
+    time_minutes: 20
+    assumed: true
+    assumption_note: It is written for someone new to probability. If you already know the puzzle, skim chapter 1.
+  objectives:
+    - id: list-cases
+      text: After this, you can list every case of the Monty Hall game and count how often staying and switching win.
+    - id: explain-why
+      text: After this, you can explain which door to choose after the host opens one, and why.
+    - id: explain-host
+      text: After this, you can explain why the host's knowledge, not the number of doors left, sets the odds.
+  source: "Selvin (1975), letters to The American Statistician; vos Savant (1990), Parade; cases and chances worked out by code for this lesson"
+
+theme:
+  name: Game-show magenta
+  accent: "#b5179e"
+  why: A bold magenta from the world of game-show lights; red itself is kept for wrong answers.
+
+glossary:
+  - term: host
+    definition: The person who runs the game. In the classic game he knows where the car is.
+  - term: case
+    definition: One way the game can turn out, such as "the car is behind door 2". Here every case is equally likely.
+  - term: simulation
+    definition: Playing the game many times with a computer, so the share of wins shows the odds.
+
+known_ideas:
+  - id: known-even-chance
+    idea: When every outcome is equally likely, each has the same chance, such as 1 in 2 for a coin.
+
+facts:
+  - id: fact-rules
+    statement: "In the classic game, the host always opens a door you did not pick, always shows a goat, and always offers the switch."
+    status: confirmed
+    source: "Selvin (1975), The American Statistician 29(1); vos Savant (1990), Parade"
+  - id: fact-two-thirds
+    statement: Under those rules, switching wins 2 in 3 games and staying wins 1 in 3.
+    status: confirmed
+    source: "vos Savant (1990), Parade; the case table worked out for this lesson"
+  - id: fact-many-doors
+    statement: With n doors and a host who opens every other goat door, switching wins (n − 1) in n games.
+    status: confirmed
+    source: worked out by code for this lesson (exact fractions)
+  - id: fact-guessing-host
+    statement: A host who opens a random door you did not pick shows a goat in 4 of 6 equally likely moves; in those, staying and switching each win 2.
+    status: confirmed
+    source: the case table worked out for this lesson
+  - id: fact-simulation
+    statement: "In 1,000 simulated games with a host who knows, staying won 337 and switching won 663. A guessing host needed 1,492 games to show a goat 1,000 times (492 showed the car); in those 1,000, staying won 488 and switching won 512."
+    status: confirmed
+    source: the lesson's monty module, played by computer with a fixed seed
+
+misconceptions:
+  - id: two-doors-even
+    wrong_idea: Two doors are left, so each has a 1 in 2 chance.
+    why_people_believe_it: Two closed doors look like a coin toss.
+    what_is_true: The doors are not alike. Yours was picked at random from 3; the other was kept shut by a host who knows where the car is.
+    source: "vos Savant (1990), Parade"
+  - id: host-resets-odds
+    wrong_idea: Opening a door starts a new game, so the odds are shared out again between the doors left.
+    why_people_believe_it: After the reveal it feels like a fresh choice between two doors.
+    what_is_true: Nothing about your first pick changed. Your door keeps its 1 in 3, and the other two doors' 2 in 3 ends up on the one the host leaves shut.
+    source: worked out for this lesson
+  - id: always-switch
+    wrong_idea: Switching always wins 2 in 3, whatever the host does.
+    why_people_believe_it: People who have heard of the puzzle remember the answer as "always switch".
+    what_is_true: The 2 in 3 comes from a host who knows. A host who guesses and happens to show a goat leaves the two doors even.
+    source: the case table and the simulation for this lesson
+
+shared_modules:
+  monty: |
+    """The Monty Hall game, worked out two ways: exact chances by listing cases, and a seeded simulation as a check."""
+    import random
+    from fractions import Fraction
+
+    DOORS = [1, 2, 3]
+
+    def door_chances(doors, host_has_opened):
+        """Each door's chance of hiding the car; you pick door 1. After the host (who knows) opens every other goat door,
+        door 1 keeps 1/n and the one door he leaves shut holds the rest."""
+        yours = Fraction(1, doors)
+        if not host_has_opened:
+            return [yours] * doors
+        return [yours, 1 - yours] + [Fraction(0)] * (doors - 2)
+
+    def play(host_knows, rng):
+        """One game: you always pick door 1. Returns (goat shown, stay wins, switch wins)."""
+        car = rng.choice(DOORS)
+        pick = 1
+        closed = [door for door in DOORS if door != pick]
+        if host_knows:
+            opened = rng.choice([door for door in closed if door != car])   # he always shows a goat
+        else:
+            opened = rng.choice(closed)                                     # he guesses, and may show the car
+        other = [door for door in closed if door != opened][0]
+        return opened != car, car == pick, car == other
+
+    def tally(host_knows, games, seed=2):
+        """Play until `games` games have shown a goat (games where a guessing host shows the car are thrown out)."""
+        rng = random.Random(seed)
+        counted = thrown = stay = switch = 0
+        while counted < games:
+            goat_shown, stay_wins, switch_wins = play(host_knows, rng)
+            if not goat_shown:
+                thrown += 1
+                continue
+            counted += 1
+            stay += stay_wins
+            switch += switch_wins
+        return {"games": counted, "thrown_out": thrown, "stay": stay, "switch": switch}
+
+chapters:
+
+  # ---------------------------------------------------------------- 1
+  - id: every-case
+    title: List every case
+    minutes: 8
+    why_it_matters: The answer feels obvious to almost everyone. This chapter checks it, case by case.
+    must_know:
+      - You pick door 1, and the car is equally likely to be behind door 1, 2 or 3.
+      - The host knows where the car is and always opens a goat door, so in 2 of the 3 cases he has only one door he can open.
+    must_get_right:
+      - id: count-cases
+        can_do: List the 3 cases and count that switching wins in 2 of them.
+        evidence: The learner fills in how many cases switching wins; each wrong pick shows the count from the table.
+        objective: list-cases
+        tested_by: [cases-count]
+      - id: not-even
+        can_do: Spot why two closed doors are not a 1 in 2 choice.
+        evidence: A pitfall check on the even-odds idea.
+        objective: explain-why
+        tested_by: [even-check]
+    brings_in: [known-even-chance]
+    carries_forward:
+      - id: first-pick-third
+        idea: Your first pick is right 1 time in 3, and switching wins in every case where it was wrong.
+        used_in: [where-the-chance-goes]
+        shown_by: [cases-idea, cases-table]
+    misconceptions: [two-doors-even]
+    bridge_in:
+      text: You know that when every outcome is equally likely, each has the same chance. This game looks like a 1 in 2 choice. Let's check.
+      recalls: [known-even-chance]
+    bridge_out:
+      text: Next, follow the chance door by door when the host opens his door.
+      points_to: where-the-chance-goes
+    blocks:
+      - id: predict-game
+        type: predict
+        question: "Three doors: a car behind one, goats behind two. You pick door 1. The host, who knows where the car is, opens door 3 and shows a goat, then offers you door 2. What should you do?"
+        options:
+          - {text: "Stay with door 1", correct: false, why_wrong: "Your first pick was a 1 in 3 guess, and the host's move did not change that."}
+          - {text: "Switch to door 2", correct: true, why_right: "Door 2 wins whenever your first pick was wrong, which is 2 times in 3."}
+          - {text: "It does not matter, it's 50/50", correct: false, why_wrong: "The two doors are not alike: the host chose which one to leave shut."}
+      - id: many-doors-slider
+        type: diagram
+        shape: change-over-time
+        brief:
+          understand: "Start big: slide to 100 doors. You pick one, the host opens 98 goat doors and leaves one closed. Which would you take?"
+          how_it_helps: "A slider over 3, 10 and 100 doors: bars out of 100 games for your door and for the one door the host leaves closed."
+          clearer_than_text: At 100 doors, a 1 in 100 against 99 in 100 makes switching feel obvious.
+        figure:
+          kind: frames
+          control: slider
+          control_label: Slide to 100 doors
+          computed_by:
+            language: python
+            code: |
+              import json
+              from monty import door_chances
+              frames = []
+              for doors in [3, 10, 100]:
+                  yours, other = door_chances(doors, True)[:2]
+                  frames.append({"label": str(doors), "figure": {"kind": "bars", "max": 100, "bars": [
+                      {"label": "Your door", "value": round(100 * float(yours)), "note": f"{yours.numerator} in {yours.denominator}"},
+                      {"label": "The other", "value": round(100 * float(other)), "note": f"{other.numerator} in {other.denominator}"}]}})
+              print(json.dumps({"frames": frames}))
+          frames:
+            - label: '3'
+              figure:
+                kind: bars
+                max: 100
+                bars:
+                  - label: Your door
+                    value: 33
+                    note: 1 in 3
+                  - label: The other
+                    value: 67
+                    note: 2 in 3
+            - label: '10'
+              figure:
+                kind: bars
+                max: 100
+                bars:
+                  - label: Your door
+                    value: 10
+                    note: 1 in 10
+                  - label: The other
+                    value: 90
+                    note: 9 in 10
+            - label: '100'
+              figure:
+                kind: bars
+                max: 100
+                bars:
+                  - label: Your door
+                    value: 1
+                    note: 1 in 100
+                  - label: The other
+                    value: 99
+                    note: 99 in 100
+      - id: cases-idea
+        type: idea
+        key: true
+        text: "Don't argue about it: list every case. The car is behind door 1, 2 or 3, each equally likely, and you always pick door 1. When the car is behind door 2 or 3, the host has only one goat door he can open, so the other closed door must hide the car."
+        more: "Try it at home with three cups and a coin. A friend hides the coin and, after you pick a cup, lifts an empty one you didn't pick. Play 15 rounds staying and 15 switching, and count the coins."
+      - id: cases-table
+        type: diagram
+        shape: comparison
+        brief:
+          understand: Each row is one place the car can be, equally likely. Count the ticks in each column.
+          how_it_helps: "One row per place the car can be. Each row shows the three doors, the door the host must open, and whether staying or switching wins."
+          clearer_than_text: Seeing two of the three rows end in a switching win settles the argument in one look.
+        figure:
+          kind: svg
+          svg: |
+            <svg viewBox="0 0 340 204" role="img" aria-label="You pick door 1. Car behind door 1: the host opens 2 or 3, still one case, and staying wins. Car behind door 2: the host opens 3, switching wins. Car behind door 3: the host opens 2, switching wins."><text x="64" y="22" class="svg-text small">Door 1 · 2 · 3 (you pick 1)</text><text x="232" y="22" text-anchor="middle" class="svg-text small">Stay</text><text x="300" y="22" text-anchor="middle" class="svg-text small">Switch</text><text x="4" y="63" class="svg-text small">Car: 1</text><rect x="64" y="44" width="34" height="30" rx="4" class="svg-box hot"/><text x="81" y="63" text-anchor="middle" class="svg-text small">car</text><rect x="104" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="121" y="63" text-anchor="middle" class="svg-text small">goat</text><rect x="144" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="161" y="63" text-anchor="middle" class="svg-text small">goat</text><text x="64" y="88" class="svg-text small dim">opens 2 or 3 (one case)</text><text x="232" y="63" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="300" y="63" text-anchor="middle" class="svg-text dim">✗</text><text x="4" y="115" class="svg-text small">Car: 2</text><rect x="64" y="96" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="115" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="96" width="34" height="30" rx="4" class="svg-box hot"/><text x="121" y="115" text-anchor="middle" class="svg-text small">car</text><rect x="144" y="96" width="34" height="30" rx="4" class="svg-box ghost"/><text x="161" y="115" text-anchor="middle" class="svg-text small dim">open</text><text x="64" y="140" class="svg-text small dim">must open 3</text><text x="232" y="115" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="115" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="4" y="167" class="svg-text small">Car: 3</text><rect x="64" y="148" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="167" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="148" width="34" height="30" rx="4" class="svg-box ghost"/><text x="121" y="167" text-anchor="middle" class="svg-text small dim">open</text><rect x="144" y="148" width="34" height="30" rx="4" class="svg-box hot"/><text x="161" y="167" text-anchor="middle" class="svg-text small">car</text><text x="64" y="192" class="svg-text small dim">must open 2</text><text x="232" y="167" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="167" text-anchor="middle" class="svg-text hot">✓ wins</text></svg>
+      - id: one-case-idea
+        type: idea
+        text: "Picture 300 games. In about 100, the car is behind your door: the host opens door 2 or door 3, but it is still those same 100 games, and staying wins them. In the other 200, he has no choice, and switching wins them all."
+      - id: cases-count
+        type: fill_blanks
+        instructions:
+          - Fill the blank with how many of the 3 cases switching wins.
+          - See what the table shows for each choice.
+        language: text
+        source: the case table
+        context_note: The table above, with one row per place the car can be.
+        text: "Of the 3 equally likely cases, switching wins in {{count}}."
+        blanks:
+          - id: count
+            options:
+              - text: 2 of them
+                correct: true
+                why_right: Switching wins whenever the car is not behind your door, and that is 2 of the 3 cases.
+                output: "Car behind door 2: the host must open 3, switching wins. Car behind door 3: he must open 2, switching wins. Only the car behind door 1 makes staying win."
+                output_from: worked
+                output_source: the case table above
+              - text: half of them, since two doors are left
+                correct: false
+                why_wrong: The table has 3 equally likely rows, not 2, and switching wins in 2 of them.
+                misconception: two-doors-even
+                output: "There is no half: the table has 3 equally likely rows, and switching wins in 2 of them."
+                output_from: worked
+                output_source: the case table above
+              - text: 1 of them
+                correct: false
+                why_wrong: That is staying's count. Staying wins only when the car was behind door 1 all along.
+                misconception: host-resets-odds
+                output: "Staying wins 1 case, the car behind door 1. Switching wins the other 2."
+                output_from: worked
+                output_source: the case table above
+        hints:
+          - In which rows does the car sit behind a door you did not pick?
+      - id: cases-key-check
+        type: check
+        purpose: key
+        tests: cases-idea
+        question: "Same game, but this time you pick door 2, and the host, who knows, opens door 1 to show a goat. List the cases: how often does switching to door 3 win?"
+        options:
+          - {text: "2 times in 3", correct: true, why_right: "The door numbers change nothing: your pick is right 1 time in 3, and switching wins the other 2."}
+          - {text: "1 time in 2", correct: false, why_wrong: "The cases are the same 3 as before, with different numbers on the doors."}
+          - {text: "1 time in 3", correct: false, why_wrong: "That is how often staying wins."}
+      - id: even-pitfall
+        type: pitfall
+        misconception: two-doors-even
+      - id: even-check
+        type: check
+        purpose: pitfall
+        tests: two-doors-even
+        question: "A friend says: \"Once a goat is shown, two doors are left, so it's 1 in 2 each.\" Using the case table, what is the flaw?"
+        options:
+          - {text: "There are 3 equally likely cases, not 2, and the other closed door wins in 2 of them", correct: true, why_right: "Counting doors left is not counting cases."}
+          - {text: "Nothing: once a door is open, the two left share the chance evenly, like a coin", correct: false, why_wrong: "Opening a door is not a new coin toss; the table shows switching winning 2 of 3 cases."}
+          - {text: "Your door gains the opened door's share, so staying is now better", correct: false, why_wrong: "The host never touches your door; the opened door's share goes to the other closed door."}
+      - id: cases-recap
+        type: recap
+        text: List every case. Your pick is right 1 time in 3, and switching wins in every case where it was wrong, 2 times in 3.
+        sums_up: [cases-idea, cases-table]
+
+  # ---------------------------------------------------------------- 2
+  - id: where-the-chance-goes
+    title: Where the chance goes
+    minutes: 6
+    why_it_matters: Listing cases proves it. This chapter makes it feel obvious, so you can explain it to anyone.
+    must_know:
+      - Your door keeps its 1 in 3 when the host opens a door.
+      - The other two doors share 2 in 3, and the host's reveal moves all of it onto the one he leaves shut.
+    must_get_right:
+      - id: track-chance
+        can_do: Say each door's chance before and after the host opens his door.
+        evidence: The learner picks door 2's chance after the reveal; each wrong pick shows the worked chances.
+        objective: explain-why
+        tested_by: [after-chance]
+      - id: many-doors
+        can_do: Apply the idea to more doors.
+        evidence: A key check with 100 doors.
+        objective: explain-why
+        tested_by: [hundred-check]
+    brings_in: [first-pick-third]
+    carries_forward:
+      - id: host-knows
+        idea: The host knows where the car is, so the door he leaves shut collects the other doors' whole chance.
+        used_in: [what-the-host-knows]
+        shown_by: [groups-idea, before-after]
+    misconceptions: [host-resets-odds]
+    bridge_in:
+      text: Your first pick is right 1 time in 3, and switching wins whenever it was wrong. Now follow the chance itself, door by door.
+      recalls: [first-pick-third]
+    bridge_out:
+      text: Next, take away the host's knowledge and watch what happens to the odds.
+      points_to: what-the-host-knows
+    blocks:
+      - id: predict-after
+        type: predict
+        question: "Before the host opens anything, your door 1 has a 1 in 3 chance. He opens door 3 and shows a goat. What is your door's chance now?"
+        options:
+          - {text: "1 in 2, now that two doors are left", correct: false, why_wrong: "Whatever is behind your door, he can always find a goat to show, so your door keeps its 1 in 3."}
+          - {text: "Still 1 in 3", correct: true, why_right: "Nothing about your door changed."}
+          - {text: "Less than 1 in 3", correct: false, why_wrong: "Nothing happened to your door; it keeps what it had."}
+      - id: groups-idea
+        type: idea
+        key: true
+        text: "Split the doors into two groups: your door, with 1 in 3, and the other two, with 2 in 3 together. The host opens a goat door in the other group, which he can always do, so nothing changes for your door: it stays at 1 in 3. The other group keeps its 2 in 3, now all on the one door he left closed."
+      - id: before-after
+        type: diagram
+        shape: change-over-time
+        brief:
+          understand: "Tap through the three steps: the host's reveal moves door 3's share onto door 2, never onto your door."
+          how_it_helps: "Bars out of 100 games, with three buttons: each door (33, 33, 33), the two groups (33 against 67), and after the reveal (33, 67, 0)."
+          clearer_than_text: Watching door 2's bar double while yours stays put shows where the 2 in 3 comes from.
+        figure:
+          kind: frames
+          control: buttons
+          control_label: Step
+          computed_by:
+            language: python
+            code: |
+              import json
+              from monty import door_chances
+              names = ["Door 1 (yours)", "Door 2", "Door 3"]
+              frames = []
+              def bar(name, chance, note=None):
+                  return {"label": name, "value": round(100 * float(chance)), "note": note or (f"{chance.numerator} in {chance.denominator}" if chance else "opened")}
+              before, after = door_chances(3, False), door_chances(3, True)
+              frames = [
+                  {"label": "Before", "caption": "Each door wins about 33 games in 100.",
+                   "figure": {"kind": "bars", "max": 100, "bars": [bar(n, c) for n, c in zip(names, before)]}},
+                  {"label": "Two groups", "caption": "Your door: 33. The other two together: 67.",
+                   "figure": {"kind": "bars", "max": 100, "bars": [bar(names[0], before[0]), bar("Doors 2 + 3", before[1] + before[2], "together")]}},
+                  {"label": "After", "caption": "Door 3 is open and empty, so door 2 holds all 67.",
+                   "figure": {"kind": "bars", "max": 100, "bars": [bar(n, c) for n, c in zip(names, after)]}},
+              ]
+              print(json.dumps({"frames": frames}))
+          frames:
+            - label: Before
+              caption: Each door wins about 33 games in 100.
+              figure:
+                kind: bars
+                max: 100
+                bars:
+                  - label: Door 1 (yours)
+                    value: 33
+                    note: 1 in 3
+                  - label: Door 2
+                    value: 33
+                    note: 1 in 3
+                  - label: Door 3
+                    value: 33
+                    note: 1 in 3
+            - label: Two groups
+              caption: 'Your door: 33. The other two together: 67.'
+              figure:
+                kind: bars
+                max: 100
+                bars:
+                  - label: Door 1 (yours)
+                    value: 33
+                    note: 1 in 3
+                  - label: Doors 2 + 3
+                    value: 67
+                    note: together
+            - label: After
+              caption: Door 3 is open and empty, so door 2 holds all 67.
+              figure:
+                kind: bars
+                max: 100
+                bars:
+                  - label: Door 1 (yours)
+                    value: 33
+                    note: 1 in 3
+                  - label: Door 2
+                    value: 67
+                    note: 2 in 3
+                  - label: Door 3
+                    value: 0
+                    note: opened
+      - id: after-chance
+        type: fill_blanks
+        instructions:
+          - Fill the blank with door 2's chance after the host opens door 3.
+          - See the worked chances for each choice.
+        language: text
+        source: the Before and After bars
+        context_note: The bars above, after the host has opened door 3.
+        text: "After the host opens door 3, door 2's chance of hiding the car is {{chance}}."
+        blanks:
+          - id: chance
+            options:
+              - text: 2 in 3
+                correct: true
+                why_right: Door 2 now holds the whole 2 in 3 that doors 2 and 3 shared.
+                output: "Door 1 stays at 1 in 3. Doors 2 and 3 had 2 in 3 together; door 3 is out, so door 2 holds all 2 in 3."
+                output_from: worked
+                output_source: counting the cases
+              - text: 1 in 2
+                correct: false
+                why_wrong: The reveal is not a new game; your door keeps its 1 in 3.
+                misconception: host-resets-odds
+                output: "1 in 2 would mean your door's chance grew from 1 in 3, but the host never touches your door. Door 2 holds 2 in 3."
+                output_from: worked
+                output_source: counting the cases
+              - text: 1 in 3, like before
+                correct: false
+                why_wrong: Door 3's share cannot vanish, and it cannot move to your door.
+                misconception: two-doors-even
+                output: "Then the chances would add up to only 2 in 3. Door 3's share moves onto door 2: 1 in 3 plus 1 in 3 makes 2 in 3."
+                output_from: worked
+                output_source: counting the cases
+        hints:
+          - Chances always add up to 1. Which door can door 3's share move to?
+      - id: hundred-check
+        type: check
+        purpose: key
+        tests: groups-idea
+        question: "100 doors, one car. You pick door 1. The host, who knows, opens 98 goat doors and leaves door 57 shut. How often does switching to door 57 win?"
+        options:
+          - {text: "99 times in 100", correct: true, why_right: "Your door keeps 1 in 100; the other 99 doors' chance all lands on door 57."}
+          - {text: "1 time in 2", correct: false, why_wrong: "Two doors are left, but the host chose which one to keep shut."}
+          - {text: "1 time in 100", correct: false, why_wrong: "That is your own door's chance."}
+      - id: reset-pitfall
+        type: pitfall
+        misconception: host-resets-odds
+      - id: chance-recap
+        type: recap
+        text: Your door keeps its 1 in 3; the host moves the other doors' whole 2 in 3 onto the one he leaves shut.
+        sums_up: [groups-idea, before-after]
+
+  # ---------------------------------------------------------------- 3
+  - id: what-the-host-knows
+    title: What the host knows
+    minutes: 6
+    why_it_matters: Change one thing about the host, and see whether your answer still holds.
+    must_know:
+      - A host who guesses sometimes reveals the car, which ends the game.
+      - When a guessing host happens to show a goat, the two closed doors are even.
+    must_get_right:
+      - id: guessing-host
+        can_do: List the guessing host's moves and count the wins.
+        evidence: The learner fills in the switching wins for a guessing host; each wrong pick shows the table's count.
+        objective: explain-host
+        tested_by: [guess-count, host-key-check]
+    brings_in: [host-knows]
+    carries_forward:
+      - id: knowledge-sets-odds
+        idea: What the other side knows when it acts is what sets the odds.
+        used_in: [beyond]
+        shown_by: [host-idea, guesses-table]
+    misconceptions: [always-switch]
+    bridge_in:
+      text: The 2 in 3 came from a host who knows where the car is. Now take that knowledge away.
+      recalls: [host-knows]
+    bridge_out:
+      text: "Ask the same question whenever someone acts before you choose: what did they know when they acted?"
+      points_to: beyond
+    blocks:
+      - id: predict-guess
+        type: predict
+        question: "This time the host does not know where the car is. He opens door 3 at random, and it happens to be a goat. Should you switch?"
+        options:
+          - {text: "Yes, switching still wins 2 in 3", correct: false, why_wrong: "The 2 in 3 needed a host who knew."}
+          - {text: "It no longer matters: both doors are even", correct: true, why_right: "A goat he found by luck gives the other closed door no extra chance."}
+          - {text: "No, staying now wins", correct: false, why_wrong: "Neither door is favoured; the guess carries no information."}
+      - id: guesses-table
+        type: diagram
+        shape: comparison
+        brief:
+          understand: The host who knows turns the 2 'shows the car' games into switching wins; the host who guesses throws them away.
+          how_it_helps: "Six rows, one per equally likely way the game goes (3 car spots × 2 doors he might pick), with two columns: a host who guesses and a host who knows."
+          clearer_than_text: Seeing the same two rows end differently for the two hosts shows exactly where the 2 in 3 comes from.
+        figure:
+          kind: svg
+          svg: |
+            <svg viewBox="0 0 340 308" role="img" aria-label="The same 6 equally likely moves for two hosts. A host who guesses shows the car in 2 of them, so those games end; of the 4 left, staying wins 2 and switching 2. A host who knows opens the other door in those 2 moves, so they become switching wins: staying 2, switching 4 of 6."><text x="4" y="18" class="svg-text small">Car / host picks</text><text x="132" y="18" class="svg-text small">Host guesses</text><text x="240" y="18" class="svg-text small">Host knows</text><text x="4" y="44" class="svg-text small">Car 1, host</text><text x="4" y="58" class="svg-text small">picks door 2</text><text x="132" y="44" class="svg-text small">stay ✓</text><text x="240" y="44" class="svg-text small">stay ✓</text><text x="4" y="84" class="svg-text small">Car 1, host</text><text x="4" y="98" class="svg-text small">picks door 3</text><text x="132" y="84" class="svg-text small">stay ✓</text><text x="240" y="84" class="svg-text small">stay ✓</text><text x="4" y="124" class="svg-text small">Car 2, host</text><text x="4" y="138" class="svg-text small">picks door 2</text><text x="132" y="124" class="svg-text small dim">shows the car</text><text x="132" y="138" class="svg-text small dim">game over</text><text x="240" y="124" class="svg-text small hot">switch ✓</text><text x="240" y="138" class="svg-text small">skips it, opens 3</text><text x="4" y="164" class="svg-text small">Car 2, host</text><text x="4" y="178" class="svg-text small">picks door 3</text><text x="132" y="164" class="svg-text small hot">switch ✓</text><text x="240" y="164" class="svg-text small hot">switch ✓</text><text x="4" y="204" class="svg-text small">Car 3, host</text><text x="4" y="218" class="svg-text small">picks door 2</text><text x="132" y="204" class="svg-text small hot">switch ✓</text><text x="240" y="204" class="svg-text small hot">switch ✓</text><text x="4" y="244" class="svg-text small">Car 3, host</text><text x="4" y="258" class="svg-text small">picks door 3</text><text x="132" y="244" class="svg-text small dim">shows the car</text><text x="132" y="258" class="svg-text small dim">game over</text><text x="240" y="244" class="svg-text small hot">switch ✓</text><text x="240" y="258" class="svg-text small">skips it, opens 2</text><line x1="4" y1="266" x2="336" y2="266" class="svg-line dim"/><text x="4" y="286" class="svg-text small">Wins</text><text x="132" y="286" class="svg-text small">stay 2, switch 2</text><text x="132" y="300" class="svg-text small dim">of 4 games left</text><text x="240" y="286" class="svg-text small hot">stay 2, switch 4</text><text x="240" y="300" class="svg-text small dim">of 6</text></svg>
+      - id: host-idea
+        type: idea
+        key: true
+        text: "Same goat, different meaning. A host who knows could never have shown the car; a guesser could have, and just didn't this time. So the 2 'shows the car' games become switching wins for the knowing host, and are simply thrown out for the guesser."
+      - id: halves-idea
+        type: idea
+        text: "Car behind your door: whichever door he opens, staying wins. Car behind another door: a guessing host opens the car's door half the time, and those games are thrown out. So switching loses half its wins and ends up level with staying."
+      - id: guess-count
+        type: fill_blanks
+        instructions:
+          - Fill the blank with how many of the 4 games left switching wins.
+          - See what the table shows.
+        language: text
+        source: the guessing host's table
+        context_note: The table above; only the moves that show a goat count.
+        text: "When the host guesses and shows a goat, switching wins {{count}} of the 4 games left."
+        blanks:
+          - id: count
+            options:
+              - text: "2"
+                correct: true
+                why_right: Car 2 with door 3 opened, and car 3 with door 2 opened. Staying wins the other 2.
+                output: "Switching wins 2 of 4 and staying wins 2 of 4: even. Playing it by computer agrees: in 1,000 games where a guessing host showed a goat, switching won 512 and staying 488."
+                output_from: worked
+                output_source: the case table, and 1,000 games played by computer
+              - text: "3, still 2 in 3 or so"
+                correct: false
+                why_wrong: The 2 in 3 came from a host who knows; a guess carries no information.
+                misconception: always-switch
+                output: "Only 2 of the 4 rows end in a switching win. The rows where a knowing host would have been forced to open a goat door are now split by luck."
+                output_from: worked
+                output_source: the case table above
+              - text: "1"
+                correct: false
+                why_wrong: Count the switching ticks again; there are 2.
+                misconception: host-resets-odds
+                output: "Switching wins 2 of the 4 goat moves: car behind 2 with door 3 opened, and car behind 3 with door 2 opened."
+                output_from: worked
+                output_source: the case table above
+        hints:
+          - Cross out the rows that show the car, then count the switching ticks.
+      - id: simulation-check
+        type: diagram
+        shape: comparison
+        brief:
+          understand: "A simulation, the game played by computer: 1,000 games for each host, counting only games where a goat was shown. With a host who knows, switching wins about 2 in 3. With a host who guesses, they come out about equal; a small gap like 488 against 512 is just luck, like coin flips."
+          how_it_helps: "Buttons switch between a host who knows and one who guesses; bars for staying and switching wins."
+          clearer_than_text: Seeing 663 against 337, then about even, ties the reasoning to real play.
+        figure:
+          kind: frames
+          control: buttons
+          control_label: The host
+          computed_by:
+            language: python
+            code: |
+              import json
+              from monty import tally
+              frames = []
+              for label, knows, games in [("Knows", True, 1000), ("Guesses", False, 1000)]:
+                  wins = tally(host_knows=knows, games=games)
+                  frames.append({"label": label, "figure": {"kind": "bars", "max": 1000,
+                                 "bars": [{"label": "Stay", "value": wins["stay"]}, {"label": "Switch", "value": wins["switch"]}]}})
+              print(json.dumps({"frames": frames}))
+          frames:
+            - label: Knows
+              figure:
+                kind: bars
+                max: 1000
+                bars:
+                  - label: Stay
+                    value: 337
+                  - label: Switch
+                    value: 663
+            - label: Guesses
+              figure:
+                kind: bars
+                max: 1000
+                bars:
+                  - label: Stay
+                    value: 488
+                  - label: Switch
+                    value: 512
+      - id: host-key-check
+        type: check
+        purpose: key
+        tests: host-idea
+        question: "Two shows run tonight. In Show A the host knows where the car is; in Show B he picks a door at random. Both hosts open a door and show a goat. Where does switching help?"
+        options:
+          - {text: "Only in Show A", correct: true, why_right: "Only a host who knows moves chance onto the door he leaves shut."}
+          - {text: "In both shows", correct: false, why_wrong: "Show B's goat was luck; its table splits 2 and 2."}
+          - {text: "In neither show", correct: false, why_wrong: "Show A's host had to leave the car shut whenever your pick was wrong."}
+      - id: always-pitfall
+        type: pitfall
+        misconception: always-switch
+      - id: host-recap
+        type: recap
+        text: The odds come from what the host knew when he acted; a host who guesses leaves the two doors even.
+        sums_up: [host-idea, guesses-table]

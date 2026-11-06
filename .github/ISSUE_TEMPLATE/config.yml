@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How to use it
+    url: https://github.com/chayapol-p/interactive-lessons#try-it
+    about: Start with Try it in the README; open an issue if something goes wrong.

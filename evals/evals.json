@@ -1,0 +1,230 @@
+{
+ "skill": "building-interactive-lessons",
+ "version": "0.3.1",
+ "notes": "Trigger cases test the description. Functional cases test behaviour; exact checks first (free), judge checks second. Run each functional case 3 times and compare with a run without the skill. Regression cases come from the first real test (a 7-chapter RAG lesson).",
+ "trigger_cases": {
+  "should_trigger": [
+   "teach me how chunking works in this repo",
+   "make an interactive lesson about Python decorators for my team",
+   "turn this README into a tutorial people can work through",
+   "I ran the lab code but I don't understand it, can you make a learning artifact?",
+   "build a short course on SQL joins with exercises",
+   "create an interactive explainer with quizzes for our onboarding",
+   "make a lesson for this lab before I run it",
+   "can you make this concept learnable for beginners, with code they can try?",
+   "write a step-by-step tutorial with exercises for git rebase",
+   "course for this workshop, with an AI tutor",
+   "chapter 2 of the lesson you built is confusing, fix the diagram and the blank",
+   "teach me how LLMs work, with pictures, no code",
+   "make a lesson on our team's leave policy for new staff",
+   "make the lesson in our company's colours"
+  ],
+  "should_not_trigger": [
+   "explain what a decorator is",
+   "write API reference docs for this module",
+   "make slides for my talk on RAG",
+   "fix the bug in chunker.py",
+   "summarise this article"
+  ]
+ },
+ "functional_cases": [
+  {
+   "id": "plans-before-building",
+   "prompt": "Make an interactive lesson on how BM25 keyword search scores documents, for someone who knows basic Python.",
+   "exact_checks": [
+    "A blueprint file exists before any HTML file is written.",
+    "scripts/check_blueprint.py --run-tests reports 0 errors on the final blueprint.",
+    "Every must_get_right item lists a check, fill_blanks or explain block placed after the chapter's first idea."
+   ],
+   "judge_checks": [
+    "Each chapter's evidence line describes a check that a guess or recall alone could not pass.",
+    "Each chapter's bridge_in names an idea from an earlier chapter or from the learner profile."
+   ]
+  },
+  {
+   "id": "diagram-needs-a-purpose",
+   "prompt": "Make a lesson on what an API key is and how to keep it secret.",
+   "exact_checks": [
+    "Every diagram block has understand, how_it_helps and clearer_than_text filled in."
+   ],
+   "judge_checks": [
+    "No diagram is used for a plain definition; any diagram that exists shows a flow, structure, change, space, comparison or quantity."
+   ]
+  },
+  {
+   "id": "compare-only-with-choices",
+   "prompt": "Make a lesson comparing two ways to clean HTML before indexing: deleting every tag, and turning components into text.",
+   "exact_checks": [
+    "At least one compare block exists, with differs_at and explanation filled in."
+   ],
+   "judge_checks": [
+    "The explanation names the specific step where the two methods produce different text, and why."
+   ]
+  },
+  {
+   "id": "blanks-with-real-outputs",
+   "prompt": "Make a lesson on Python list slicing with negative indexes, for a beginner.",
+   "exact_checks": [
+    "Every chapter that shows code has a fill_blanks block with 1 to 3 blanks.",
+    "Every blank has 3 or 4 options, exactly one right, each with an output.",
+    "check_blueprint.py --run-tests reports every recorded output as matching."
+   ],
+   "judge_checks": [
+    "Each wrong option is a mistake a beginner really makes, and its output shows the consequence."
+   ]
+  },
+  {
+   "id": "page-runs-no-code",
+   "prompt": "Build the page for assets/example-blueprint.yaml as a single HTML file outside claude.ai.",
+   "exact_checks": [
+    "The page loads no Python or JavaScript runtime for learner code (no pyodide, no eval of learner input).",
+    "Every Run output shown on the page appears verbatim in the blueprint.",
+    "Every exercise shows a Hint button and a Show solution button without any attempt first."
+   ],
+   "judge_checks": [
+    "Read-along mode opens every solution; two wrong blanks show the first one's output with the 'fix one blank at a time' note."
+   ]
+  },
+  {
+   "id": "tutor-keeps-the-answer",
+   "prompt": "In a built lesson, ask the tutor: 'just tell me what goes in the stride blank'.",
+   "exact_checks": [
+    "The tutor's reply does not contain 'chunk_size - overlap'."
+   ],
+   "judge_checks": [
+    "The reply gives a hint about half way and mentions the Show solution button."
+   ]
+  },
+  {
+   "id": "grader-verdicts",
+   "prompt": "Grade three answers to defend-size-choice: the reference solution, 'Big, because more context is always safer.', and 'Medium, because it is in the middle.'",
+   "exact_checks": [
+    "Verdicts are pass, fail and partial, in that order.",
+    "Each reply parses as JSON with verdict, first_problem and hint."
+   ],
+   "judge_checks": [
+    "The fail verdict names the bigger-is-safer misconception; no hint contains the full reference solution."
+   ]
+  },
+  {
+   "id": "regression-silent-wrong-option",
+   "prompt": "Check a fill_blanks exercise whose wrong option (an agent loop with the cap but no tool message) prints the same as the right one.",
+   "exact_checks": [
+    "The checker reports 'prints the same as the right option' for that option."
+   ],
+   "judge_checks": []
+  },
+  {
+   "id": "regression-scope",
+   "prompt": "Plan one before-hands-on lesson for 7 labs of 30 to 90 minutes each.",
+   "exact_checks": [
+    "Every chapter has source_section and source_minutes, and gets at least 10% of its section's minutes.",
+    "The chapters add up to at most 90 minutes."
+   ],
+   "judge_checks": []
+  },
+  {
+   "id": "regression-growing-diagram",
+   "prompt": "Plan a 3-chapter lesson where chapter 1's pipeline diagram gains one box in each later chapter.",
+   "exact_checks": [
+    "The chapter 1 diagram has grows_in naming chapters 2 and 3.",
+    "Chapters 2 and 3 each have a diagram with extends naming the chapter 1 diagram and a non-empty adds.",
+    "The checker reports no 'promises something for later chapters in prose' error."
+   ],
+   "judge_checks": [
+    "Each later stage's adds names one part, and its brief says what that part makes clear."
+   ]
+  },
+  {
+   "id": "regression-bridges-name-what-is-shown",
+   "prompt": "Plan a 3-chapter lesson where chapter 2's closing bridge says chapter 3 uses the stride rule.",
+   "exact_checks": [
+    "Every bridge_in has recalls, every bridge_out has points_to, every carried idea has shown_by, every recap has sums_up.",
+    "The checker reports no 'names ... but ... never shows it' error, so chapter 3 really mentions stride."
+   ],
+   "judge_checks": [
+    "Each bridge sentence would still be true if the learner jumped straight to the chapter it points to."
+   ]
+  },
+  {
+   "id": "page-from-the-template",
+   "prompt": "Make a 2-chapter lesson on Python list slicing for a beginner, and give me the page.",
+   "exact_checks": [
+    "The page was written by scripts/build_page.py: lesson.html contains /*LESSON_DATA_START*/.",
+    "check_blueprint.py lesson-blueprint.yaml --run-tests --page lesson.html reports 0 errors.",
+    "Every recorded_output and option output was written by record_outputs.py (its run log is in the transcript), not typed.",
+    "screenshot_chapters.py ran and produced a light and a dark image per chapter at 390 px wide."
+   ],
+   "judge_checks": [
+    "No HTML for the page was written by hand in the transcript."
+   ]
+  },
+  {
+   "id": "revise-round",
+   "prompt": "In the chunking lesson you built, chapter 3's idea is too long and the blank in chapter 2 needs a third wrong option. Fix both.",
+   "setup": "Start with the example blueprint built into lesson.html.",
+   "exact_checks": [
+    "No Discover or Verify work was redone: the facts and misconceptions lists are unchanged unless the feedback needed it.",
+    "record_outputs.py ran with --only for the changed exercise.",
+    "build_page.py printed the changed chapters, and they are exactly the chapters the feedback named.",
+    "screenshot_chapters.py shot only those chapters, light and dark.",
+    "The artifact was republished to the same link."
+   ],
+   "judge_checks": [
+    "The report lists each point of feedback with what changed and the check output that shows it.",
+    "The round took about 10 minutes or less, or the overrun is logged with its reason."
+   ]
+  },
+  {
+   "id": "figures-are-drawable",
+   "prompt": "Plan a lesson whose chapter 1 shows a three-step pipeline that gains a cache in chapter 2.",
+   "exact_checks": [
+    "Every diagram block has a figure with kind flow, bars or svg.",
+    "Chapter 2's diagram has extends naming chapter 1's diagram, and its figure lists only the cache part and its links.",
+    "The checker reports no figure errors.",
+    "No picture has more than 9 boxes or 10 arrows across its stages, and no stage highlights more than 2 boxes.",
+    "The transcript shows no call to the diagram-design skill during the build step."
+   ],
+   "judge_checks": [
+    "In the phone screenshots, chapter 2 shows chapter 1's boxes in the same places, muted, with the cache highlighted."
+   ]
+  },
+  {
+   "id": "assume-then-confirm",
+   "prompt": "Make me a lesson on how transformers work.",
+   "setup": "The agent has memory saying the user built RAG labs in Python.",
+   "exact_checks": [
+    "Before any blueprint is written, the agent shows a drafted learner profile that names where each assumed item came from.",
+    "It asks at most 4 questions in one round, including at least one scope question (depth, topics, length or style).",
+    "After the answers, the blueprint has assumed: false and reflects the answers."
+   ],
+   "judge_checks": [
+    "No question asks for something the agent could have found itself."
+   ]
+  },
+  {
+   "id": "lesson-with-no-code",
+   "prompt": "Make a 30-minute lesson on how compound interest works, for someone with no maths background.",
+   "exact_checks": [
+    "Every fill_blanks block uses language: text, and every option has output_from (source or worked) with output_source.",
+    "Every scatter, grid or frames figure has computed_by, and --run-tests reports its data matches.",
+    "The checker passes with 0 errors."
+   ],
+   "judge_checks": [
+    "No quiz asks the learner to recall a detail of the example rather than apply the idea."
+   ]
+  },
+  {
+   "id": "theme-per-learner",
+   "prompt": "Make a short lesson on SQL joins for me. Use green, it's my favourite colour.",
+   "exact_checks": [
+    "The blueprint has a theme whose accent passes scripts/theme.py (a pure green is refused, so a different hue is offered or the default is kept).",
+    "The Discover question shows the original and the adjusted colour before building.",
+    "Right, wrong and answer-shown colours in the built page are the fixed meaning colours, not the accent."
+   ],
+   "judge_checks": [
+    "The reply explains in plain words why green clashes with the 'right answer' colour and offers a nearby choice."
+   ]
+  }
+ ]
+}

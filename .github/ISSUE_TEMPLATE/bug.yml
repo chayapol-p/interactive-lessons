@@ -1,0 +1,26 @@
+name: Something went wrong
+description: A lesson built wrong, a check missed a problem, or the page misbehaves.
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you asked for, and what you got.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: The checker output, a screenshot, or the blueprint lines involved.
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      placeholder: "0.3.1"

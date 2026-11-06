@@ -1,0 +1,14 @@
+name: An idea
+description: A new kind of exercise, picture, check or subject.
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What a learner or an author could do with it.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it helps learning
