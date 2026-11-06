@@ -64,8 +64,16 @@ with sync_playwright() as playwright:
     browser = playwright.chromium.launch(args=["--no-sandbox"])
     errors = []
 
+    def offline(context):
+        """Only the page's own file loads: web fonts and anything else outside are refused, so every run behaves the same."""
+        context.route("**/*", lambda route: route.continue_() if route.request.url.startswith("file:") else route.abort())
+        return context
+
+    def new_context(**settings):
+        return offline(browser.new_context(**settings))
+
     def new_tab(url, fake_claude=False):
-        context = browser.new_context(viewport={"width": 390, "height": 844})
+        context = new_context(viewport={"width": 390, "height": 844})
         if fake_claude:
             context.add_init_script(FAKE_CLAUDE)
         tab = context.new_page()
@@ -198,7 +206,7 @@ with sync_playwright() as playwright:
     doors.get_by_role("button", name="Play again").click()
     tab.wait_for_timeout(200)
     expect("Play again replays the step", doors.locator(".frame-layer.leaving").count() == 1)
-    calm = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce").new_page()
+    calm = new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce").new_page()
     calm.goto(monty + "#why-it-works"); calm.wait_for_timeout(150)
     calm.locator("#doors-open .switch.frames button").nth(1).click(); calm.wait_for_timeout(100)
     expect("reduced motion steps without moving", calm.locator("#doors-open .frame-layer.leaving").count() == 0
@@ -229,6 +237,12 @@ with sync_playwright() as playwright:
     expect("the tutor gets the rules and this block", "Never give an exercise's solution" in request and "fill-the-blanks exercise (OPEN" in request, request[:200])
     tab.keyboard.press("Escape")
     expect("Escape closes the tutor", tab.locator(".sheet").count() == 0)
+
+    # ---- On a real phone (mobile viewport rules), the page lays out at phone width, not shrunk desktop width
+    phone = new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2).new_page()
+    phone.goto(monty + "#the-game"); phone.wait_for_timeout(150)
+    expect("a phone lays the page out at its own width", phone.evaluate("document.documentElement.clientWidth") == 390,
+           str(phone.evaluate("document.documentElement.clientWidth")))
 
     # ---- Every view of every example loads with no page error
     for example in ["example-blueprint", "example-concepts-blueprint", "example-monty-blueprint"]:
