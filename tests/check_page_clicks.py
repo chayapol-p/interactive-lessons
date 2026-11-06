@@ -149,7 +149,7 @@ with sync_playwright() as playwright:
 
     # ---- Stepped pictures keep one height, so the page never jumps
     for url, diagram_id in [(concepts + "#attention", "attention-grid"), (concepts + "#next-token", "odds-bars"),
-                            (build("example-monty-blueprint") + "#where-the-chance-goes", "before-after")]:
+                            (build("example-monty-blueprint") + "#why-it-works", "before-after")]:
         tab = new_tab(url)
         figure = block(tab, diagram_id)
         heights = []
@@ -167,7 +167,7 @@ with sync_playwright() as playwright:
 
     # ---- Play: fresh random deals, counts beside the expected share; read-along shows the seeded sample
     monty = build("example-monty-blueprint")
-    tab = new_tab(monty + "#every-case")
+    tab = new_tab(monty + "#feel-it")
     play = block(tab, "deal-games")
     expect("play shows nothing before a deal", play.locator(".deal-cell").count() == 0)
     switch_counts = []
@@ -179,12 +179,16 @@ with sync_playwright() as playwright:
     expect("counts sit beside the expected share", "expected about 67" in play.inner_text() and "All your deals together" in play.inner_text())
     play.get_by_role("button", name="Deal 10 games").click()
     expect("a deal of 10 shows 10 games", play.locator(".deal-cell").count() == 10)
-    sample = block(new_tab(monty + "?read-along=on#every-case"), "deal-games").inner_text()
+    sample = block(new_tab(monty + "?read-along=on#feel-it"), "deal-games").inner_text()
     expect("read-along shows the seeded sample deal", "you: 63 of 100" in sample and "you: 37 of 100" in sample, sample[:300])
 
     # ---- Tiles, animated: a tap moves between computed steps, replayable; reduced motion steps instead
-    tab = new_tab(monty + "#where-the-chance-goes")
+    tab = new_tab(monty + "#why-it-works")
     doors = block(tab, "doors-open")
+    doors.locator(".switch.frames button").nth(2).click()
+    expect("the tapped step button shows as pressed", doors.locator(".switch.frames button").nth(2).get_attribute("aria-pressed") == "true"
+           and doors.get_by_role("button", name="Play again").get_attribute("aria-pressed") is None)
+    doors.locator(".switch.frames button").nth(0).click(); tab.wait_for_timeout(800)
     expect("tiles draw one box per door", doors.locator(".frame-layer.current rect.svg-box").count() == 3)
     doors.locator(".switch.frames button").nth(1).click()
     tab.wait_for_timeout(200)
@@ -195,10 +199,20 @@ with sync_playwright() as playwright:
     tab.wait_for_timeout(200)
     expect("Play again replays the step", doors.locator(".frame-layer.leaving").count() == 1)
     calm = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce").new_page()
-    calm.goto(monty + "#where-the-chance-goes"); calm.wait_for_timeout(150)
+    calm.goto(monty + "#why-it-works"); calm.wait_for_timeout(150)
     calm.locator("#doors-open .switch.frames button").nth(1).click(); calm.wait_for_timeout(100)
     expect("reduced motion steps without moving", calm.locator("#doors-open .frame-layer.leaving").count() == 0
            and not calm.locator("#doors-open").get_by_role("button", name="Play again").is_visible())
+
+    # ---- A chapter with no exercises is done only when its quizzes are answered right
+    tab = new_tab(monty + "#use-it")
+    expect("a chapter with no exercises is not done at the start", tab.locator(".journey-steps li").nth(0).inner_text() == "1")
+    tab.goto(monty + "#the-game"); tab.wait_for_timeout(100)
+    block(tab, "rules-key-check").locator(".option", has_text="He no longer knows").click()
+    tab.goto(monty + "#use-it"); tab.wait_for_timeout(100)
+    expect("answering its quiz right marks it done", tab.locator(".journey-steps li").nth(0).inner_text() == "✓")
+    order = block(new_tab(monty + "?read-along=on#feel-it"), "deal-games").locator(".deal-cell").all_inner_texts()
+    expect("the sample deal is laid out in a mixed order", order[:37] != ["St"] * 37, str(order[:12]))
 
     # ---- Tutor: opens with the block's context, sends on Enter, renders Markdown, keeps the answer back
     tab = new_tab(chunking + "#size-and-overlap", fake_claude=True)

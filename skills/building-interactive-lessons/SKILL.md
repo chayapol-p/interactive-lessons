@@ -198,7 +198,7 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 - `scripts/screenshot_chapters.py`: phone screenshots of the changed chapters, light and dark
 - `assets/template.html`: the page template
 - `assets/example-blueprint.yaml`: a complete small code example (text chunking)
-- `assets/example-monty-blueprint.yaml`: a small 3-chapter example with no code (Stay or Switch?: case tables, Before and After bars, a door-count slider; every chance worked out by code)
+- `assets/example-monty-blueprint.yaml`: a 5-chapter example with no code, told as one story from hook to payoff (Stay or Switch?: doors as tiles, animated steps, Deal 100 games, case tables, a quiz with no doors; every chance worked out by code)
 - `assets/example-concepts-blueprint.yaml`: a complete example with no code (How LLMs Work: text blanks, token chips, a word map, an attention grid, a temperature slider)
 
 ## Next

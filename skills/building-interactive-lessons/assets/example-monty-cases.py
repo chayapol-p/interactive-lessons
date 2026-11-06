@@ -1,4 +1,4 @@
-"""Draw the two case tables for the Monty Hall lesson as SVG markup that uses the lesson template's classes.
+"""Draw the two case tables for the Monty Hall lesson (chapters 2 and 4) as SVG markup that uses the lesson template's classes.
 
 Every row is worked out by listing the cases, so nothing in the pictures is typed by hand.
 Run: python3 assets/example-monty-cases.py   (prints both SVGs as JSON, ready to paste into example-monty-blueprint.yaml)

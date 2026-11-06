@@ -87,16 +87,15 @@ case("frame-label-long", "            - label: Before\n", "            - label: 
 
 # Picture ladder rules, broken in the Monty Hall example
 example = (K / "assets/example-monty-blueprint.yaml").read_text()
-case("play-weights-off", "            weight: 0.3333333333333333\n            outcome: stay-wins",
-     "            weight: 0.5\n            outcome: stay-wins", expect="add up to")
-case("play-typed-by-hand", "            stay-wins: 37\n            switch-wins: 63", "            stay-wins: 33\n            switch-wins: 67",
-     run_tests=True, expect="not what computed_by prints")
+LAST_CASE = "weight: 0.3333333333333333\n            outcome: switch-wins\n        sample:\n          games: 100\n          seed: 7\n"
+case("play-weights-off", LAST_CASE, LAST_CASE.replace("0.3333333333333333", "0.5"), expect="add up to")
+case("play-typed-by-hand", "seed: 7\n          counts:\n            stay-wins: 37\n            switch-wins: 63",
+     "seed: 7\n          counts:\n            stay-wins: 33\n            switch-wins: 67", run_tests=True, expect="not what computed_by prints")
 case("play-not-agreed", "  agreed_extras: [animation, play]", "  agreed_extras: [animation]", expect="a play block is built only after a yes")
 case("animation-not-agreed", "  agreed_extras: [animation, play]", "  agreed_extras: [play]", expect="an animated picture is built only after a yes")
-case("answer-in-milestone", 'milestone: "I can list every case and count who wins."', 'milestone: "I can show why you switch to door 2."',
-     expect="before the guess")
-case("tile-unknown-state", "caption: You pick door 1.\n              figure:\n                kind: tiles\n                tiles:\n                  - label: Door 1\n                    state: picked",
-     "caption: You pick door 1.\n              figure:\n                kind: tiles\n                tiles:\n                  - label: Door 1\n                    state: chosen", expect="needs state")
+case("answer-in-milestone", 'milestone: "I can say the puzzle, its three rules, and a first guess."',
+     'milestone: "I can show why you switch to door 2."', expect="before the guess")
+case("tile-unknown-state", "{label: Door 1, state: picked, note: yours}", "{label: Door 1, state: chosen, note: yours}", expect="needs state")
 
 if missed:
     sys.exit(f"Missed {len(missed)} breaks: {', '.join(missed)}")

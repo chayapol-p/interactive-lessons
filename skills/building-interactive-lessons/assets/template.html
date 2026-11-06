@@ -255,7 +255,9 @@ details.stretch summary { cursor: pointer; min-height: 48px; display: flex; alig
 .frame-layer { grid-area: 1 / 1; visibility: hidden; min-width: 0; }
 .frame-layer.current { visibility: visible; }
 .frame-stack.animated .frame-layer.leaving { visibility: visible; }
-.replay-row { display: flex; justify-content: flex-end; }
+.frame-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: var(--tap); }
+.frame-head .token-row-label { margin: 0; }
+.frame-head label { flex: 1; }
 /* kind: tiles. Doors, cups, cards, slots: a row of labelled boxes with a state */
 .svg-box.picked { fill: var(--surface); stroke: var(--accent); stroke-width: 2.5; }
 .svg-text.big { font-size: 15px; font-weight: 600; }
@@ -1183,20 +1185,20 @@ function framesFigure(figure) {
       const value = control.querySelector("strong");
       if (value) value.textContent = frame.label;
     } else {
-      control.querySelectorAll("button").forEach((button, index) => button.setAttribute("aria-pressed", index === current ? "true" : "false"));
+      control.querySelectorAll(".switch.frames button").forEach((button, index) => button.setAttribute("aria-pressed", index === current ? "true" : "false"));
     }
   }
   if (figure.control === "slider") {
     const slider = h("input", { type: "range", min: "0", max: String(figure.frames.length - 1), step: "1", value: "0", "aria-label": figure.control_label });
     slider.addEventListener("input", () => { const from = current; current = Number(slider.value); draw(from); });
-    control.append(h("label", {}, h("span", {}, figure.control_label), h("strong", {}, figure.frames[0].label)), slider);
+    control.append(h("div", { class: "frame-head" }, h("label", {}, h("span", {}, figure.control_label), " ", h("strong", {}, figure.frames[0].label)), replay), slider);
   } else {
-    control.append(h("p", { class: "token-row-label" }, figure.control_label),
+    control.append(h("div", { class: "frame-head" }, h("p", { class: "token-row-label" }, figure.control_label), replay),
       h("div", { class: "switch frames", role: "group", "aria-label": figure.control_label }, figure.frames.map((frame, index) =>
         h("button", { type: "button", "aria-pressed": index === 0 ? "true" : "false", onclick: () => { const from = current; current = index; draw(from); } }, frame.label))));
   }
   draw();
-  return h("div", {}, control, h("div", { class: `frame-stack${animated ? " animated" : ""}` }, layers), replay ? h("div", { class: "replay-row" }, replay) : null, spoken);
+  return h("div", {}, control, h("div", { class: `frame-stack${animated ? " animated" : ""}` }, layers), spoken);
 }
 // kind: tiles. A row of labelled boxes, each closed, open, picked or hot: doors, cups, cards, slots.
 // Tiles that share a `group` sit in one dashed frame with the group's name above it.
@@ -1204,7 +1206,8 @@ const TILE_WORDS = { closed: "closed", open: "open", picked: "your pick", hot: "
 function tilesFigure(figure) {
   const tiles = figure.tiles;
   const perRow = Math.min(tiles.length, 6);
-  const width = 340, gap = 10, hasGroups = tiles.some((tile) => tile.group);
+  const hasGroups = tiles.some((tile) => tile.group);
+  const width = 340, gap = hasGroups ? 16 : 10;   // groups need room between their frames
   const tileWidth = Math.min(90, (width - gap * (perRow + 1)) / perRow);
   const rowWidth = perRow * tileWidth + (perRow - 1) * gap;
   const left = (width - rowWidth) / 2, top = hasGroups ? 30 : 8, tileHeight = 70, rowHeight = tileHeight + 30;
@@ -1645,8 +1648,13 @@ function dealGames(cases, games) {
   return dealt;
 }
 function sampleGames(block) {
-  // The seeded deal as a list of outcomes, in outcome order (its counts are what the blueprint recorded)
-  return block.outcomes.flatMap((outcome) => Array(block.sample.counts[outcome.id] || 0).fill(outcome.id));
+  // The seeded deal as a list of outcomes (its counts are what the blueprint recorded), laid out in an order fixed by
+  // its seed, so it looks like a real deal and is the same every time
+  const games = block.outcomes.flatMap((outcome) => Array(block.sample.counts[outcome.id] || 0).fill(outcome.id));
+  let seed = (Number(block.sample.seed) || 1) >>> 0;
+  const next = () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  for (let i = games.length - 1; i > 0; i -= 1) { const j = Math.floor(next() * (i + 1)); [games[i], games[j]] = [games[j], games[i]]; }
+  return games;
 }
 function renderPlay(chapter, block) {
   const wrapper = h("section", { class: "block", id: block.id });
@@ -1748,7 +1756,13 @@ function topBar(where, shortWhere) {
     modes.length ? h("p", { class: "mode-line" }, modes.map((mode, index) => [index ? " · " : "", mode])) : null);
 }
 function exercisesOf(chapter) { return chapter.blocks.filter((b) => EXERCISE_TYPES.includes(b.type)); }
-function chapterDone(chapter) { return exercisesOf(chapter).every((b) => (progress.blocks[b.id] || {}).passed); }
+function chapterDone(chapter) {
+  // Done means work done: every exercise passed or, in a chapter with no exercises, every quiz answered right
+  const exercises = exercisesOf(chapter);
+  if (exercises.length) return exercises.every((b) => (progress.blocks[b.id] || {}).passed);
+  const quizzes = chapter.blocks.filter((b) => b.type === "check");
+  return quizzes.length > 0 && quizzes.every((b) => (progress.blocks[b.id] || {}).correct === true);
+}
 function chapterSubline(chapter) {
   return chapter.source_section ? `Prepares for ${chapter.source_section}` : chapter.why_it_matters;
 }
