@@ -35,7 +35,7 @@ def host_knows_table():
         for column, number in enumerate(DOORS):
             behind = "car" if number == car else "goat"
             parts.append(door(64 + column * 40, y, number, behind, number == opened))
-        note = "he may open 2 or 3" if opened is None else f"he must open {opened}"
+        note = "he may open 2 or 3: still this one row" if opened is None else f"he must open {opened}"
         parts.append(f'<text x="64" y="{y + 44}" class="svg-text small dim">{note}</text>')
         parts.append(mark(232, y + 19, stay_wins))
         parts.append(mark(300, y + 19, switch_wins))

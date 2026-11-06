@@ -1,6 +1,6 @@
 {
  "skill": "building-interactive-lessons",
- "version": "0.3.1",
+ "version": "0.4.0",
  "notes": "Trigger cases test the description. Functional cases test behaviour; exact checks first (free), judge checks second. Run each functional case 3 times and compare with a run without the skill. Regression cases come from the first real test (a 7-chapter RAG lesson).",
  "trigger_cases": {
   "should_trigger": [
@@ -17,7 +17,9 @@
    "chapter 2 of the lesson you built is confusing, fix the diagram and the blank",
    "teach me how LLMs work, with pictures, no code",
    "make a lesson on our team's leave policy for new staff",
-   "make the lesson in our company's colours"
+   "make the lesson in our company's colours",
+   "make a lesson on the Monty Hall problem where I can play the game myself",
+   "test the lesson you built on a few fresh learners and fix what they hit"
   ],
   "should_not_trigger": [
    "explain what a decorator is",
@@ -224,6 +226,78 @@
    ],
    "judge_checks": [
     "The reply explains in plain words why green clashes with the 'right answer' colour and offers a nearby choice."
+   ]
+  },
+  {
+   "id": "ask-before-animating",
+   "prompt": "Make a short lesson on why the Monty Hall switch wins, for a sceptical friend.",
+   "exact_checks": [
+    "Before any blueprint is written, the Discover questions offer an animated picture or a play block for a named moment, with its extra build time.",
+    "If the answers say no, the blueprint has no figure with animate: true and no play block, and lesson.agreed_extras is absent or empty.",
+    "If the answers say yes, lesson.agreed_extras lists each extra, and check_blueprint.py --run-tests reports 0 errors."
+   ],
+   "judge_checks": [
+    "Each offered extra names the moment it is for, not 'animations' in general."
+   ]
+  },
+  {
+   "id": "arc-fields",
+   "prompt": "Make a 4-chapter lesson on how compound interest grows, for someone with no maths background.",
+   "exact_checks": [
+    "The blueprint has lesson.big_idea, and every chapter has beat, milestone and (all but the last) open_question.",
+    "The first chapter's beat includes hook and the last chapter's includes payoff; beats never go back.",
+    "check_blueprint.py --run-tests reports 0 errors."
+   ],
+   "judge_checks": [
+    "Each open_question is answered by the next chapter's blocks.",
+    "The last chapter answers the first chapter's opening guess."
+   ]
+  },
+  {
+   "id": "no-early-answers",
+   "prompt": "Plan a lesson whose first chapter asks 'how often does switching win?' and whose objectives and titles are drafted first.",
+   "exact_checks": [
+    "The checker reports no 'already shows in … before the guess' error.",
+    "No objective, chapter title or milestone contains the phrase '2 in 3'."
+   ],
+   "judge_checks": [
+    "The idea that answers each guess comes after it, and the start page reads as questions, not answers."
+   ]
+  },
+  {
+   "id": "text-budget",
+   "prompt": "Revise the chunking lesson so every idea fits the text budget.",
+   "setup": "Start with assets/example-blueprint.yaml, with one idea lengthened to 4 sentences.",
+   "exact_checks": [
+    "The checker reports no 'more than 2 sentences', 'words; keep it to about 45' or 'more than one sentence' error.",
+    "The removed detail sits in the idea's more field, not deleted."
+   ],
+   "judge_checks": [
+    "The idea still says the one thing its chapter needs."
+   ]
+  },
+  {
+   "id": "learners-make-the-evidence",
+   "prompt": "Add a 'deal 100 games' block to the Monty Hall lesson's proof chapter.",
+   "exact_checks": [
+    "The play block's cases and sample come from computed_by, and --run-tests reports 'data matches' for it.",
+    "The case weights add up to 1, and every outcome has a 1 or 2 character short mark.",
+    "tests/check_page_clicks.py shows fresh deals differ and read-along shows the seeded sample."
+   ],
+   "judge_checks": [
+    "The page shows the learner's count beside the expected share for each outcome."
+   ]
+  },
+  {
+   "id": "test-with-real-users",
+   "prompt": "Test the rebuilt Monty Hall lesson on fresh learners and fix what they hit.",
+   "exact_checks": [
+    "Each round uses a fresh agent with a persona that differs from earlier ones, using only scripts/phone_driver.py screenshots.",
+    "Each report has moments, lost spots, teach-back, verdict, top 3 fixes and bugs.",
+    "The run stops on a correct teach-back with 'I get it', or after 2 rounds with nothing new, and says which."
+   ],
+   "judge_checks": [
+    "Each reported bug was confirmed on screen before it was fixed, and tool artifacts were fixed in the tool, not the page."
    ]
   }
  ]

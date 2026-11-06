@@ -2,7 +2,7 @@
 
 This file is the source for the README. It records what the project is, why it exists, and the rules every lesson follows, with the reason behind each rule.
 
-Status: v0.3. Revised after the first real tests (a 7-chapter RAG workshop lesson, a no-code How LLMs Work lesson) and a design review of the page.
+Status: v0.4. Revised after the first real tests (a 7-chapter RAG workshop lesson, a no-code How LLMs Work lesson), a design review of the page, and rounds of user tests with fresh personas on the Monty Hall lesson.
 
 ---
 
@@ -51,7 +51,7 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** Mayer's pre-training principle; lucas-ataides/teach's "build from what the learner already knows".
 
 ### 4.5 One idea per block, in short steps
-- **Rule:** a block holds one idea, explained in at most 3 sentences, tied to something the learner already knows.
+- **Rule:** a block holds one idea, explained in at most 2 sentences and about 45 words, tied to something the learner already knows. Feedback is one sentence; a caption is about 25 words. A script checks the budget.
 - **Why:** short, learner-paced segments are easier to absorb than a long stream.
 - **From:** Mayer's segmenting and coherence principles; DataCamp's one objective per lesson; ape-teach's one milestone at a time.
 
@@ -118,30 +118,59 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **Why:** a page that feels like theirs invites the learner in; a "right" that changes colour between lessons teaches nothing but confusion.
 - **From:** a six-seat design review of the template, led by the author.
 
+### 4.19 The picture ladder
+- **Rule:** each moment gets the lowest step of picture that carries it: words, a still picture, a stepped picture the learner taps through (the default for any change), an animated one (when the motion is the idea), or play (the learner makes the evidence). Animation and play are offered for named moments, with their build cost, and built only on a yes. Every number in any step is computed.
+- **Why:** in testing, a stepped picture taught a change that a paragraph had not, and an animation where nothing moves is only decoration. Asking first keeps the expensive steps for the moments that need them.
+- **From:** Mayer's multimedia and signalling principles; the author's test rounds, where the 10-door picture opening one door at a time was the moment the group idea landed.
+
+### 4.20 One story, with milestones
+- **Rule:** a lesson is one story with a big idea, told in beats: hook, intuition, proof, mechanism, boundary, transfer, payoff. Each chapter names its milestone ("I can…") and ends on an open question that the next chapter answers; the last chapter answers the first question. A journey strip shows where the learner is.
+- **Why:** learners who follow one question from puzzle to answer keep both the answer and the reason; chapters read as separate topics are forgotten as separate topics. An open question at every chapter end keeps a question in the learner's hands.
+- **From:** the author's story-deck (big idea, "Next →" questions), attention-principles (curiosity loops) and personal-storytelling (problem, pursuit, payoff) skills, borrowed at design time.
+
+### 4.21 Nothing gives the answer early
+- **Rule:** a guess's answer never appears before the guess: not in a title, a goal, a milestone, a caption or a totals row. The idea that answers a guess stays folded until the guess is made (with a Skip button). A blank's answer is never written in the block just above it, and the right option is never the longest. Scripts check each of these.
+- **Why:** in every early test round, learners read the answer while scrolling to the question, and the guess stopped being a guess. A prediction only works when the learner commits before they know.
+
+### 4.22 Learners make the evidence
+- **Rule:** where a learner needs to believe a number, let them make it: deal 10 or 100 games from a computed case table, fresh and random each time, and show their counts beside the expected share. A seeded sample deal is kept only for screenshots and read-along.
+- **Why:** a sceptic distrusts a table they were shown and trusts a count they made. In testing, a persona sure of "50/50" said "That's not 50/50, is it" at her own deal, not at any paragraph; a fixed deal looks staged.
+
+### 4.23 Test, then reveal
+- **Rule:** a "Spot the mistake" question comes before the common-mistake card it tests; the card stays folded until the question is answered, then opens as feedback. A learner may open it early, and read-along opens everything.
+- **Why:** a card read first hands over the question's answer; a card read after a try explains the learner's own choice, right or wrong. The same reason folds the key idea under each guess (4.21).
+
+### 4.24 Test with real users, then fix
+- **Rule:** before release, fresh persona agents, a different person each round, use the lesson only the way a learner does (phone screenshots and taps, no answers mode, no files) and report in a fixed shape: moments, lost spots, a teach-back, a verdict, top fixes, bugs. Fix, then test with a new person. Stop on a correct teach-back with "I get it", or after two rounds with nothing new (then ask the author).
+- **Why:** an author cannot unsee what they know. The test rounds found what no script did: a page that rendered at desktop width on a phone, a caption that contradicted its picture, a chapter ticked "done" before any work.
+- **From:** the author's own rounds; the testing-with-real-users skill holds the method for any artifact a person uses.
+
 ## 5. How it works
 
 1. **Discover:** who the learner is, what they know, what they should be able to do afterwards, and how big one lesson can be.
 2. **Verify:** read the sources, list facts as confirmed or inferred, collect common misconceptions; a script runs every slice and every blank option and records the outputs.
 3. **Plan:** map the concepts, order chapters so each uses only what came before, and write the blueprint. A script checks it.
 4. **Build:** a script fills the page template from the blueprint, one chapter per page.
-5. **Check:** one command runs every check a script can; phone screenshots, light and dark, show the rest; try the grader with right, wrong and half-right answers.
+5. **Check:** one command runs every check a script can; phone screenshots, light and dark, show the rest; try the grader with right, wrong and half-right answers; test with fresh personas until one gets it (4.24).
 6. **Publish and improve:** learners' progress shows which blocks need work. A revise round edits the blueprint, rebuilds, and re-checks only the chapters that changed.
 
 Time budget: plan in 15 minutes, first build in 20, a revise round in 10. A step that runs over stops and logs why.
 
 ## 6. What a chapter looks like
 
+- A journey strip: where this chapter sits, and its milestone
 - A bridge from the last chapter
 - **Predict**, with a confidence rating
-- **Idea**, in at most 3 sentences
-- **Diagram**, only when its purpose is written down
+- **Idea**, in at most 2 sentences, folded until the guess is made
+- **Picture**, only when its purpose is written down, at the lowest step of the ladder that carries it
+- **Play** (when agreed): deal games and count them
 - **Real material:** a code slice with line comments and its recorded output, or a real sentence, rule or formula
 - **Compare choices**, when the chapter has options to compare
 - **Fill the blanks** on the words that carry the idea, with Hint and Show solution
 - **Explain** in your own words, graded by AI
 - **Stretch** (optional): write it yourself
-- **Pitfall** card with a quiz
-- **Recap** line, and a pointer to where the idea is used next
+- **Spot the mistake**, then the common-mistake card it opens
+- **Recap** line, and the open question the next chapter answers
 - **Ask the tutor** beside every step
 
 ## 7. Non-goals

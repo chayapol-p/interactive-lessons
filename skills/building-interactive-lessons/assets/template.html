@@ -55,7 +55,7 @@ button { font: inherit; color: inherit; }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--tap); padding: 0 14px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; font-weight: 500; font-size: 0.9375rem; text-decoration: none; color: var(--ink); }
-.btn:hover { border-color: var(--ink); }
+@media (hover: hover) { .btn:hover { border-color: var(--ink); } }
 .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .btn.quiet { border-color: transparent; background: transparent; color: var(--accent); padding: 0 8px; }
 .btn:disabled { opacity: .55; cursor: default; }
@@ -80,14 +80,17 @@ details.more summary { cursor: pointer; color: var(--accent); font-weight: 500; 
 details.more p { margin-top: 8px; color: var(--muted); }
 .badge { display: inline-block; font-size: 0.8125rem; font-weight: 600; padding: 1px 7px; border-radius: 4px; background: var(--mark-soft); color: var(--mark); }
 .badge.ok { background: var(--good-soft); color: var(--good); }
+.term-wrap { white-space: nowrap; }
 .term { display: inline; font: inherit; color: inherit; background: none; border: 0; padding: 0; border-bottom: 1.5px dotted var(--accent); cursor: help; }
 
 /* Options (predict and check) */
 .quiz { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
 .options { display: flex; flex-direction: column; gap: 8px; }
 .option { text-align: left; min-height: var(--tap); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; line-height: 1.4; }
-.option:hover:not(:disabled) { border-color: var(--accent); }
+@media (hover: hover) { .option:hover:not(:disabled) { border-color: var(--accent); } }
 .option:disabled { cursor: default; }
+.option.picked { border-color: var(--accent); background: var(--accent-soft); }
+.option.picked::before { content: "●  "; color: var(--accent); }
 .option.right { border-color: var(--good); background: var(--good-soft); }
 .option.wrong { border-color: var(--bad); background: var(--bad-soft); }
 .option.right::before { content: "✓  "; color: var(--good); font-weight: 700; }
@@ -176,7 +179,7 @@ pre.blank-code { line-height: 2.5; }
 .chooser-label { font-size: 0.875rem; color: var(--muted); font-weight: 600; }
 .chips { display: flex; flex-direction: column; gap: 8px; }
 .chip { text-align: left; min-height: var(--tap); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--code-bg); color: var(--ink); font-family: var(--font-code); font-size: 0.8125rem; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
-.chip:hover { border-color: var(--accent); }
+@media (hover: hover) { .chip:hover { border-color: var(--accent); } }
 .chips.text .chip { font-family: var(--font-ui); font-size: 0.9375rem; background: var(--surface); }  /* words, not code */
 .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 details.stretch { border: 1px dashed var(--line); border-radius: var(--radius); padding: 0 14px; background: var(--surface); }
@@ -752,8 +755,11 @@ function withTerms(text) {
     const entry = GLOSSARY.find((g) => g.term.toLowerCase() === match.toLowerCase());
     if (!entry || seen.has(entry.term)) return match;
     seen.add(entry.term);
-    pieces.push(String(text).slice(last, offset), h("button", { class: "term", type: "button", onclick: () => openTerm(entry) }, match));
-    last = offset + match.length;
+    // Punctuation right after the word stays on its line, so a comma never wraps away from it
+    const after = String(text).slice(offset + match.length).match(/^[,.;:!?)\]'"’”]+/);
+    const term = h("button", { class: "term", type: "button", onclick: () => openTerm(entry) }, match);
+    pieces.push(String(text).slice(last, offset), after ? h("span", { class: "term-wrap" }, term, after[0]) : term);
+    last = offset + match.length + (after ? after[0].length : 0);
     return match;
   });
   pieces.push(String(text).slice(last));
@@ -823,6 +829,15 @@ function renderChoiceBlock(chapter, block, kind) {
         onclick: () => { state.choice = index; state.correct = !!option.correct; state.answeredOnce = true; saveProgress(); draw(); revealAfter(block.id); wrapper.querySelector(".feedback")?.focus(); } }, option.text);
     });
     let feedback = null;
+    if (answered && block.hold) {
+      // A held guess opens the lesson's question: it is noted, not marked; the last chapter comes back to it
+      const last = CHAPTERS[CHAPTERS.length - 1];
+      setChildren(wrapper, head, h("p", { class: "question" }, withTerms(block.question)),
+        h("div", { class: "options" }, block.options.map((option, index) => h("button", { class: `option${index === state.choice ? " picked" : ""}`, type: "button", disabled: true, "aria-label": option.text + (index === state.choice ? ", your guess" : "") }, option.text))),
+        h("div", { class: "feedback neutral", tabindex: "-1", role: "status" }, h("p", {}, h("strong", {}, "Noted. "), `You said: ${block.options[state.choice].text}${state.confidence ? ` (${{ unsure: "unsure", fairly: "fairly sure", certain: "certain" }[state.confidence]})` : ""}. Hold on to it: this lesson tests it, and chapter ${CHAPTERS.indexOf(last) + 1} comes back to it.`)),
+        h("div", { class: "btn-row" }, h("button", { class: "btn quiet", type: "button", onclick: () => { delete state.choice; delete state.correct; delete state.confidence; saveProgress(); draw(); } }, "Change my guess")));
+      return;
+    }
     if (answered) {
       const picked = block.options[state.choice];
       const correct = block.options.find((option) => option.correct);
@@ -1690,6 +1705,11 @@ function sampleGames(block) {
   for (let i = games.length - 1; i > 0; i -= 1) { const j = Math.floor(next() * (i + 1)); [games[i], games[j]] = [games[j], games[i]]; }
   return games;
 }
+// How far a fair deal of `games` wanders: about 19 deals in 20 land within two spreads of the expected count
+function spread(share, games) {
+  const middle = share * games, width = 2 * Math.sqrt(games * share * (1 - share));
+  return `${Math.max(0, Math.round(middle - width))} to ${Math.min(games, Math.round(middle + width))}`;
+}
 function renderPlay(chapter, block) {
   const wrapper = h("section", { class: "block", id: block.id });
   const outcomes = Object.fromEntries(block.outcomes.map((outcome) => [outcome.id, outcome]));
@@ -1712,8 +1732,8 @@ function renderPlay(chapter, block) {
       dealt.map((outcome, index) => h("span", { class: `deal-cell${outcomes[outcome].hot ? " hot" : ""}${fresh && !reducedMotion() ? " new" : ""}`, style: fresh ? `animation-delay:${Math.min(index * 8, 900)}ms` : null }, outcomes[outcome].short))));
     setChildren(table, h("table", { class: "tally-table" }, h("tbody", {}, block.outcomes.map((outcome) => h("tr", {},
       h("td", {}, h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), outcome.label),
-      h("td", {}, `you: ${counts[outcome.id]} of ${games}`, h("span", { class: "expected" }, `expected about ${Math.round(expected[outcome.id] * games)}`)))))),
-      totalGames > games ? h("p", { class: "why" }, `All your deals together: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} of ${totalGames}`).join(" · ") + ".") : null,
+      h("td", {}, `you: ${counts[outcome.id]} of ${games}`, h("span", { class: "expected" }, `expected about ${Math.round(expected[outcome.id] * games)}${games >= 100 ? `, most deals ${spread(expected[outcome.id], games)}` : ""}`)))))),
+      totalGames > games ? h("p", { class: "why" }, `All your deals together, ${totalGames} games: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} (expected about ${Math.round(expected[o.id] * totalGames)})`).join(" · ") + ".") : null,
       readAlong && !totalGames ? h("p", { class: "why" }, "A sample deal, the same every time. Deal again for your own.") : null);
   }
   wrapper.append(
@@ -1753,10 +1773,22 @@ function renderPitfall(chapter, block) {
   draw();
   return wrapper;
 }
+function heldGuessRecall(chapter) {
+  // In the last chapter, the first held guess comes back with its answer, so the lesson ends where it began
+  if (chapter !== CHAPTERS[CHAPTERS.length - 1]) return null;
+  const held = CHAPTERS.flatMap((c) => c.blocks).find((b) => b.type === "predict" && b.hold && b.options);
+  if (!held) return null;
+  const state = progress.blocks[held.id] || {};
+  const right = held.options.find((option) => option.correct);
+  const picked = state.choice !== undefined ? held.options[state.choice] : null;
+  return h("div", { class: "feedback neutral" }, h("p", {}, h("strong", {}, "Your first guess. "), picked ? `In chapter ${CHAPTERS.indexOf(BLOCK_CHAPTER[held.id]) + 1} you said: ${picked.text}.` : "You skipped the first guess."),
+    h("p", {}, h("strong", {}, "The answer: "), `${right.text}. ${right.why_right || ""}`));
+}
 function renderRecap(chapter, block) {
   // A chapter ends on its open question, which the next chapter answers; the last chapter ends on its bridge out
   const next = CHAPTERS[chapterIndex(chapter.id) + 1];
   return h("section", { class: "block", id: block.id },
+    heldGuessRecall(chapter),
     h("div", { class: "recap" }, h("div", { class: "eyebrow" }, "Remember"), h("p", { class: "line" }, withTerms(block.text)),
       chapter.open_question && next ? null : h("p", { class: "bridge" }, chapter.bridge_out.text)),
     chapter.open_question && next ? h("div", { class: "open-question" }, h("div", { class: "eyebrow" }, "Still open"),

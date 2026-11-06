@@ -91,7 +91,7 @@ The lesson page runs no code. Every Run button shows an output that was recorded
 
 Every block has `id` and `type`. `R` = required, `o` = optional.
 
-**predict**: `question` R; `options` (2 to 4) or `answer`.
+**predict**: `question` R; `options` (2 to 4) or `answer`; `hold` o (`true`, options only): the guess is noted, not marked, and the last chapter brings it back with its answer. Use it for the hook's opening guess, so the lesson's question stays open until the lesson answers it.
 ```yaml
 - id: predict-count
   type: predict

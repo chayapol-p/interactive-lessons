@@ -191,25 +191,31 @@ with sync_playwright() as playwright:
     expect("read-along shows the seeded sample deal", "you: 63 of 100" in sample and "you: 37 of 100" in sample, sample[:300])
 
     # ---- Tiles, animated: a tap moves between computed steps, replayable; reduced motion steps instead
-    tab = new_tab(monty + "#why-it-works")
-    doors = block(tab, "doors-open")
+    tab = new_tab(monty + "#feel-it")
+    doors = block(tab, "ten-doors")
     doors.locator(".switch.frames button").nth(2).click()
     expect("the tapped step button shows as pressed", doors.locator(".switch.frames button").nth(2).get_attribute("aria-pressed") == "true"
            and doors.get_by_role("button", name="Play again").get_attribute("aria-pressed") is None)
-    doors.locator(".switch.frames button").nth(0).click(); tab.wait_for_timeout(800)
-    expect("tiles draw one box per door", doors.locator(".frame-layer.current rect.svg-box").count() == 3)
+    doors.locator(".switch.frames button").nth(0).click(); tab.wait_for_timeout(1500)
+    expect("tiles draw one box per door", doors.locator(".frame-layer.current rect.svg-box").count() == 10)
     doors.locator(".switch.frames button").nth(1).click()
-    tab.wait_for_timeout(100)
-    expect("a tap animates from the last step", doors.locator("[data-tile-ghost]").count() == 1)
-    tab.wait_for_timeout(800)
-    expect("the animation ends within a second", doors.locator("[data-tile-ghost]").count() == 0)
+    tab.wait_for_timeout(60)
+    expect("a tap animates from the last step", doors.locator("[data-tile-ghost]").count() == 8)
+    tab.wait_for_timeout(1500)
+    expect("the animation ends within 2 seconds", doors.locator("[data-tile-ghost]").count() == 0)
     doors.get_by_role("button", name="Play again").click()
-    tab.wait_for_timeout(100)
-    expect("Play again replays the step", doors.locator("[data-tile-ghost]").count() == 1)
+    tab.wait_for_timeout(60)
+    expect("Play again replays the step", doors.locator("[data-tile-ghost]").count() == 8)
+    tab = new_tab(monty + "#why-it-works")
     bars = block(tab, "before-after")
     bars.locator(".switch.frames button").nth(2).click()
     tab.wait_for_timeout(150)
     expect("bars move to the new step", bars.locator(".frame-layer.current rect.svg-bar").count() == 3)
+    calm = new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce").new_page()
+    calm.goto(monty + "#feel-it"); calm.wait_for_timeout(150)
+    calm.locator("#ten-doors .switch.frames button").nth(1).click(); calm.wait_for_timeout(60)
+    expect("reduced motion steps without moving", calm.locator("#ten-doors [data-tile-ghost]").count() == 0
+           and not calm.locator("#ten-doors").get_by_role("button", name="Play again").is_visible())
 
     # ---- Ten doors: the host's goats open one at a time, all within 2 seconds
     tab = new_tab(monty + "#feel-it")
@@ -224,11 +230,6 @@ with sync_playwright() as playwright:
     expect("all of them open within 2 seconds", ten.locator("[data-tile-ghost]").count() == 0)
     expect("ten tiles sit in two rows of five", len(set(ten.locator(".frame-layer.current rect.svg-box").evaluate_all("els => els.map(e => e.getAttribute('y'))"))) == 2)
     expect("the deal names its marks before any deal", "sw switching wins" in block(tab, "deal-games").inner_text().lower())
-    calm = new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce").new_page()
-    calm.goto(monty + "#why-it-works"); calm.wait_for_timeout(150)
-    calm.locator("#doors-open .switch.frames button").nth(1).click(); calm.wait_for_timeout(100)
-    expect("reduced motion steps without moving", calm.locator("#doors-open .frame-layer.leaving").count() == 0
-           and not calm.locator("#doors-open").get_by_role("button", name="Play again").is_visible())
 
     # ---- A chapter with no exercises is done only when its quizzes are answered right
     tab = new_tab(monty + "#use-it")
@@ -239,6 +240,19 @@ with sync_playwright() as playwright:
     expect("answering its quiz right marks it done", tab.locator(".journey-steps li").nth(0).inner_text() == "✓")
     order = block(new_tab(monty + "?read-along=on#feel-it"), "deal-games").locator(".deal-cell").all_inner_texts()
     expect("the sample deal is laid out in a mixed order", order[:37] != ["St"] * 37, str(order[:12]))
+
+    # ---- A held guess is noted, not marked, and the last chapter brings it back with its answer
+    tab = new_tab(monty + "#the-game")
+    first = block(tab, "predict-game")
+    first.locator(".option", has_text="Stay with door 1").click()
+    text = first.inner_text()
+    expect("a held guess is noted, not marked", "Noted" in text and "Not quite" not in text and first.locator(".option.wrong, .option.right").count() == 0, text[:200])
+    tab.goto(monty + "#use-it"); tab.wait_for_timeout(100)
+    recap = block(tab, "use-recap").inner_text()
+    expect("the last chapter brings the first guess back", "you said: Stay with door 1" in recap and "Switch to door 2" in recap, recap[:200])
+    expect("the deal says how far a fair deal wanders", "most deals" in block(new_tab(monty + "?read-along=on#feel-it"), "deal-games").inner_text())
+    expect("a comma stays with its glossary word", tab.evaluate("() => [...document.querySelectorAll('.term-wrap')].some(w => w.textContent.endsWith(','))") or
+           new_tab(monty + "#feel-it").evaluate("() => [...document.querySelectorAll('.term-wrap')].some(w => w.textContent.endsWith(','))"))
 
     # ---- With the tutor off, ticking every point of the self-check counts the answer as done
     tab = new_tab(monty + "#use-it")

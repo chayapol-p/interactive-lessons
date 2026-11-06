@@ -4,9 +4,11 @@ Usage (from the repo root):
     pip install pyyaml playwright
     python3 docs/diagram/capture_lesson_shot.py
 
-It builds the Stay or Switch? example (the Monty Hall problem) with the skill's own scripts, opens chapter 1 at phone width,
-picks a wrong option in the fill-the-blank exercise, presses See result and Check, and saves the
-After bars as docs/images/lesson-bars(-dark).png, and the passage, its result and its reason as docs/images/lesson-shot.png (light) and docs/images/lesson-shot-dark.png (dark).
+It builds the Stay or Switch? example (the Monty Hall problem) with the skill's own scripts, opens chapter 3 ("Why") at phone
+width, shows the After bars, picks a wrong option in the fill-the-blank exercise and presses Check (one button: the verdict
+and where the pick leads). It saves the After bars as docs/images/lesson-bars(-dark).png, and the passage, its reason and its
+result as docs/images/lesson-shot.png (light) and docs/images/lesson-shot-dark.png (dark). Outside requests (web fonts) are
+refused, so the shots use the system fonts and repeat exactly.
 """
 
 import os
@@ -27,18 +29,19 @@ subprocess.run([sys.executable, str(SKILL / "scripts" / "build_page.py"), str(SK
 
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-# Show the After bars, then pick the wrong option "1 in 2", then See result and Check, in each theme
+# Show the After bars, then pick the wrong option "1 in 2" and press Check, in each theme
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch(args=["--no-sandbox"])
     for theme, file_name in [("light", "lesson-shot.png"), ("dark", "lesson-shot-dark.png")]:
-        tab = browser.new_page(viewport={"width": 390, "height": 844}, color_scheme=theme, device_scale_factor=2)
-        tab.goto(page.as_uri() + "#where-the-chance-goes")
+        context = browser.new_context(viewport={"width": 390, "height": 844}, color_scheme=theme, device_scale_factor=2, reduced_motion="reduce")
+        context.route("**/*", lambda route: route.continue_() if route.request.url.startswith("file:") else route.abort())
+        tab = context.new_page()
+        tab.goto(page.as_uri() + "#why-it-works")
         tab.locator("#before-after").get_by_role("button", name="After").click()  # the bars after the host opens door 3
         exercise = tab.locator("#after-chance")
         exercise.locator(".blank").first.click()
         exercise.locator(".chip").filter(has_text="1 in 2").click()
-        exercise.get_by_role("button", name="See result").click()
-        exercise.get_by_role("button", name="Check").click()
+        exercise.get_by_role("button", name="Check", exact=True).click()
         tab.add_style_tag(content=".topbar { display: none !important; }")  # the sticky bar would cover the top
         # Two shots, shown side by side in the README: the After bars, then the wrong pick with its result and reason
         def page_box(selector_top, selector_bottom):
@@ -48,7 +51,7 @@ with sync_playwright() as playwright:
             }""", [selector_top, selector_bottom])
         bars_name = file_name.replace("lesson-shot", "lesson-bars")
         tab.screenshot(path=str(IMAGES / bars_name), full_page=True, clip=page_box("#before-after .switch", "#before-after figcaption"))
-        tab.screenshot(path=str(IMAGES / file_name), full_page=True, clip=page_box("#after-chance .code-panel", "#after-chance .feedback.wrong"))
+        tab.screenshot(path=str(IMAGES / file_name), full_page=True, clip=page_box("#after-chance .code-panel", "#after-chance .output"))
         print(f"Saved {IMAGES / bars_name}")
         print(f"Saved {IMAGES / file_name}")
     browser.close()

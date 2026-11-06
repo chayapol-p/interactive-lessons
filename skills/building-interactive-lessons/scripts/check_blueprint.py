@@ -96,7 +96,7 @@ ALLOWED_KEYS = {
     "compare_option": {"name", "steps"},
     "rubric_line": {"criterion", "passing"},
     "wrong_answer": {"answer", "misconception", "hint"},
-    "predict": {"id", "type", "question", "options", "answer"},
+    "predict": {"id", "type", "question", "options", "answer", "hold"},
     "idea": {"id", "type", "text", "key", "more"},
     "diagram": {"id", "type", "shape", "brief", "figure", "grows_in", "extends"},
     "diagram_extends": {"diagram", "adds"},
@@ -1204,6 +1204,8 @@ def check_block(block, misconception_ids, problems):
     block_type = block.get("type")
 
     if block_type == "predict":
+        if "hold" in block and (block.get("hold") is not True or "options" not in block):
+            problems.error(block_id, "hold: true keeps a guess with options unmarked until the last chapter; leave it out otherwise")
         if "options" in block:
             check_answer_options(block_id, block["options"], PREDICT_OPTION_RANGE, problems)
         elif is_missing(block.get("answer")):

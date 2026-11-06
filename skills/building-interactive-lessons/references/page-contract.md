@@ -57,6 +57,7 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 **Bridge line** (top of each chapter): the chapter's `bridge_in`, in a muted style.
 
 **Predict**: the question, options or an input, and a 3-step confidence choice (unsure, fairly sure, certain).
+- **A held guess** (`hold: true`): the page says "Noted. You said: …" and marks nothing; "Change my guess" is always there. The last chapter's recap brings it back ("Your first guess … The answer: …"). Why: a sceptic told the answer before any proof feels corrected, not convinced.
 - **The answer waits for the guess:** the first `idea` block after the predict (the key idea that answers it) stays folded behind "Answer to see why" until the guess is made. A **Skip** button opens it without a guess, and the choice is kept. Only that one block folds; everything else stays open. Read-along opens it.
 - Why: in every test round, learners read the answer while scrolling to the guess, so the guess stopped being a guess.
 
@@ -73,7 +74,7 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Compare**: a switch between options. Below it, each option's steps, with step `differs_at` marked and the explanation shown.
 
-**Play** (label "Play it"): the prompt, a key of the marks ("St staying wins · Sw switching wins"), one button per deal size, then the dealt games as a grid of small cells (each with its outcome's short mark; the hot outcome filled with the accent), and a table: each outcome's count beside the expected share ("you: 64 of 100 · expected about 67"). Each deal is fresh and random; after two or more deals, a line adds up all of them. Read-along shows the seeded sample deal instead, laid out in an order fixed by its seed, so screenshots repeat and it still looks like a real deal.
+**Play** (label "Play it"): the prompt, a key of the marks ("St staying wins · Sw switching wins"), one button per deal size, then the dealt games as a grid of small cells (each with its outcome's short mark; the hot outcome filled with the accent), and a table: each outcome's count beside the expected share and how far a fair deal usually wanders ("you: 64 of 100 · expected about 67, most deals 57 to 76", two spreads either side). Why: a low run without that range made a numbers-minded tester distrust the whole lesson. Each deal is fresh and random; after two or more deals, a line adds up all of them. Read-along shows the seeded sample deal instead, laid out in an order fixed by its seed, so screenshots repeat and it still looks like a real deal.
 
 **Fill the blanks, explain, stretch**: see section 3.
 
@@ -84,7 +85,8 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Recap**: the recap line and the `bridge_out` sentence.
 
-**Glossary terms**: the first use of each `glossary` term in an idea, a question or a recap is tappable and opens its definition in a bottom sheet.
+**Glossary terms**: the first use of each `glossary` term in an idea, a question or a recap is tappable and opens its definition in a bottom sheet. Punctuation right after it stays on its line.
+- **Touch:** hover styles apply only where there is a mouse (`@media (hover: hover)`), so a tap never leaves a border on whatever lands under the finger.
 
 **Ask the tutor**: a button on every block opens a chat panel (a bottom sheet on phones). It sends the context packet for that block. Stop button while answering.
 
