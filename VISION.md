@@ -120,8 +120,8 @@ Each principle has a rule, the reason for it, and where it comes from.
 
 ### 4.19 The picture ladder
 - **Rule:** each moment gets the lowest step of picture that carries it: words, a still picture, a stepped picture the learner taps through (the default for any change), an animated one (when the motion is the idea), or play (the learner makes the evidence). Animation and play are offered for named moments, with their build cost, and built only on a yes. Every number in any step is computed.
-- **Why:** in testing, a stepped picture taught a change that a paragraph had not, and an animation where nothing moves is only decoration. Asking first keeps the expensive steps for the moments that need them.
-- **From:** Mayer's multimedia and signalling principles; the author's test rounds, where the 10-door picture opening one door at a time was the moment the group idea landed.
+- **Why:** in testing, the picture a tester named as the best part was a stepped one: one door's bar dropping to zero while another's doubles. An animation where nothing moves is only decoration, so asking first keeps the expensive steps for the moments that need them.
+- **From:** Mayer's multimedia and signalling principles; the author's test rounds.
 
 ### 4.20 One story, with milestones
 - **Rule:** a lesson is one story with a big idea, told in beats: hook, intuition, proof, mechanism, boundary, transfer, payoff. Each chapter names its milestone ("I can…") and ends on an open question that the next chapter answers; the last chapter answers the first question. A journey strip shows where the learner is.
@@ -142,7 +142,7 @@ Each principle has a rule, the reason for it, and where it comes from.
 
 ### 4.24 Test with real users, then fix
 - **Rule:** before release, fresh persona agents, a different person each round, use the lesson only the way a learner does (phone screenshots and taps, no answers mode, no files) and report in a fixed shape: moments, lost spots, a teach-back, a verdict, top fixes, bugs. Fix, then test with a new person. Stop on a correct teach-back with "I get it", or after two rounds with nothing new (then ask the author).
-- **Why:** an author cannot unsee what they know. The test rounds found what no script did: a page that rendered at desktop width on a phone, a caption that contradicted its picture, a chapter ticked "done" before any work.
+- **Why:** an author cannot unsee what they know. The test rounds found what no script did: a caption that contradicted its picture, an ending that showed the answer before the learner wrote theirs, and a fair dealer that a numbers-minded learner distrusted because the page never said how far a fair deal wanders. Setting up the phone access path found one more: the page had no phone viewport tag.
 - **From:** the author's own rounds; the testing-with-real-users skill holds the method for any artifact a person uses.
 
 ## 5. How it works
