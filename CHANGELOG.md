@@ -5,6 +5,10 @@
 - Stepped pictures keep their tallest step's height, so the page never jumps.
 - Test, then reveal: a "Spot the mistake" question comes before its common-mistake card, which opens once it is answered (the checker's order rule is flipped).
 - The key idea after "Your guess" stays folded until the guess is made, with a Skip button.
+- The picture ladder: words, still, stepped (the default for a change), animated and play. Animated and play are offered in Discover for named moments and built only on a yes (`lesson.agreed_extras`).
+- New `tiles` figure: labelled boxes that are closed, open, picked or hot (doors, cups, cards), alone or as steps.
+- `animate: true` on frames: a tap moves between computed steps in 0.7 s, with Play again; reduced motion steps instead.
+- New `play` block: deal 10 or 100 games from a computed case table and see your counts beside the expected share. The checker proves the cases and a seeded sample, and that the weights add up to 1.
 - `tests/check_page_clicks.py` clicks through the examples (blanks, two wrong blanks, folded cards, steady steps, tutor).
 
 ## 0.3.1 · 5 Nov 2026

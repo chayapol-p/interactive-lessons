@@ -254,6 +254,25 @@ details.stretch summary { cursor: pointer; min-height: 48px; display: flex; alig
 .frame-stack { display: grid; }
 .frame-layer { grid-area: 1 / 1; visibility: hidden; min-width: 0; }
 .frame-layer.current { visibility: visible; }
+.frame-stack.animated .frame-layer.leaving { visibility: visible; }
+.replay-row { display: flex; justify-content: flex-end; }
+/* kind: tiles. Doors, cups, cards, slots: a row of labelled boxes with a state */
+.svg-box.picked { fill: var(--surface); stroke: var(--accent); stroke-width: 2.5; }
+.svg-text.big { font-size: 15px; font-weight: 600; }
+/* Play: games dealt on the page from a computed case table */
+.play { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.deal-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+.deal-grid.ten { grid-template-columns: repeat(10, 1fr); }
+.deal-cell { aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: var(--font-code); font-size: 0.6875rem; background: var(--surface-2); color: var(--muted); }
+.deal-cell.hot { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.deal-cell.new { animation: deal-in .25s ease-out both; }
+@keyframes deal-in { from { opacity: 0; transform: scale(.6); } }
+.tally-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.tally-table td { padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tally-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.tally-table .key { display: inline-block; min-width: 1.6em; padding: 0 4px; margin-right: 6px; border-radius: 4px; text-align: center; font-family: var(--font-code); font-size: 0.75rem; background: var(--surface-2); }
+.tally-table .key.hot { background: var(--accent); color: var(--on-accent); }
+.tally-table .expected { display: block; font-size: var(--step--1); color: var(--muted); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* Folded until answered: the key idea after a guess, and a common-mistake card after its question */
 .folded { border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--muted); font-size: 0.9375rem; }
@@ -491,6 +510,7 @@ function describeBlock(block) {
     case "compare": return `compare on "${block.input}": ${block.options.map((o) => o.name + " = " + o.steps.join(" > ")).join("; ")}. They first differ at step ${block.differs_at}. ${block.explanation}`;
     case "fill_blanks": return `fill-the-blanks exercise (OPEN: never say which option is right; point to the Show solution button instead): ${block.instructions.join(" ")}\n${block.language === "text" ? "Passage" : "Code"} with blanks:\n${block.language === "text" ? block.text : block.code}\nOptions: ${block.blanks.map((b) => `${b.id}: ${b.options.map((o) => o.text).join(" | ")}`).join("; ")}`;
     case "explain": return `explain-in-your-words exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
+    case "play": return `play: the learner deals games from a case table and counts them. ${block.prompt} Cases: ${(block.cases || []).map((c) => `${c.label} (chance ${Number(c.weight).toFixed(3)}) counts as ${c.outcome}`).join("; ")}`;
     case "stretch": return `optional write-it-yourself exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
     case "pitfall": { const m = MISCONCEPTIONS[block.misconception]; return `pitfall: wrong idea "${m.wrong_idea}". True: ${m.what_is_true}`; }
     case "recap": return `recap: ${block.text}`;
@@ -1031,8 +1051,8 @@ function barsFigure(block) {
       return svg("g", {},
         svg("text", { x: left - 8, y: y + 14, "text-anchor": "end", class: "svg-text" }, bar.label),
         bar.note ? svg("text", { x: left - 8, y: y + 28, "text-anchor": "end", class: "svg-text small" }, bar.note) : null,
-        svg("rect", { x: left, y: y + 4, width: Math.max(scaleX(bar.value) - left, 0), height: 22, rx: 3, class: `svg-bar${figure.mark_below !== undefined && bar.value < figure.mark_below ? " low" : ""}` }),
-        svg("text", { x: scaleX(bar.value) + 6, y: y + 20, class: "svg-text" }, format(bar.value)));
+        svg("rect", { x: left, y: y + 4, width: Math.max(scaleX(bar.value) - left, 0), height: 22, rx: 3, "data-label": bar.label, class: `svg-bar${figure.mark_below !== undefined && bar.value < figure.mark_below ? " low" : ""}` }),
+        svg("text", { x: scaleX(bar.value) + 6, y: y + 20, class: "svg-text bar-value" }, format(bar.value)));
     }));
 }
 // kind: svg. Markup written in the blueprint, using the svg-* classes so both themes work.
@@ -1128,9 +1148,20 @@ function framesFigure(figure) {
     drawFigure(frame.figure), frame.caption ? h("p", { class: "frame-caption" }, frame.caption) : null));
   const spoken = h("p", { class: "visually-hidden", role: "status" });
   let current = 0;
-  function draw() {
+  // animate: true moves between two computed steps on a tap (bars grow or shrink, tiles fade), in 0.7 s; nothing plays
+  // by itself. Every number shown is a computed step's; only the motion between them is drawn. Reduced motion: stepped.
+  const animated = figure.animate === true;
+  const replay = animated ? h("button", { class: "btn quiet", type: "button", onclick: () => playStep(current - 1, current) }, "Play again") : null;
+  function playStep(from, to) {
+    if (!animated || from < 0 || from === to || reducedMotion()) return;
+    animateBetween(layers[from], layers[to]);
+  }
+  function draw(from) {
     const frame = figure.frames[current];
     layers.forEach((layer, index) => { layer.classList.toggle("current", index === current); layer.setAttribute("aria-hidden", index === current ? "false" : "true"); });
+    if (from !== undefined) playStep(from, current);
+    // The button keeps its room at every step (only its visibility changes), so the picture never jumps
+    if (replay) { const off = current === 0 || reducedMotion(); replay.style.visibility = off ? "hidden" : "visible"; replay.disabled = off; }
     spoken.textContent = `${figure.control_label}: ${frame.label}.${frame.caption ? " " + frame.caption : ""}`;
     if (figure.control === "slider") {
       const value = control.querySelector("strong");
@@ -1141,18 +1172,88 @@ function framesFigure(figure) {
   }
   if (figure.control === "slider") {
     const slider = h("input", { type: "range", min: "0", max: String(figure.frames.length - 1), step: "1", value: "0", "aria-label": figure.control_label });
-    slider.addEventListener("input", () => { current = Number(slider.value); draw(); });
+    slider.addEventListener("input", () => { const from = current; current = Number(slider.value); draw(from); });
     control.append(h("label", {}, h("span", {}, figure.control_label), h("strong", {}, figure.frames[0].label)), slider);
   } else {
     control.append(h("p", { class: "token-row-label" }, figure.control_label),
       h("div", { class: "switch frames", role: "group", "aria-label": figure.control_label }, figure.frames.map((frame, index) =>
-        h("button", { type: "button", "aria-pressed": index === 0 ? "true" : "false", onclick: () => { current = index; draw(); } }, frame.label))));
+        h("button", { type: "button", "aria-pressed": index === 0 ? "true" : "false", onclick: () => { const from = current; current = index; draw(from); } }, frame.label))));
   }
   draw();
-  return h("div", {}, control, h("div", { class: "frame-stack" }, layers), spoken);
+  return h("div", {}, control, h("div", { class: `frame-stack${animated ? " animated" : ""}` }, layers), replay ? h("div", { class: "replay-row" }, replay) : null, spoken);
+}
+// kind: tiles. A row of labelled boxes, each closed, open, picked or hot: doors, cups, cards, slots.
+// Tiles that share a `group` sit in one dashed frame with the group's name above it.
+const TILE_WORDS = { closed: "closed", open: "open", picked: "your pick", hot: "highlighted" };
+function tilesFigure(figure) {
+  const tiles = figure.tiles;
+  const perRow = Math.min(tiles.length, 6);
+  const width = 340, gap = 10, hasGroups = tiles.some((tile) => tile.group);
+  const tileWidth = Math.min(90, (width - gap * (perRow + 1)) / perRow);
+  const rowWidth = perRow * tileWidth + (perRow - 1) * gap;
+  const left = (width - rowWidth) / 2, top = hasGroups ? 30 : 8, tileHeight = 70, rowHeight = tileHeight + 30;
+  const rows = Math.ceil(tiles.length / perRow);
+  const place = (index) => ({ x: left + (index % perRow) * (tileWidth + gap), y: top + Math.floor(index / perRow) * rowHeight });
+  // Group frames around neighbouring tiles of one group, in the same row
+  const frames = [];
+  tiles.forEach((tile, index) => {
+    if (!tile.group) return;
+    const last = frames[frames.length - 1];
+    const { y } = place(index);
+    if (last && last.group === tile.group && last.end === index - 1 && last.y === y) last.end = index;
+    else frames.push({ group: tile.group, start: index, end: index, y });
+  });
+  return svg("svg", { viewBox: `0 0 ${width} ${top + rows * rowHeight - 8}`, role: "img",
+    "aria-label": tiles.map((tile) => `${tile.label}: ${TILE_WORDS[tile.state]}${tile.inside ? ", " + tile.inside : ""}${tile.note ? ", " + tile.note : ""}${tile.group ? " (" + tile.group + ")" : ""}`).join(". ") },
+    frames.map((frame) => {
+      const a = place(frame.start), b = place(frame.end);
+      return [svg("rect", { x: a.x - 5, y: a.y - 5, width: b.x + tileWidth - a.x + 10, height: tileHeight + 26, rx: 8, class: "svg-group" }),
+        svg("text", { x: a.x - 3, y: a.y - 10, class: "svg-text small hot" }, frame.group)];
+    }),
+    tiles.map((tile, index) => {
+      const { x, y } = place(index);
+      const look = { closed: "", open: "ghost", picked: "picked", hot: "hot" }[tile.state];
+      const inside = tile.inside !== undefined ? tile.inside : tile.state === "open" ? "" : "?";
+      return svg("g", {},
+        svg("rect", { x, y, width: tileWidth, height: tileHeight, rx: 6, class: `svg-box ${look}` }),
+        svg("text", { x: x + tileWidth / 2, y: y + 16, "text-anchor": "middle", class: "svg-text small" }, tile.label),
+        svg("text", { x: x + tileWidth / 2, y: y + 46, "text-anchor": "middle", class: `svg-text big${tile.state === "open" ? " dim" : ""}` }, inside),
+        tile.note ? svg("text", { x: x + tileWidth / 2, y: y + tileHeight + 15, "text-anchor": "middle", class: `svg-text small${tile.state === "picked" || tile.state === "hot" ? " hot" : ""}` }, tile.note) : null);
+    }));
+}
+const reducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+const STEP_MILLISECONDS = 700;
+// Bars that share a label grow or shrink from the old step's width to the new one's; a new bar grows from zero.
+// Anything else (tiles, tokens, a grid) fades from the old step into the new one.
+function animateBetween(fromLayer, toLayer) {
+  const oldWidths = {};
+  fromLayer.querySelectorAll("rect.svg-bar").forEach((bar) => { oldWidths[bar.getAttribute("data-label")] = Number(bar.getAttribute("width")); });
+  const bars = [...toLayer.querySelectorAll("rect.svg-bar")];
+  if (bars.length) {
+    const targets = bars.map((bar) => Number(bar.dataset.target || bar.getAttribute("width")));
+    bars.forEach((bar, index) => { bar.dataset.target = targets[index]; });
+    const starts = bars.map((bar) => oldWidths[bar.getAttribute("data-label")] || 0);
+    const values = [...toLayer.querySelectorAll(".bar-value")];
+    values.forEach((value) => value.animate([{ opacity: 0 }, { opacity: 0, offset: 0.8 }, { opacity: 1 }], { duration: STEP_MILLISECONDS }));
+    const began = performance.now();
+    const frame = (now) => {
+      const progress = Math.min(1, (now - began) / STEP_MILLISECONDS);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      bars.forEach((bar, index) => bar.setAttribute("width", String(starts[index] + (targets[index] - starts[index]) * eased)));
+      if (progress < 1) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+    return;
+  }
+  // Out, then in: the old step fades out in the first half and the new one fades in during the second, so two
+  // steps' words never sit on top of each other
+  fromLayer.classList.add("leaving");
+  fromLayer.animate([{ opacity: 1 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" }).onfinish = () => fromLayer.classList.remove("leaving");
+  toLayer.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" });
 }
 function drawFigure(figure, block) {
   switch (figure.kind) {
+    case "tiles": return tilesFigure(figure);
     case "flow": return flowFigure(block);
     case "bars": return barsFigure({ figure });
     case "tokens": return tokensFigure(figure);
@@ -1514,6 +1615,59 @@ function renderStretch(chapter, block) {
       feedbackHolder, help.row, help.hintsHolder, help.solutionHolder));
 }
 
+// ---------- Play: the learner deals games and counts them ----------
+// Each game lands in one case of the case table, which code worked out at build time (with its chance as a weight).
+// A fresh deal is random on purpose: evidence the learner makes is evidence they trust. Read-along shows the
+// seeded sample deal kept in the blueprint, so screenshots and tests are the same every time.
+function dealGames(cases, games) {
+  const dealt = [];
+  for (let game = 0; game < games; game += 1) {
+    let roll = Math.random(), chosen = cases[cases.length - 1];
+    for (const item of cases) { if (roll < item.weight) { chosen = item; break; } roll -= item.weight; }
+    dealt.push(chosen.outcome);
+  }
+  return dealt;
+}
+function sampleGames(block) {
+  // The seeded deal as a list of outcomes, in outcome order (its counts are what the blueprint recorded)
+  return block.outcomes.flatMap((outcome) => Array(block.sample.counts[outcome.id] || 0).fill(outcome.id));
+}
+function renderPlay(chapter, block) {
+  const wrapper = h("section", { class: "block", id: block.id });
+  const outcomes = Object.fromEntries(block.outcomes.map((outcome) => [outcome.id, outcome]));
+  const expected = Object.fromEntries(block.outcomes.map((outcome) => [outcome.id, block.cases.filter((c) => c.outcome === outcome.id).reduce((sum, c) => sum + c.weight, 0)]));
+  let dealt = readAlong ? sampleGames(block) : null;
+  const totals = Object.fromEntries(block.outcomes.map((outcome) => [outcome.id, 0]));
+  let totalGames = 0;
+  const grid = h("div", {}), table = h("div", { role: "status" });
+  function deal(games) {
+    dealt = dealGames(block.cases, games);
+    dealt.forEach((outcome) => { totals[outcome] += 1; });
+    totalGames += games;
+    draw(true);
+  }
+  function draw(fresh) {
+    if (!dealt) { setChildren(grid); setChildren(table, h("p", { class: "why" }, "Nothing dealt yet.")); return; }
+    const games = dealt.length;
+    const counts = Object.fromEntries(block.outcomes.map((outcome) => [outcome.id, dealt.filter((o) => o === outcome.id).length]));
+    setChildren(grid, h("div", { class: "deal-grid", role: "img", "aria-label": block.outcomes.map((o) => `${o.label}: ${counts[o.id]} of ${games}`).join(", ") },
+      dealt.map((outcome, index) => h("span", { class: `deal-cell${outcomes[outcome].hot ? " hot" : ""}${fresh && !reducedMotion() ? " new" : ""}`, style: fresh ? `animation-delay:${Math.min(index * 8, 900)}ms` : null }, outcomes[outcome].short))));
+    setChildren(table, h("table", { class: "tally-table" }, h("tbody", {}, block.outcomes.map((outcome) => h("tr", {},
+      h("td", {}, h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), outcome.label),
+      h("td", {}, `you: ${counts[outcome.id]} of ${games}`, h("span", { class: "expected" }, `expected about ${Math.round(expected[outcome.id] * games)}`)))))),
+      totalGames > games ? h("p", { class: "why" }, `All your deals together: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} of ${totalGames}`).join(" · ") + ".") : null,
+      readAlong && !totalGames ? h("p", { class: "why" }, "A sample deal, the same every time. Deal again for your own.") : null);
+  }
+  wrapper.append(
+    h("div", { class: "block-label" }, "Play it", h("span", { class: "spacer" }), tutorButton(chapter, block)),
+    h("div", { class: "play" },
+      h("p", { class: "question" }, withTerms(block.prompt)),
+      h("div", { class: "btn-row" }, block.deals.map((games, index) => h("button", { class: `btn${index === block.deals.length - 1 ? " primary" : ""}`, type: "button", onclick: () => deal(games) }, `Deal ${games} games`))),
+      grid, table));
+  draw(false);
+  return wrapper;
+}
+
 // ---------- Pitfall and recap ----------
 function renderPitfall(chapter, block) {
   const misconception = MISCONCEPTIONS[block.misconception];
@@ -1549,7 +1703,7 @@ const RENDERERS = {
   check: (c, b) => renderChoiceBlock(c, b, "check"),
   idea: renderIdea, diagram: renderDiagram, code: renderCode, compare: renderCompare,
   fill_blanks: renderFillBlanks, explain: renderExplain, stretch: renderStretch,
-  pitfall: renderPitfall, recap: renderRecap,
+  pitfall: renderPitfall, recap: renderRecap, play: renderPlay,
 };
 
 // ---------- Pages ----------

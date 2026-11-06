@@ -69,6 +69,17 @@ case("theme-clash-green", 'accent: "#5b3cc4"', 'accent: "#2a9d4a"', expect="too 
 case("theme-too-grey", 'accent: "#5b3cc4"', 'accent: "#777777"', expect="grey")
 case("frame-label-long", "            - label: Before\n", "            - label: Before attention runs\n", expect="12")
 
+# Picture ladder rules, broken in the Monty Hall example
+example = (K / "assets/example-monty-blueprint.yaml").read_text()
+case("play-weights-off", "            weight: 0.3333333333333333\n            outcome: stay-wins",
+     "            weight: 0.5\n            outcome: stay-wins", expect="add up to")
+case("play-typed-by-hand", "            stay-wins: 37\n            switch-wins: 63", "            stay-wins: 33\n            switch-wins: 67",
+     run_tests=True, expect="not what computed_by prints")
+case("play-not-agreed", "  agreed_extras: [animation, play]", "  agreed_extras: [animation]", expect="a play block is built only after a yes")
+case("animation-not-agreed", "  agreed_extras: [animation, play]", "  agreed_extras: [play]", expect="an animated picture is built only after a yes")
+case("tile-unknown-state", "caption: You pick door 1.\n              figure:\n                kind: tiles\n                tiles:\n                  - label: Door 1\n                    state: picked",
+     "caption: You pick door 1.\n              figure:\n                kind: tiles\n                tiles:\n                  - label: Door 1\n                    state: chosen", expect="needs state")
+
 if missed:
     sys.exit(f"Missed {len(missed)} breaks: {', '.join(missed)}")
 print("Every break was caught.")

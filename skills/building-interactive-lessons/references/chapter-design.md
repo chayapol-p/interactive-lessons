@@ -82,6 +82,9 @@ A chapter is a short sequence of blocks. Use only the blocks the chapter needs.
 **`stretch`**: an optional "write it yourself" exercise, collapsed by default, at most one per chapter. Checked against the solution, plus AI grading when available.
 - Why: some learners want to write the code. Keeping it optional stops it from blocking learners who came to understand, not to type.
 
+**`play`**: the learner deals 10 or 100 games from a computed case table and counts the outcomes beside the expected share. Only with a yes from Discover (`diagrams.md` section 0).
+- Why: a sceptic who will not believe a chance from a table believes the count they made themselves.
+
 **`check`**: a quiz question (see `checks-and-quizzes.md`).
 - Why: a fast test of one key concept or one pitfall.
 

@@ -19,6 +19,7 @@ lesson:
       text: After this, you can explain which door to choose after the host opens one, and why.
     - id: explain-host
       text: After this, you can explain why the host's knowledge, not the number of doors left, sets the odds.
+  agreed_extras: [animation, play]
   source: "Selvin (1975), letters to The American Statistician; vos Savant (1990), Parade; cases and chances worked out by code for this lesson"
 
 theme:
@@ -234,6 +235,42 @@ chapters:
           kind: svg
           svg: |
             <svg viewBox="0 0 340 204" role="img" aria-label="You pick door 1. Car behind door 1: the host opens 2 or 3, still one case, and staying wins. Car behind door 2: the host opens 3, switching wins. Car behind door 3: the host opens 2, switching wins."><text x="64" y="22" class="svg-text small">Door 1 · 2 · 3 (you pick 1)</text><text x="232" y="22" text-anchor="middle" class="svg-text small">Stay</text><text x="300" y="22" text-anchor="middle" class="svg-text small">Switch</text><text x="4" y="63" class="svg-text small">Car: 1</text><rect x="64" y="44" width="34" height="30" rx="4" class="svg-box hot"/><text x="81" y="63" text-anchor="middle" class="svg-text small">car</text><rect x="104" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="121" y="63" text-anchor="middle" class="svg-text small">goat</text><rect x="144" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="161" y="63" text-anchor="middle" class="svg-text small">goat</text><text x="64" y="88" class="svg-text small dim">opens 2 or 3 (one case)</text><text x="232" y="63" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="300" y="63" text-anchor="middle" class="svg-text dim">✗</text><text x="4" y="115" class="svg-text small">Car: 2</text><rect x="64" y="96" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="115" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="96" width="34" height="30" rx="4" class="svg-box hot"/><text x="121" y="115" text-anchor="middle" class="svg-text small">car</text><rect x="144" y="96" width="34" height="30" rx="4" class="svg-box ghost"/><text x="161" y="115" text-anchor="middle" class="svg-text small dim">open</text><text x="64" y="140" class="svg-text small dim">must open 3</text><text x="232" y="115" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="115" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="4" y="167" class="svg-text small">Car: 3</text><rect x="64" y="148" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="167" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="148" width="34" height="30" rx="4" class="svg-box ghost"/><text x="121" y="167" text-anchor="middle" class="svg-text small dim">open</text><rect x="144" y="148" width="34" height="30" rx="4" class="svg-box hot"/><text x="161" y="167" text-anchor="middle" class="svg-text small">car</text><text x="64" y="192" class="svg-text small dim">must open 2</text><text x="232" y="167" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="167" text-anchor="middle" class="svg-text hot">✓ wins</text></svg>
+      - id: deal-games
+        type: play
+        prompt: "Deal 100 games with a host who knows. You always pick door 1 and count who would win: staying or switching."
+        deals: [10, 100]
+        outcomes:
+          - {id: stay-wins, label: Staying wins, short: St}
+          - {id: switch-wins, label: Switching wins, short: Sw, hot: true}
+        computed_by:
+          language: python
+          code: |
+            import json, random
+            from fractions import Fraction
+            from monty import DOORS
+            # One case per place the car can be; you pick door 1, so staying wins only when the car is there
+            cases = [{"label": f"Car behind door {car}", "weight": float(Fraction(1, len(DOORS))),
+                      "outcome": "stay-wins" if car == 1 else "switch-wins"} for car in DOORS]
+            rng = random.Random(7)   # the seeded sample deal shown in read-along and screenshots
+            dealt = rng.choices([c["outcome"] for c in cases], weights=[c["weight"] for c in cases], k=100)
+            counts = {outcome: dealt.count(outcome) for outcome in ["stay-wins", "switch-wins"]}
+            print(json.dumps({"cases": cases, "sample": {"games": 100, "seed": 7, "counts": counts}}))
+        cases:
+          - label: Car behind door 1
+            weight: 0.3333333333333333
+            outcome: stay-wins
+          - label: Car behind door 2
+            weight: 0.3333333333333333
+            outcome: switch-wins
+          - label: Car behind door 3
+            weight: 0.3333333333333333
+            outcome: switch-wins
+        sample:
+          games: 100
+          seed: 7
+          counts:
+            stay-wins: 37
+            switch-wins: 63
       - id: one-case-idea
         type: idea
         text: "Picture 300 games. In about 100, the car is behind your door: the host opens door 2 or door 3, but it is still those same 100 games, and staying wins them. In the other 200, he has no choice, and switching wins them all."
@@ -337,6 +374,86 @@ chapters:
           - {text: "1 in 2, now that two doors are left", correct: false, why_wrong: "Whatever is behind your door, he can always find a goat to show, so your door keeps its 1 in 3."}
           - {text: "Still 1 in 3", correct: true, why_right: "Nothing about your door changed."}
           - {text: "Less than 1 in 3", correct: false, why_wrong: "Nothing happened to your door; it keeps what it had."}
+      - id: doors-open
+        type: diagram
+        shape: change-over-time
+        brief:
+          understand: "Tap through the game: you pick door 1, the host opens a goat door, and one other door stays shut."
+          how_it_helps: "Three doors as tiles, stepping from your pick to the host's open door to the offer."
+          clearer_than_text: Seeing the host's door open while yours stays shut shows that he never touches your door.
+        figure:
+          kind: frames
+          control: buttons
+          control_label: Step
+          animate: true
+          computed_by:
+            language: python
+            code: |
+              import json
+              from monty import DOORS
+              # The car is behind door 2 in this run; you pick door 1, so the host must open door 3
+              car, pick = 2, 1
+              opened = [d for d in DOORS if d not in (pick, car)][0]
+              def tiles(step):
+                  row = []
+                  for door in DOORS:
+                      state = "picked" if door == pick else "open" if (step >= 1 and door == opened) else "hot" if (step == 2 and door != pick) else "closed"
+                      inside = "goat" if state == "open" else "?"
+                      note = "yours" if door == pick else "opened" if state == "open" else "the offer" if state == "hot" else ""
+                      row.append({"label": f"Door {door}", "state": state, "inside": inside, **({"note": note} if note else {})})
+                  return {"kind": "tiles", "tiles": row}
+              captions = ["You pick door 1.", f"The host opens door {opened}: a goat.", f"He offers door {6 - pick - opened} instead."]
+              frames = [{"label": label, "caption": captions[step], "figure": tiles(step)} for step, label in enumerate(["You pick", "Host opens", "The offer"])]
+              print(json.dumps({"frames": frames}))
+          frames:
+            - label: You pick
+              caption: You pick door 1.
+              figure:
+                kind: tiles
+                tiles:
+                  - label: Door 1
+                    state: picked
+                    inside: '?'
+                    note: yours
+                  - label: Door 2
+                    state: closed
+                    inside: '?'
+                  - label: Door 3
+                    state: closed
+                    inside: '?'
+            - label: Host opens
+              caption: 'The host opens door 3: a goat.'
+              figure:
+                kind: tiles
+                tiles:
+                  - label: Door 1
+                    state: picked
+                    inside: '?'
+                    note: yours
+                  - label: Door 2
+                    state: closed
+                    inside: '?'
+                  - label: Door 3
+                    state: open
+                    inside: goat
+                    note: opened
+            - label: The offer
+              caption: He offers door 2 instead.
+              figure:
+                kind: tiles
+                tiles:
+                  - label: Door 1
+                    state: picked
+                    inside: '?'
+                    note: yours
+                  - label: Door 2
+                    state: hot
+                    inside: '?'
+                    note: the offer
+                  - label: Door 3
+                    state: open
+                    inside: goat
+                    note: opened
       - id: groups-idea
         type: idea
         key: true

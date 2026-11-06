@@ -149,6 +149,41 @@ with sync_playwright() as playwright:
             heights.append(round(figure.bounding_box()["height"]))
         expect(f"{diagram_id} keeps one height over {steps} steps", len(set(heights)) == 1, str(heights))
 
+    # ---- Play: fresh random deals, counts beside the expected share; read-along shows the seeded sample
+    monty = build("example-monty-blueprint")
+    tab = new_tab(monty + "#every-case")
+    play = block(tab, "deal-games")
+    expect("play shows nothing before a deal", play.locator(".deal-cell").count() == 0)
+    switch_counts = []
+    for _ in range(5):
+        play.get_by_role("button", name="Deal 100 games").click()
+        switch_counts.append(play.locator(".deal-cell.hot").count())
+    expect("a deal of 100 shows 100 games", play.locator(".deal-cell").count() == 100)
+    expect("each deal is fresh, not a fixed list", len(set(switch_counts)) > 1, str(switch_counts))
+    expect("counts sit beside the expected share", "expected about 67" in play.inner_text() and "All your deals together" in play.inner_text())
+    play.get_by_role("button", name="Deal 10 games").click()
+    expect("a deal of 10 shows 10 games", play.locator(".deal-cell").count() == 10)
+    sample = block(new_tab(monty + "?read-along=on#every-case"), "deal-games").inner_text()
+    expect("read-along shows the seeded sample deal", "you: 63 of 100" in sample and "you: 37 of 100" in sample, sample[:300])
+
+    # ---- Tiles, animated: a tap moves between computed steps, replayable; reduced motion steps instead
+    tab = new_tab(monty + "#where-the-chance-goes")
+    doors = block(tab, "doors-open")
+    expect("tiles draw one box per door", doors.locator(".frame-layer.current rect.svg-box").count() == 3)
+    doors.locator(".switch.frames button").nth(1).click()
+    tab.wait_for_timeout(200)
+    expect("a tap animates from the last step", doors.locator(".frame-layer.leaving").count() == 1)
+    tab.wait_for_timeout(800)
+    expect("the animation ends within a second", doors.locator(".frame-layer.leaving").count() == 0)
+    doors.get_by_role("button", name="Play again").click()
+    tab.wait_for_timeout(200)
+    expect("Play again replays the step", doors.locator(".frame-layer.leaving").count() == 1)
+    calm = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce").new_page()
+    calm.goto(monty + "#where-the-chance-goes"); calm.wait_for_timeout(150)
+    calm.locator("#doors-open .switch.frames button").nth(1).click(); calm.wait_for_timeout(100)
+    expect("reduced motion steps without moving", calm.locator("#doors-open .frame-layer.leaving").count() == 0
+           and not calm.locator("#doors-open").get_by_role("button", name="Play again").is_visible())
+
     # ---- Tutor: opens with the block's context, sends on Enter, renders Markdown, keeps the answer back
     tab = new_tab(chunking + "#size-and-overlap", fake_claude=True)
     tab.wait_for_timeout(200)

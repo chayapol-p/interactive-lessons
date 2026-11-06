@@ -33,6 +33,7 @@ Any field not listed here is an **error**. That catches typos, and it catches YA
   - `assumption_note` (R when `assumed: true`): who should confirm it, and when
 - `objectives` R: 3 to 5 items of `{id, text}`. Text starts "After this, you can…" and never uses "understand".
 - `source` o: where the material comes from.
+- `agreed_extras` o: the picture-ladder steps the author said yes to in Discover: `animation`, `play`. An animated figure or a play block without its yes is an error (`diagrams.md` section 0).
 
 **`known_ideas`**: `{id, idea}`. Ids start with `known-`. These are the specific ideas the first chapters bring in. `learner.knows` is the short profile line; `known_ideas` are the pieces a chapter can name in `brings_in`.
 
@@ -99,9 +100,9 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
 **idea**: `text` R (at most 3 sentences), `key` o (`true` when a later chapter or the field guide depends on it), `more` o.
 
 **diagram**: `shape` R (`flow`, `structure`, `change-over-time`, `space`, `comparison`, `quantity`), `brief` R with `understand`, `how_it_helps`, `clearer_than_text`, and `figure` R: what the template draws.
-- `figure.kind` R: `flow` (`parts` of `{id, label, row, note}`, `links` of `{from, to, label}`, `highlight` o), `bars` (`bars` of `{label, value, note}`, `max` o, `mark_below` o), `tokens` (`rows` of `{label, tokens: [{text, id, hot}]}`), `scatter` (`points` of `{label, x, y}`, `highlight`, `x_label`, `y_label`), `grid` (`rows`, `columns`, `values` from 0 to 1, `highlight_row`), `frames` (`frames` of `{label, figure, caption}`, where `caption` o is one line shown under that step, `control: slider | buttons`, `control_label`) or `svg` (`svg`: full markup). See `diagrams.md` section 7.
+- `figure.kind` R: `tiles` (`tiles` of `{label, state, inside, note, group}`, `state` one of closed, open, picked, hot), `flow` (`parts` of `{id, label, row, note}`, `links` of `{from, to, label}`, `highlight` o), `bars` (`bars` of `{label, value, note}`, `max` o, `mark_below` o), `tokens` (`rows` of `{label, tokens: [{text, id, hot}]}`), `scatter` (`points` of `{label, x, y}`, `highlight`, `x_label`, `y_label`), `grid` (`rows`, `columns`, `values` from 0 to 1, `highlight_row`), `frames` (`frames` of `{label, figure, caption}`, where `caption` o is one line shown under that step, `control: slider | buttons`, `control_label`, `animate` o: `true` moves between steps on a tap, needs `animation` in `lesson.agreed_extras`; a frame may hold bars, tokens, scatter, grid or tiles) or `svg` (`svg`: full markup). See `diagrams.md` section 7.
 - `figure.toy` o (`true`): the numbers are made up to show the idea. The page puts "Toy numbers." before the caption. Use it on every figure whose data is a sketch, not a measurement.
-- `figure.computed_by` (R for scatter, grid and frames; o for bars and tokens): `{language: python, code, run_locally}`. The code prints the figure's data as one JSON object; `record_outputs.py` writes it in, and `--run-tests` proves it. `run_locally` skips a run that needs a file or service the lesson does not ship.
+- `figure.computed_by` (R for scatter, grid and frames; o for bars, tokens and tiles): `{language: python, code, run_locally}`. The code prints the figure's data as one JSON object; `record_outputs.py` writes it in, and `--run-tests` proves it. `run_locally` skips a run that needs a file or service the lesson does not ship.
 - A diagram that grows across chapters is written as stages, never as a promise in prose:
   - `grows_in` o (first stage only): the later chapters that add to it. Each named chapter must have a stage that extends it.
   - `extends` o (later stages only): `{diagram, adds}`. `diagram` names the earlier stage (in an earlier chapter); `adds` says what this stage draws on top. Its `figure` lists only the parts and links it adds, and keeps the first stage's kind.
@@ -190,6 +191,32 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
 - `purpose: pitfall` → `tests` names a misconception.
 
 **recap**: `text` R, `sums_up` R (the teaching blocks of this chapter it summarises).
+
+**play**: the learner deals games and counts them (picture-ladder step 4; needs `play` in `lesson.agreed_extras`).
+- `prompt` R: what to deal and count, in one or two sentences.
+- `deals` R: the deal sizes offered as buttons, `[10]`, `[100]` or `[10, 100]`.
+- `outcomes` R: 2 to 4 items of `{id, label, short, hot}`. `short` R is 1 or 2 characters drawn in each dealt game, so a game never reads by colour alone; at most one outcome is `hot` (the one the lesson is about).
+- `computed_by` R: python that prints one JSON object with `cases` and `sample`. `record_outputs.py` writes both in, and `--run-tests` proves them. Write `cases: []` and `sample: {games: 100, seed: 7, counts: {}}` before recording.
+- `cases` (recorded): 2 to 12 items of `{label, weight, outcome}`: each way a game can go, its chance, and what it counts as. The weights add up to 1 (checked).
+- `sample` (recorded): `{games, seed, counts}`, one deal made with a fixed seed. Read-along, screenshots and tests show it; a learner's own deals are fresh and random.
+```yaml
+- id: deal-games
+  type: play
+  prompt: Deal 100 games with a host who knows, and count who would win.
+  deals: [10, 100]
+  outcomes:
+    - {id: stay-wins, label: Staying wins, short: St}
+    - {id: switch-wins, label: Switching wins, short: Sw, hot: true}
+  computed_by:
+    language: python
+    code: |
+      import json, random
+      cases = [{"label": f"Car behind door {car}", "weight": 1 / 3, "outcome": "stay-wins" if car == 1 else "switch-wins"} for car in [1, 2, 3]]
+      dealt = random.Random(7).choices([c["outcome"] for c in cases], weights=[c["weight"] for c in cases], k=100)
+      print(json.dumps({"cases": cases, "sample": {"games": 100, "seed": 7, "counts": {o: dealt.count(o) for o in ["stay-wins", "switch-wins"]}}}))
+  cases: []
+  sample: {games: 100, seed: 7, counts: {}}
+```
 
 ## 4. Id rules
 

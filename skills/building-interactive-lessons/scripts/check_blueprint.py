@@ -67,7 +67,7 @@ TESTS_AFTER_TEACHING = {"check", "fill_blanks", "explain"}
 
 ALLOWED_KEYS = {
     "top": {"lesson", "theme", "glossary", "known_ideas", "facts", "misconceptions", "shared_modules", "chapters"},
-    "lesson": {"title", "role", "learner", "objectives", "source"},
+    "lesson": {"title", "role", "learner", "objectives", "source", "agreed_extras"},
     "learner": {"knows", "new_to", "wants_to", "time_minutes", "assumed", "assumption_note"},
     "objective": {"id", "text"},
     "glossary": {"term", "definition"},
@@ -94,7 +94,9 @@ ALLOWED_KEYS = {
     "diagram": {"id", "type", "shape", "brief", "figure", "grows_in", "extends"},
     "diagram_extends": {"diagram", "adds"},
     "figure": {"kind", "parts", "links", "highlight", "bars", "max", "svg", "rows", "columns", "values", "highlight_row",
-               "points", "x_label", "y_label", "frames", "control", "control_label", "computed_by", "label", "mark_below", "toy"},
+               "points", "x_label", "y_label", "frames", "control", "control_label", "computed_by", "label", "mark_below", "toy",
+               "tiles", "animate"},
+    "figure_tile": {"label", "state", "inside", "note", "group"},
     "figure_token_row": {"label", "tokens"},
     "figure_token": {"text", "id", "hot"},
     "figure_point": {"label", "x", "y", "group"},
@@ -112,6 +114,10 @@ ALLOWED_KEYS = {
     "pitfall": {"id", "type", "misconception"},
     "check": {"id", "type", "purpose", "tests", "question", "options"},
     "recap": {"id", "type", "text", "sums_up"},
+    "play": {"id", "type", "prompt", "deals", "outcomes", "computed_by", "cases", "sample"},
+    "play_outcome": {"id", "label", "short", "hot"},
+    "play_case": {"label", "weight", "outcome"},
+    "play_sample": {"games", "seed", "counts"},
 }
 
 REQUIRED_KEYS = {
@@ -159,7 +165,15 @@ REQUIRED_KEYS = {
     "pitfall": {"id", "type", "misconception"},
     "check": {"id", "type", "purpose", "tests", "question", "options"},
     "recap": {"id", "type", "text", "sums_up"},
+    "figure_tile": {"label", "state"},
+    "play": {"id", "type", "prompt", "deals", "outcomes", "computed_by", "cases", "sample"},
+    "play_outcome": {"id", "label", "short"},
+    "play_case": {"label", "weight", "outcome"},
+    "play_sample": {"games", "seed", "counts"},
 }
+
+BLOCK_TYPES = {"predict", "idea", "diagram", "code", "compare", "fill_blanks", "explain", "stretch", "pitfall", "check",
+               "recap", "play"}
 
 RETIRED_BLOCK_TYPES = {
     "your_turn": "was split in v0.2: code exercises are now 'fill_blanks' (default) or an optional 'stretch'; explain exercises are 'explain'",
@@ -309,7 +323,7 @@ def check_blueprint_shape(blueprint, problems):
             if block_type in RETIRED_BLOCK_TYPES:
                 problems.error(block_id, f"block type '{block_type}' {RETIRED_BLOCK_TYPES[block_type]}")
                 continue
-            if block_type not in ALLOWED_KEYS or block_type in {"top", "lesson", "learner"}:
+            if block_type not in BLOCK_TYPES:
                 problems.error(block_id, f"unknown block type '{block_type}'")
                 continue
             check_item_shape(block, block_type, block_id, problems)
@@ -340,6 +354,13 @@ def check_blueprint_shape(blueprint, problems):
                     check_list_shape(blank.get("options") if isinstance(blank, dict) else [], "blank_option", f"{blank_where} option", problems)
                 if "run_locally" in block:
                     check_item_shape(block["run_locally"] or {}, "run_locally", f"{block_id}.run_locally", problems)
+            if block_type == "play":
+                check_list_shape(block.get("outcomes"), "play_outcome", f"{block_id}.outcomes", problems)
+                check_list_shape(block.get("cases"), "play_case", f"{block_id}.cases", problems)
+                if isinstance(block.get("sample"), dict):
+                    check_item_shape(block["sample"], "play_sample", f"{block_id}.sample", problems)
+                if isinstance(block.get("computed_by"), dict):
+                    check_item_shape(block["computed_by"], "computed_by", f"{block_id}.computed_by", problems)
             if block_type in {"explain", "stretch"}:
                 check_list_shape(block.get("rubric"), "rubric_line", f"{block_id}.rubric", problems)
                 check_list_shape(block.get("common_wrong_answers"), "wrong_answer", f"{block_id}.common_wrong_answers", problems)
@@ -626,11 +647,18 @@ def check_bridges_and_recaps(blueprint, problems):
                 problems.error(block.get("id"), f"names '{name}', but the blocks it sums up never show it")
 
 
-FIGURE_KINDS = {"flow", "bars", "svg", "tokens", "scatter", "grid", "frames"}
-DATA_FIGURE_KINDS = {"bars", "tokens", "scatter", "grid"}   # kinds a frames figure can step through
+FIGURE_KINDS = {"flow", "bars", "svg", "tokens", "scatter", "grid", "frames", "tiles"}
+DATA_FIGURE_KINDS = {"bars", "tokens", "scatter", "grid", "tiles"}   # kinds a frames figure can step through
 # The data fields of each kind: computed_by must print exactly these, as JSON
 FIGURE_DATA_FIELDS = {"bars": ["bars"], "tokens": ["rows"], "scatter": ["points"], "grid": ["rows", "columns", "values"],
-                      "frames": ["frames"]}
+                      "frames": ["frames"], "tiles": ["tiles"]}
+TILE_STATES = {"closed", "open", "picked", "hot"}
+MOST_TILES = 12
+MOST_TILE_LABEL = 10        # characters: a tile is about 50 px wide at phone width
+EXTRAS = {"animation", "play"}  # picture-ladder steps 3 and 4: built only after the author says yes in Discover
+PLAY_DEALS = {10, 100}
+PLAY_OUTCOME_RANGE = (2, 4)
+PLAY_CASE_RANGE = (2, 12)
 MOST_SCATTER_POINTS = 12
 MOST_GRID_SIDE = 8
 FRAME_COUNT_RANGE = (2, 8)
@@ -646,6 +674,8 @@ def check_data_figure_shape(figure, where, problems):
                 check_list_shape(row.get("tokens"), "figure_token", f"{where}.rows item {index + 1}.tokens", problems)
     if figure.get("kind") == "scatter":
         check_list_shape(figure.get("points"), "figure_point", f"{where}.points", problems)
+    if figure.get("kind") == "tiles":
+        check_list_shape(figure.get("tiles"), "figure_tile", f"{where}.tiles", problems)
     if figure.get("kind") == "frames":
         check_list_shape(figure.get("frames"), "figure_frame", f"{where}.frames", problems)
         for index, frame in enumerate(figure.get("frames") or []):
@@ -693,6 +723,17 @@ def check_data_figure(diagram_id, figure, problems, inside_frames=False):
             problems.error(diagram_id, "grid values must be numbers from 0 to 1 (they set each cell's shade)")
         if figure.get("highlight_row") is not None and figure.get("highlight_row") not in rows:
             problems.error(diagram_id, f"highlight_row '{figure.get('highlight_row')}' is not a row label")
+    elif kind == "tiles":
+        tiles = figure.get("tiles") or []
+        if not 1 <= len(tiles) <= MOST_TILES:
+            problems.error(diagram_id, f"a tiles figure needs 1 to {MOST_TILES} tiles; it has {len(tiles)}")
+        for tile in tiles:
+            if tile.get("state") not in TILE_STATES:
+                problems.error(diagram_id, f"tile '{tile.get('label')}' needs state: one of {', '.join(sorted(TILE_STATES))}")
+            if len(str(tile.get("label", ""))) > MOST_TILE_LABEL:
+                problems.error(diagram_id, f"tile label '{tile.get('label')}' is longer than {MOST_TILE_LABEL} characters; it will not fit a tile on a phone")
+        if sum(1 for tile in tiles if tile.get("state") == "hot") > MOST_HIGHLIGHTED_BOXES:
+            problems.error(diagram_id, f"highlight at most {MOST_HIGHLIGHTED_BOXES} tiles as hot")
     elif kind == "frames":
         if inside_frames:
             problems.error(diagram_id, "a frame cannot hold another frames figure")
@@ -716,6 +757,8 @@ def check_data_figure(diagram_id, figure, problems, inside_frames=False):
             problems.error(diagram_id, f"every frame holds the same kind of figure, one of: {', '.join(sorted(DATA_FIGURE_KINDS))}")
         for frame in frames:
             check_data_figure(f"{diagram_id} frame '{frame.get('label')}'", frame.get("figure") or {}, problems, inside_frames=True)
+        if "animate" in figure and not isinstance(figure.get("animate"), bool):
+            problems.error(diagram_id, "animate must be true or false")
     computed_by = figure.get("computed_by")
     if computed_by is not None:
         if kind not in FIGURE_DATA_FIELDS:
@@ -803,12 +846,15 @@ def check_figures(blueprint, problems):
                 if not isinstance(bar.get("value"), (int, float)) or isinstance(bar.get("value"), bool):
                     problems.error(diagram_id, f"bar '{bar.get('label')}' needs a number value")
 
-        elif kind in ("tokens", "scatter", "grid", "frames"):
+        elif kind in ("tokens", "scatter", "grid", "frames", "tiles"):
             if "extends" in block or block.get("grows_in"):
                 problems.error(diagram_id, f"a {kind} figure cannot grow; use a frames figure to step through states")
             check_data_figure(diagram_id, figure, problems)
 
-        elif kind == "svg":
+        if "animate" in figure and kind != "frames":
+            problems.error(diagram_id, "animate works only on a frames figure: it moves between the computed steps")
+
+        if kind == "svg":
             if "extends" in block or block.get("grows_in"):
                 problems.error(diagram_id, "an svg figure cannot grow; use a flow figure for a diagram that grows")
             if not str(figure.get("svg", "")).strip().startswith("<svg"):
@@ -1200,12 +1246,73 @@ def check_block(block, misconception_ids, problems):
                 problems.error(block_id, f"a code stretch needs language: {', '.join(sorted(CODE_LANGUAGES))}")
             check_code_text(f"{block_id} reference_solution", block.get("reference_solution"), block.get("language"), problems)
 
+    elif block_type == "play":
+        check_play(block, problems)
+
     elif block_type == "check":
         if block.get("purpose") not in {"key", "pitfall"}:
             problems.error(block_id, "purpose must be 'key' or 'pitfall'; quiz only key ideas and pitfalls")
         if block.get("purpose") == "pitfall" and block.get("tests") not in misconception_ids:
             problems.error(block_id, "a pitfall check must test a defined misconception")
         check_answer_options(block_id, block.get("options"), CHECK_OPTION_RANGE, problems)
+
+
+def check_play(block, problems):
+    """A play block deals games from a case table that code worked out; the page shows the learner's counts beside the
+    expected share. The cases and the seeded sample deal come from computed_by, so no chance is typed by hand."""
+    block_id = block.get("id", "play")
+    deals = block.get("deals") or []
+    if not deals or not set(deals) <= PLAY_DEALS or len(set(deals)) != len(deals):
+        problems.error(block_id, f"deals lists how many games a tap deals: 10, 100 or both")
+    outcomes = [outcome for outcome in block.get("outcomes") or [] if isinstance(outcome, dict)]
+    outcome_ids = [outcome.get("id") for outcome in outcomes]
+    if not PLAY_OUTCOME_RANGE[0] <= len(outcomes) <= PLAY_OUTCOME_RANGE[1]:
+        problems.error(block_id, f"a play block counts {PLAY_OUTCOME_RANGE[0]} to {PLAY_OUTCOME_RANGE[1]} outcomes; it has {len(outcomes)}")
+    if len(set(outcome_ids)) != len(outcome_ids):
+        problems.error(block_id, "outcome ids must be unique")
+    for outcome in outcomes:
+        if not 1 <= len(str(outcome.get("short", ""))) <= 2:
+            problems.error(block_id, f"outcome '{outcome.get('id')}' needs short: 1 or 2 characters shown in each dealt game, so it never relies on colour")
+    if sum(1 for outcome in outcomes if outcome.get("hot")) > 1:
+        problems.error(block_id, "mark at most one outcome hot: the one the lesson is about")
+    computed_by = block.get("computed_by")
+    if not isinstance(computed_by, dict) or computed_by.get("language") != "python":
+        problems.error(block_id, "a play block needs computed_by: python that prints its cases and a seeded sample deal as JSON, "
+                       "so every chance comes from code, not from hand")
+    cases = [case for case in block.get("cases") or [] if isinstance(case, dict)]
+    if not PLAY_CASE_RANGE[0] <= len(cases) <= PLAY_CASE_RANGE[1]:
+        problems.error(block_id, f"a play block needs {PLAY_CASE_RANGE[0]} to {PLAY_CASE_RANGE[1]} cases; it has {len(cases)} (run record_outputs.py)")
+    weights = [case.get("weight") for case in cases]
+    if any(not is_number(weight) or weight <= 0 for weight in weights):
+        problems.error(block_id, "every case needs a weight above 0: its chance")
+    elif cases and abs(sum(weights) - 1) > 1e-6:
+        problems.error(block_id, f"the case weights add up to {sum(weights):.4f}, not 1; every game must land in exactly one case")
+    for case in cases:
+        if case.get("outcome") not in outcome_ids:
+            problems.error(block_id, f"case '{case.get('label')}' counts '{case.get('outcome')}', which is not an outcome")
+    for outcome_id in set(outcome_ids) - {case.get("outcome") for case in cases}:
+        problems.error(block_id, f"no case leads to outcome '{outcome_id}'")
+    sample = block.get("sample") if isinstance(block.get("sample"), dict) else {}
+    counts = sample.get("counts") if isinstance(sample.get("counts"), dict) else {}
+    if sample.get("games") not in set(deals):
+        problems.error(block_id, "sample.games must be one of the deal sizes: the seeded deal shown in screenshots and read-along")
+    elif set(counts) - set(outcome_ids) or sum(value for value in counts.values() if is_number(value)) != sample.get("games"):
+        problems.error(block_id, "sample.counts must count each outcome, adding up to sample.games")
+
+
+def check_extras(blueprint, problems):
+    """Picture-ladder steps 3 and 4 (animation, play) cost build time, so they are built only after the author agreed in Discover."""
+    agreed = (blueprint.get("lesson") or {}).get("agreed_extras") or []
+    for extra in agreed:
+        if extra not in EXTRAS:
+            problems.error("lesson.agreed_extras", f"'{extra}' is not an extra; use {', '.join(sorted(EXTRAS))}")
+    for chapter in blueprint.get("chapters") or []:
+        for block in chapter.get("blocks") or []:
+            figure = block.get("figure") if isinstance(block.get("figure"), dict) else {}
+            if figure.get("animate") is True and "animation" not in agreed:
+                problems.error(block.get("id"), "an animated picture is built only after a yes in Discover: ask, then add 'animation' to lesson.agreed_extras")
+            if block.get("type") == "play" and "play" not in agreed:
+                problems.error(block.get("id"), "a play block is built only after a yes in Discover: ask, then add 'play' to lesson.agreed_extras")
 
 
 def check_compare(block, problems):
@@ -1294,13 +1401,20 @@ def figure_runs(blueprint):
     runs = []
     for chapter_index, chapter in enumerate(blueprint.get("chapters") or []):
         for block_index, block in enumerate(chapter.get("blocks") or []):
+            if block.get("type") == "play" and isinstance(block.get("computed_by"), dict):
+                # A play block's cases and seeded sample live on the block itself
+                fields = ["cases", "sample"]
+                runs.append({"name": f"{block.get('id')}: play", "code": block["computed_by"].get("code") or "", "fields": fields,
+                             "claimed": {field: block.get(field) for field in fields}, "in_figure": False,
+                             "skip": block["computed_by"].get("run_locally"), "target": (chapter_index, block_index)})
+                continue
             figure = block.get("figure") if block.get("type") == "diagram" else None
             if not isinstance(figure, dict) or not isinstance(figure.get("computed_by"), dict):
                 continue
             computed_by = figure["computed_by"]
             fields = FIGURE_DATA_FIELDS.get(figure.get("kind"), [])
             runs.append({"name": f"{block.get('id')}: figure", "code": computed_by.get("code") or "", "fields": fields,
-                         "claimed": {field: figure.get(field) for field in fields},
+                         "claimed": {field: figure.get(field) for field in fields}, "in_figure": True,
                          "skip": computed_by.get("run_locally"), "target": (chapter_index, block_index)})
     return runs
 
@@ -1329,7 +1443,7 @@ def run_tests(blueprint, problems):
         matches = json.dumps(actual, sort_keys=True) == json.dumps(run["claimed"], sort_keys=True, default=str)
         print(f"RUN      {run['name']}: {'data matches' if matches else 'DATA DIFFERS'}")
         if not matches:
-            problems.error(run["name"], "the picture's numbers are not what computed_by prints; run record_outputs.py")
+            problems.error(run["name"], ("the numbers are not what computed_by prints" if run["in_figure"] else "the cases or the sample deal are not what computed_by prints") + "; run record_outputs.py")
     for run in build_runs(blueprint):
         actual_output, _ = run_program(run["language"], run["code"], blueprint.get("shared_modules"))
         matches = normalise_output(actual_output) == normalise_output(run["claimed_output"])
@@ -1361,12 +1475,13 @@ def check_blueprint(blueprint, run_code=False):
     check_bridges_and_recaps(blueprint, problems)
     check_figures(blueprint, problems)
     check_example_details(blueprint, problems)
+    check_extras(blueprint, problems)
     misconception_ids = {item.get("id") for item in blueprint.get("misconceptions") or []}
     for chapter in blueprint.get("chapters") or []:
         check_chapter_teaching_and_tests(chapter, misconception_ids, problems)
         check_block_rhythm(chapter, problems)
         for block in chapter.get("blocks") or []:
-            if block.get("type") in ALLOWED_KEYS:
+            if block.get("type") in BLOCK_TYPES:
                 check_block(block, misconception_ids, problems)
     if run_code:
         run_tests(blueprint, problems)

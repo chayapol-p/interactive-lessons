@@ -58,7 +58,7 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Idea**: at most 3 sentences. Every `glossary` term in the text is tappable and opens its definition card at the bottom of the screen. A "More" panel holds optional depth.
 
-**Diagram**: drawn from its `figure` (see `diagrams.md`). A stepped picture (`frames`) draws every step once and keeps the tallest step's height, so tapping through steps never moves the page. A `toy` figure starts its caption with "Toy numbers." A caption under it states the brief's `understand` sentence.
+**Diagram**: drawn from its `figure` (see `diagrams.md`). A stepped picture (`frames`) draws every step once and keeps the tallest step's height, so tapping through steps never moves the page. With `animate: true`, a tap moves from the last step to the new one in 0.7 s and a "Play again" button (always in place, so nothing jumps) replays it; reduced motion turns the movement off. A `toy` figure starts its caption with "Toy numbers." A caption under it states the brief's `understand` sentence.
 - A stage with `extends` redraws the earlier stages muted, in the same positions, and highlights what it adds, under a line saying what was added to which chapter's picture. A first stage with `grows_in` notes under it which chapters add to it.
 
 **Code**
@@ -68,6 +68,8 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 - A slice with `run_locally` also shows its command.
 
 **Compare**: a switch between options. Below it, each option's steps, with step `differs_at` marked and the explanation shown.
+
+**Play** (label "Play it"): the prompt, one button per deal size, then the dealt games as a grid of small cells (each with its outcome's short mark; the hot outcome filled with the accent), and a table: each outcome's count beside the expected share ("you: 64 of 100 · expected about 67"). Each deal is fresh and random; after two or more deals, a line adds up all of them. Read-along shows the seeded sample deal instead, so screenshots repeat.
 
 **Fill the blanks, explain, stretch**: see section 3.
 

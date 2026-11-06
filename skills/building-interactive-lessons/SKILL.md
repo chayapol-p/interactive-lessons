@@ -63,6 +63,7 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
 3. **Ask, in one round, at most 4 questions,** with the environment's multiple-choice question tool when there is one:
    - **Confirm the profile:** show what you assumed they know, each item with where it came from, and let them tick or correct it.
    - **Scope questions** whose answers change the chapters: how deep (intuition only, light maths, full mechanics), which topics are in or out, how long, and the style (for example, picture-heavy or code-heavy).
+   - **Offer the higher picture steps, only where a named moment needs them** (`references/diagrams.md` section 0): an animation when the motion is the idea, a play block when the learner needs to believe a number. Name the moment and the extra build time, for example "Chapter 2: let you deal 100 games and count the wins yourself (about 10 more minutes to build)?". Build them only on a yes, and record it in `lesson.agreed_extras`.
    - **Confirm the theme:** draft one accent and its name from a colour they named, their organisation's colour (say "check me"), the topic's world, or the default Ink blue. Run `python scripts/theme.py '#hex'` and show the original and adjusted colour. No organisation name or logo goes on the page without a yes. This can share a question with the profile.
    - Put your recommended answer first. Never ask what you can find out yourself.
 4. **Record the answers** in the blueprint and set `assumed: false`. If nobody answers (an unattended run), go on with `assumed: true` and an `assumption_note` naming who should confirm it.
@@ -94,7 +95,8 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
 - Fill one **chapter card** per chapter. See `references/chapter-design.md` for every field and the reason it exists.
 - Choose blocks: predict, idea, then the exercise after the teaching. See `references/chapter-design.md`.
 - Write exercises and quizzes by the rules in `references/checks-and-quizzes.md`.
-- Write a brief for every diagram first, cut it to the fewest boxes, pick its pattern (growing pipeline, paired traces or sequence), then write its `figure` (flow, bars or svg). See `references/diagrams.md`. Borrow from the diagram-design skill here if it is installed, never during a build.
+- Pick each picture's step on the ladder (words, still, stepped, animated, play; `references/diagrams.md` section 0). Stepped is the default for a change; animated and play only with a yes from Discover.
+- Write a brief for every diagram first, cut it to the fewest boxes, pick its pattern (growing pipeline, paired traces or sequence), then write its `figure` (flow, bars, tiles, frames or svg). See `references/diagrams.md`. Borrow from the diagram-design skill here if it is installed, never during a build.
 - Save the blueprint in the format in `references/blueprint-format.md`. `assets/example-blueprint.yaml` is a complete example.
 - Run the checker and fix every error:
   ```bash
@@ -165,6 +167,8 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 | "figure link … is not a part of this figure" | A later stage links to a part no stage defines → add the part, or fix the id |
 | "page … is stale" | The blueprint changed after the build → rebuild with `build_page.py` |
 | "changed.json belongs to another build" | The last build failed → fix the blueprint and rebuild |
+| "built only after a yes in Discover" | An animation or play block was added without asking → ask the author, then add `animation` or `play` to `lesson.agreed_extras`, or use a stepped picture |
+| "the case weights add up to …, not 1" | A game can land in no case or two → fix the cases in `computed_by` and re-record |
 | "a pitfall check comes right before the pitfall card" | The card sits before its question, so it gives the answer away → move the check above the card |
 | "the question names 'X', which no earlier block explains" | A quiz leans on a detail of the example → explain the example and that detail earlier, or explain it in brackets in the question |
 | "option 'X' is only a detail of the example" | An answer is a clause number or file name → write what that choice means |

@@ -74,7 +74,7 @@ def main():
         else:
             block["blanks"][target[2]]["options"][target[3]]["output"] = as_yaml_text(output)
 
-    # Pictures whose numbers come from computed_by
+    # Pictures and play blocks whose numbers come from computed_by
     for run in figure_runs(plain):
         block_id = run["name"].split(":")[0]
         if (arguments.only and block_id not in arguments.only) or run["skip"]:
@@ -88,9 +88,10 @@ def main():
         print(f"{'same' if same else 'UPDATED':8} {run['name']}")
         if not same:
             changed += 1
-            figure = document["chapters"][run["target"][0]]["blocks"][run["target"][1]]["figure"]
+            block = document["chapters"][run["target"][0]]["blocks"][run["target"][1]]
+            holder = block["figure"] if run["in_figure"] else block   # a play block keeps its cases on the block
             for field in run["fields"]:
-                figure[field] = actual[field]
+                holder[field] = actual[field]
 
     if changed and not arguments.dry_run:
         with blueprint_path.open("w", encoding="utf-8") as blueprint_file:
