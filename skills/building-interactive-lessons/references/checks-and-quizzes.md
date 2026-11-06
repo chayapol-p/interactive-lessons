@@ -65,7 +65,8 @@ Judgement call: could a learner pass this check by guessing, by matching words, 
 **Judgement calls**
 - A key-idea check gives a situation the chapter did not show. If a learner can only answer the chapter's own example, they memorised it.
 - A pitfall check shows code or a statement containing the misconception and asks what is wrong.
-- Options are similar in length and style. No "all of the above", no trick wording.
+- Options are similar in length and style. No "all of the above", no trick wording. The right option is never much longer than the wrong ones **(checked)**.
+- A guess's right answer never shows before the guess **(checked)**, and a blank's right option is never written in the block just above it **(checked)**. See `chapter-design.md` section 8.
 
 **After an answer**: mark the choice right or wrong, reveal the correct option, show the picked option's explanation first, then the correct one's.
 
@@ -100,7 +101,7 @@ A lesson often teaches through an example: a lab, a codebase, a rule book, a dat
 - 1 or 2 hint levels per exercise **(checked)**. Level 1 points to the part of the problem. Level 2 goes about half way. A hint never contains the solution.
 - **Hint** and **Show solution** are two separate buttons on every exercise, always available, plus a read-along mode that opens every solution (see `page-contract.md` section 3). The learner chooses when to open the solution.
 - The **tutor** never hands over a solution. When asked for one, it gives a hint or a leading question and points to the Show solution button.
-- Feedback names the **first** problem only. A success message states the insight, not praise.
+- Feedback names the **first** problem only, in one sentence **(checked for `why_right` and `why_wrong`)**. A success message states the insight, not praise.
 
 ## 8. Confidence and the field guide
 

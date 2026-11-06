@@ -112,6 +112,22 @@ with sync_playwright() as playwright:
     tab.wait_for_timeout(150)
     expect("a skipped idea stays open after a reload", "Each new chunk starts one stride" in block(tab, "stride-idea").inner_text())
 
+    # ---- The arc on the page: journey strip, open question, why-it-matters only on the start page, big idea at the end
+    tab = new_tab(chunking + "#size-and-overlap")
+    strip = tab.locator(".journey")
+    expect("the journey strip marks this chapter", strip.locator("[aria-current=step]").inner_text() == "2" and "You are here" in strip.inner_text())
+    milestones = tab.evaluate("() => LESSON.chapters.map(c => c.milestone.replace(/^I can /, ''))")
+    expect("the strip shows this milestone only, never a later one", milestones[1] in strip.inner_text() and milestones[2] not in tab.locator("main").inner_text())
+    expect("the chapter ends on its open question", "Still open" in tab.locator("#stride-recap").inner_text() and "Chapter 3 answers it" in tab.locator("#stride-recap").inner_text())
+    expect("why it matters is not in the chapter", "Why it matters" not in tab.locator("main").inner_text())
+    tab.goto(chunking + "#start"); tab.wait_for_timeout(100)
+    why = tab.evaluate("() => LESSON.chapters[1].why_it_matters")
+    expect("why it matters is on the start page", why in tab.locator("main").inner_text())
+    tab.goto(chunking + "#field-guide"); tab.wait_for_timeout(100)
+    expect("the field guide opens with the big idea", "The big idea" in tab.locator("main").inner_text())
+    tab.goto(chunking + "#choosing-a-size"); tab.wait_for_timeout(100)
+    expect("the last chapter ends on its bridge, no open question", "Still open" not in tab.locator("main").inner_text())
+
     # ---- Read-along opens everything
     for chapter in ["why-chunk", "size-and-overlap", "choosing-a-size"]:
         tab = new_tab(chunking + "?read-along=on#" + chapter)

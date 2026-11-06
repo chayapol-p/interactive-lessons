@@ -91,10 +91,11 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
   It runs every slice and every blank option with the real interpreter and writes what each prints into the blueprint, keeping its comments. A step that needs a service gets `run_locally`; record it on a machine that has the service.
 
 ### 3. Plan
+- Plan the arc first: one `big_idea`, then chapters by beat (hook, intuition, proof, mechanism, boundary, transfer, payoff), each with a `milestone` and an `open_question` the next chapter answers. See `references/chapter-design.md` section 0.
 - Map the concepts and what each depends on. Order the chapters so each uses only what came before.
 - Fill one **chapter card** per chapter. See `references/chapter-design.md` for every field and the reason it exists.
 - Choose blocks: predict, idea, then the exercise after the teaching. See `references/chapter-design.md`.
-- Write exercises and quizzes by the rules in `references/checks-and-quizzes.md`.
+- Write exercises and quizzes by the rules in `references/checks-and-quizzes.md`, inside the text budget (`chapter-design.md` section 8): ideas of 2 sentences, one-sentence feedback, short captions, no answer before its guess.
 - Pick each picture's step on the ladder (words, still, stepped, animated, play; `references/diagrams.md` section 0). Stepped is the default for a change; animated and play only with a yes from Discover.
 - Write a brief for every diagram first, cut it to the fewest boxes, pick its pattern (growing pipeline, paired traces or sequence), then write its `figure` (flow, bars, tiles, frames or svg). See `references/diagrams.md`. Borrow from the diagram-design skill here if it is installed, never during a build.
 - Save the blueprint in the format in `references/blueprint-format.md`. `assets/example-blueprint.yaml` is a complete example.
@@ -169,6 +170,10 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 | "changed.json belongs to another build" | The last build failed → fix the blueprint and rebuild |
 | "built only after a yes in Discover" | An animation or play block was added without asking → ask the author, then add `animation` or `play` to `lesson.agreed_extras`, or use a stepped picture |
 | "the case weights add up to …, not 1" | A game can land in no case or two → fix the cases in `computed_by` and re-record |
+| "already shows in …, before the guess" | A title, objective, milestone or caption gives the answer away → reword it without the answer, or move the picture after the guess |
+| "written word for word in … just above" | The blank tests copying → reword the block above, or move the blank further from it |
+| "a learner can guess it by length" | The right option is the long, careful one → shorten it, or make a wrong option as full |
+| "the idea has … words" or "more than one sentence" | Over the text budget → keep the core, move detail to `more`, or let the picture say it |
 | "a pitfall check comes right before the pitfall card" | The card sits before its question, so it gives the answer away → move the check above the card |
 | "the question names 'X', which no earlier block explains" | A quiz leans on a detail of the example → explain the example and that detail earlier, or explain it in brackets in the question |
 | "option 'X' is only a detail of the example" | An answer is a clause number or file name → write what that choice means |

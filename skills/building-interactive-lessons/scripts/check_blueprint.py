@@ -34,7 +34,13 @@ LONGEST_LESSON_MINUTES = 90
 SMALLEST_PRIMER_SHARE = 0.10          # a before-hands-on chapter gets at least 10% of its section's hands-on time
 MOST_CHECKS_PER_CHAPTER = 2
 MOST_STRETCHES_PER_CHAPTER = 1
-MOST_IDEA_SENTENCES = 3
+MOST_IDEA_SENTENCES = 2
+MOST_IDEA_WORDS = 45                  # the text budget: an idea is at most 2 sentences and about 45 words
+MOST_FEEDBACK_SENTENCES = 1           # why_right and why_wrong: one sentence
+MOST_CAPTION_WORDS = 25               # a picture's caption and each step's caption
+FAIR_LENGTH_RATIO = 1.5               # a right option this much longer than every wrong one gives itself away
+FAIR_LENGTH_GAP = 12                  # ...and at least this many characters longer
+ARC_BEATS = ["hook", "intuition", "proof", "mechanism", "boundary", "transfer", "payoff"]
 MOST_INSTRUCTION_LINES = 4
 MOST_CODE_LINES = 15                  # code lines only: blank and comment-only lines do not count
 CODE_LINES_PER_COMMENT = 4            # at least one comment for every 4 code lines
@@ -67,7 +73,7 @@ TESTS_AFTER_TEACHING = {"check", "fill_blanks", "explain"}
 
 ALLOWED_KEYS = {
     "top": {"lesson", "theme", "glossary", "known_ideas", "facts", "misconceptions", "shared_modules", "chapters"},
-    "lesson": {"title", "role", "learner", "objectives", "source", "agreed_extras"},
+    "lesson": {"title", "role", "learner", "objectives", "source", "agreed_extras", "big_idea"},
     "learner": {"knows", "new_to", "wants_to", "time_minutes", "assumed", "assumption_note"},
     "objective": {"id", "text"},
     "glossary": {"term", "definition"},
@@ -75,7 +81,8 @@ ALLOWED_KEYS = {
     "fact": {"id", "statement", "status", "source"},
     "misconception": {"id", "wrong_idea", "why_people_believe_it", "what_is_true", "source"},
     "chapter": {"id", "title", "minutes", "source_section", "source_minutes", "why_it_matters", "must_know",
-                "must_get_right", "brings_in", "carries_forward", "misconceptions", "bridge_in", "bridge_out", "blocks"},
+                "must_get_right", "brings_in", "carries_forward", "misconceptions", "bridge_in", "bridge_out", "blocks",
+                "beat", "milestone", "open_question"},
     "must_get_right": {"id", "can_do", "evidence", "objective", "tested_by"},
     "carried_idea": {"id", "idea", "used_in", "shown_by"},
     "bridge_in": {"text", "recalls"},
@@ -122,7 +129,7 @@ ALLOWED_KEYS = {
 
 REQUIRED_KEYS = {
     "top": {"lesson", "known_ideas", "facts", "misconceptions", "chapters"},
-    "lesson": {"title", "role", "learner", "objectives"},
+    "lesson": {"title", "role", "learner", "objectives", "big_idea"},
     "learner": {"knows", "new_to", "wants_to", "time_minutes", "assumed"},
     "objective": {"id", "text"},
     "glossary": {"term", "definition"},
@@ -130,7 +137,7 @@ REQUIRED_KEYS = {
     "fact": {"id", "statement", "status"},
     "misconception": {"id", "wrong_idea", "why_people_believe_it", "what_is_true", "source"},
     "chapter": {"id", "title", "minutes", "why_it_matters", "must_know", "must_get_right", "brings_in",
-                "carries_forward", "misconceptions", "bridge_in", "bridge_out", "blocks"},
+                "carries_forward", "misconceptions", "bridge_in", "bridge_out", "blocks", "beat", "milestone"},
     "must_get_right": {"id", "can_do", "evidence", "objective", "tested_by"},
     "carried_idea": {"id", "idea", "used_in", "shown_by"},
     "bridge_in": {"text", "recalls"},
@@ -1078,7 +1085,7 @@ def check_recorded_output(where, output, problems):
         problems.error(where, "the recorded output looks like a file path; paste the printed text itself so the page can show it")
 
 
-TEXT_LIST_KEYS = {"instructions", "hints", "must_know", "notice", "knows", "depends_on", "steps",
+TEXT_LIST_KEYS = {"beat", "instructions", "hints", "must_know", "notice", "knows", "depends_on", "steps",
                   "recalls", "brings_in", "misconceptions", "tested_by", "used_in", "shown_by", "sums_up", "grows_in", "highlight"}
 
 
@@ -1315,6 +1322,154 @@ def check_extras(blueprint, problems):
                 problems.error(block.get("id"), "a play block is built only after a yes in Discover: ask, then add 'play' to lesson.agreed_extras")
 
 
+# ===== The lesson arc and the text budget =====
+
+def words_in(text):
+    return len(re.findall(r"[\w'’,.%-]+", str(text or "")))
+
+
+def check_arc(blueprint, problems):
+    """One story with milestones: a big idea, a beat per chapter in arc order, a milestone, and an open question that
+    the next chapter answers."""
+    chapters = blueprint.get("chapters") or []
+    big_idea = (blueprint.get("lesson") or {}).get("big_idea")
+    if big_idea is not None and count_sentences(big_idea) > 1:
+        problems.error("lesson.big_idea", "the big idea is one sentence: what the learner should still say a month later")
+    last_position = -1
+    for position, chapter in enumerate(chapters):
+        chapter_id = chapter.get("id", "chapter")
+        beats = chapter.get("beat")
+        beats = beats if isinstance(beats, list) else [beats] if beats is not None else []
+        for beat in beats:
+            if beat not in ARC_BEATS:
+                problems.error(chapter_id, f"beat '{beat}' is not a beat of the arc: {', '.join(ARC_BEATS)}")
+            else:
+                if ARC_BEATS.index(beat) < last_position:
+                    problems.error(chapter_id, f"beat '{beat}' comes back after a later beat; keep the arc in order ({' → '.join(ARC_BEATS)})")
+                last_position = max(last_position, ARC_BEATS.index(beat))
+        if position == 0 and beats and "hook" not in beats:
+            problems.error(chapter_id, "the first chapter is the hook: it opens the question the lesson answers")
+        if position == len(chapters) - 1 and beats and "payoff" not in beats:
+            problems.error(chapter_id, "the last chapter is the payoff: it answers the first question")
+        milestone = chapter.get("milestone")
+        if milestone is not None and not str(milestone).startswith("I can "):
+            problems.error(chapter_id, "milestone starts 'I can ': what the learner can do at the end of this chapter")
+        open_question = chapter.get("open_question")
+        is_last = position == len(chapters) - 1
+        if is_last and open_question:
+            problems.error(chapter_id, "the last chapter closes the story: it answers questions, so it leaves no open_question")
+        elif not is_last and is_missing(open_question):
+            problems.error(chapter_id, "needs open_question: the question this chapter leaves open, which the next chapter answers")
+        elif open_question and not str(open_question).strip().endswith("?"):
+            problems.error(chapter_id, "open_question is a question: end it with '?'")
+
+
+def picture_text(block):
+    """The words a picture shows before anyone taps: its caption, step captions, and text drawn in an svg (a totals row)."""
+    pieces = []
+    figure = block.get("figure") if isinstance(block.get("figure"), dict) else {}
+    pieces.append(str((block.get("brief") or {}).get("understand", "")))
+    for frame in figure.get("frames") or []:
+        pieces.append(str(frame.get("caption", "")))
+        inner = frame.get("figure") or {}
+        pieces += [str(tile.get("inside", "")) + " " + str(tile.get("note", "")) for tile in inner.get("tiles") or []]
+    pieces += [str(tile.get("inside", "")) + " " + str(tile.get("note", "")) for tile in figure.get("tiles") or []]
+    pieces += re.findall(r">([^<>]+)<", str(figure.get("svg", "")))
+    return " \n ".join(pieces)
+
+
+RATIO_PATTERN = re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:times\s+)?(?:in|of|out of)\s+(?:every\s+)?\d+\b|\b\d+(?:\.\d+)?\s*%")
+
+
+def plain(text):
+    return re.sub(r"\s+", " ", re.sub(r"[^\w%,.\s-]", " ", str(text or "").lower())).strip()
+
+
+def check_text_budget(blueprint, problems):
+    """Ideas at most 2 sentences and about 45 words; feedback one sentence; captions about 25 words."""
+    for chapter in blueprint.get("chapters") or []:
+        for block in chapter.get("blocks") or []:
+            block_id = block.get("id", "block")
+            if block.get("type") == "idea" and words_in(block.get("text")) > MOST_IDEA_WORDS:
+                problems.error(block_id, f"the idea has {words_in(block.get('text'))} words; keep it to about {MOST_IDEA_WORDS} (move detail into 'more')")
+            options = list(block.get("options") or []) if block.get("type") in ("predict", "check") else []
+            for blank in block.get("blanks") or [] if block.get("type") == "fill_blanks" else []:
+                options += [option for option in (blank.get("options") or []) if isinstance(option, dict)]
+            for option in options:
+                if not isinstance(option, dict):
+                    continue
+                for field in ("why_right", "why_wrong"):
+                    if option.get(field) and count_sentences(option[field]) > MOST_FEEDBACK_SENTENCES:
+                        problems.error(block_id, f"{field} of '{str(option.get('text'))[:30]}' is more than one sentence; feedback says one thing")
+            if block.get("type") == "diagram":
+                captions = [("caption", (block.get("brief") or {}).get("understand"))]
+                captions += [(f"step '{frame.get('label')}' caption", frame.get("caption")) for frame in (block.get("figure") or {}).get("frames") or []]
+                for name, caption in captions:
+                    if caption and words_in(caption) > MOST_CAPTION_WORDS:
+                        problems.error(block_id, f"the {name} has {words_in(caption)} words; keep it to about {MOST_CAPTION_WORDS}, so the picture does the talking")
+
+
+def check_no_early_answers(blueprint, problems):
+    """Nothing gives a guess's answer away before the guess: not a title, a goal, a milestone, nor a caption or totals
+    row above it in the same chapter. A chance or count in the right option ("2 in 3") that no wrong option shares is
+    the giveaway; so is the whole right option when it is three words or more."""
+    chapters = blueprint.get("chapters") or []
+    lesson = blueprint.get("lesson") or {}
+    everywhere = [("a chapter title", chapter.get("title")) for chapter in chapters]
+    everywhere += [("an objective", objective.get("text")) for objective in lesson.get("objectives") or []]
+    for position, chapter in enumerate(chapters):
+        shown = everywhere + [(f"the milestone of '{earlier.get('id')}'", earlier.get("milestone")) for earlier in chapters[:position + 1]]
+        for block in chapter.get("blocks") or []:
+            if block.get("type") == "predict" and block.get("options"):
+                right = next((option for option in block["options"] if isinstance(option, dict) and option.get("correct")), None)
+                wrong_text = plain(" ".join(str(option.get("text")) for option in block["options"] if isinstance(option, dict) and not option.get("correct")))
+                if right:
+                    giveaways = [ratio for ratio in RATIO_PATTERN.findall(str(right.get("text"))) if plain(ratio) not in wrong_text]
+                    if len(plain(right.get("text")).split()) >= 3:
+                        giveaways.append(str(right.get("text")))
+                    for giveaway in giveaways:
+                        for where, text in shown:
+                            if text and re.search(r"(?<![\w])" + re.escape(plain(giveaway)) + r"(?![\w])", plain(text)):
+                                problems.error(block.get("id"), f"its answer '{giveaway}' already shows in {where}, before the guess; "
+                                               "reword that text so the guess is still a guess")
+            if block.get("type") == "diagram":
+                shown = shown + [(f"the picture '{block.get('id')}'", picture_text(block))]
+
+
+def check_no_copying(blueprint, problems):
+    """A blank's right option is never written word for word in the block just above it: the blank would test copying."""
+    for chapter in blueprint.get("chapters") or []:
+        blocks = chapter.get("blocks") or []
+        for index, block in enumerate(blocks):
+            if block.get("type") != "fill_blanks" or index == 0:
+                continue
+            above = plain(blocks_text([blocks[index - 1]]) + " " + (picture_text(blocks[index - 1]) if blocks[index - 1].get("type") == "diagram" else ""))
+            for blank in block.get("blanks") or []:
+                for option in blank.get("options") or []:
+                    if not isinstance(option, dict) or not option.get("correct"):
+                        continue
+                    phrase = plain(option.get("text"))
+                    if len(phrase) >= 4 and re.search(r"(?<![\w])" + re.escape(phrase) + r"(?![\w])", above):
+                        problems.error(block.get("id"), f"the right option '{option.get('text')}' is written word for word in "
+                                       f"'{blocks[index - 1].get('id')}' just above; the blank would test copying, not the idea")
+
+
+def check_fair_options(blueprint, problems):
+    """The right option is not much longer than the wrong ones, so length never gives it away."""
+    for chapter in blueprint.get("chapters") or []:
+        for block in chapter.get("blocks") or []:
+            groups = [block.get("options") or []] if block.get("type") in ("predict", "check") else []
+            if block.get("type") == "fill_blanks":
+                groups += [blank.get("options") or [] for blank in block.get("blanks") or [] if isinstance(blank, dict)]
+            for options in groups:
+                options = [option for option in options if isinstance(option, dict)]
+                right = [len(str(option.get("text"))) for option in options if option.get("correct")]
+                wrong = [len(str(option.get("text"))) for option in options if not option.get("correct")]
+                if right and wrong and right[0] > FAIR_LENGTH_RATIO * max(wrong) and right[0] - max(wrong) >= FAIR_LENGTH_GAP:
+                    problems.error(block.get("id"), f"the right option is {right[0]} characters, the longest wrong one {max(wrong)}; "
+                                   "a learner can guess it by length. Shorten it, or make a wrong option as full")
+
+
 def check_compare(block, problems):
     """differs_at is the number of the first step where the options part ways."""
     block_id = block.get("id", "compare")
@@ -1476,6 +1631,11 @@ def check_blueprint(blueprint, run_code=False):
     check_figures(blueprint, problems)
     check_example_details(blueprint, problems)
     check_extras(blueprint, problems)
+    check_arc(blueprint, problems)
+    check_text_budget(blueprint, problems)
+    check_no_early_answers(blueprint, problems)
+    check_no_copying(blueprint, problems)
+    check_fair_options(blueprint, problems)
     misconception_ids = {item.get("id") for item in blueprint.get("misconceptions") or []}
     for chapter in blueprint.get("chapters") or []:
         check_chapter_teaching_and_tests(chapter, misconception_ids, problems)

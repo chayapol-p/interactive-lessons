@@ -3,6 +3,7 @@
 
 lesson:
   title: How LLMs Work
+  big_idea: "An LLM turns text into numbers, lets every word reshape the others' meaning, and writes its reply one likely token at a time."
   role: standalone
   learner:
     knows: ["RAG in practice: chunks, embeddings as vectors, vector search", "building with LLMs: prompts, tool calls, agent loops, context limits", "ML basics: training lowers a model's error", vector maths]
@@ -203,6 +204,9 @@ chapters:
   - id: text-to-tokens
     title: Text becomes tokens
     minutes: 8
+    beat: [hook, intuition]
+    milestone: "I can predict roughly how a model splits text into tokens."
+    open_question: "A token is only a number, so where does its meaning come from?"
     why_it_matters: Everything a model does, it does to tokens. Spelling slips, odd costs and context limits all start here.
     must_know:
       - A model receives a list of token numbers, not letters or words.
@@ -245,8 +249,8 @@ chapters:
       - id: token-idea
         type: idea
         key: true
-        text: "Before the model sees anything, a tokenizer cuts the text into tokens: common words, parts of rare words, and punctuation. Each token is swapped for its number in a fixed list, so the model receives only a list of numbers. Bank is the same number in both sentences, so nothing yet tells the two meanings apart."
-        more: "The tokenizer used here has 65,000 tokens. It is an older Claude tokenizer, so today's models split text a little differently."
+        text: "Before the model sees anything, a tokenizer cuts the text into tokens (common words, parts of rare words, punctuation) and swaps each for its number in a fixed list. Bank gets the same number in both sentences, so nothing yet tells the two meanings apart."
+        more: "So the model receives only a list of numbers. The tokenizer used here has 65,000 tokens. It is an older Claude tokenizer, so today's models split text a little differently."
       - id: real-tokens
         type: diagram
         shape: structure
@@ -353,8 +357,8 @@ chapters:
         tests: token-idea
         question: A model is asked to reverse the letters of "unbelievable" and makes a mistake. What is the best explanation?
         options:
-          - {text: "It received a few token pieces, not the letters, so it must recall how each piece is spelled", correct: true, why_right: "The letters are hidden inside tokens; reversing them takes a memory of spelling, not a look."}
-          - {text: "The word is too long for the context window", correct: false, why_wrong: "One word is a handful of tokens; the window holds many thousands."}
+          - {text: "It sees a few token pieces, not letters, so it must recall their spelling", correct: true, why_right: "The letters are hidden inside tokens; reversing them takes a memory of spelling, not a look."}
+          - {text: "The word is too long to fit in the model's context window", correct: false, why_wrong: "One word is a handful of tokens; the window holds many thousands."}
           - {text: "It was not trained on English", correct: false, why_wrong: "It knows the word well; the problem is that it never sees its letters."}
       - id: letters-pitfall
         type: pitfall
@@ -365,7 +369,7 @@ chapters:
         tests: same-cost-every-language
         question: "The same tokenizer needs 2 tokens for \"Bangkok\" and 14 for the city's Thai name. A Thai support bot and an English one answer the same questions. What do you expect?"
         options:
-          - {text: "The Thai bot uses many more tokens, so it costs more and fills its context window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
+          - {text: "The Thai bot uses many more tokens, so it costs more and fills its window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
           - {text: "Both cost the same, because the meaning is the same", correct: false, why_wrong: "Cost counts tokens, not meaning."}
           - {text: "The Thai bot is cheaper, because Thai words are shorter", correct: false, why_wrong: "Fewer characters can still mean far more tokens."}
       - id: cost-pitfall
@@ -380,6 +384,9 @@ chapters:
   - id: tokens-to-meaning
     title: Tokens become points of meaning
     minutes: 10
+    beat: [mechanism]
+    milestone: "I can place a token as a point in a space of meaning."
+    open_question: "Bank is one point in both sentences, so how does it end up meaning river or money?"
     why_it_matters: A token number says nothing by itself. The embedding is where meaning first appears, and every later step works on it.
     must_know:
       - Each token number picks a learned embedding, a point in a space of meaning.
@@ -413,8 +420,8 @@ chapters:
       - id: embedding-idea
         type: idea
         key: true
-        text: "Each token number picks one row from a large table, and that row is the token's embedding: a long list of numbers that places it as a point in a space of meaning. Training puts tokens that are used alike close together, the same idea as your RAG embeddings, but for every token, inside the model. In real word vectors, King − Man + Woman lands near Queen, so even directions carry meaning."
-        more: "Real embeddings have hundreds or thousands of numbers. The map below uses only 2 of the toy model's 3 directions, so you can see it."
+        text: "Each token number picks one row of a large table: the token's embedding, a list of numbers that places it as a point in a space of meaning. Training puts tokens used alike close together, like your RAG embeddings, but for every token."
+        more: "In real word vectors, King − Man + Woman lands near Queen, so even directions carry meaning. Real embeddings have hundreds or thousands of numbers. The map below uses only 2 of the toy model's 3 directions, so you can see it."
       - id: meaning-map
         type: diagram
         shape: space
@@ -536,6 +543,9 @@ chapters:
   - id: attention
     title: "Attention: words look at each other"
     minutes: 12
+    beat: [mechanism]
+    milestone: "I can explain how attention moves a word's meaning toward its context."
+    open_question: "One round links words in pairs; how does a model work out harder links?"
     why_it_matters: Bank starts as the same point in both sentences. Attention is the step that gives it the right meaning, and it is the core of every modern LLM.
     must_know:
       - Each token looks at every other token and weighs how relevant each is.
@@ -574,8 +584,8 @@ chapters:
       - id: attention-idea
         type: idea
         key: true
-        text: "In attention, each token asks how relevant every other token is, and gets a share for each, adding up to 1. It then blends in those tokens' meanings by their shares, so its embedding moves. Bank gives a large share to river and flooded, and its point moves toward water; in the money sentence it moves toward money."
-        more: "All tokens do this at the same time, and every token can look at every other one in the window, near or far. That is what the 2017 Transformer paper meant by relating different positions of one sequence."
+        text: "In attention, each token gives every other token a share of relevance, adding up to 1, and blends in their meanings by those shares, so its embedding moves. Bank gives a large share to river and flooded, so its point moves toward water."
+        more: "In the money sentence it moves toward money. All tokens do this at the same time, and every token can look at every other one in the window, near or far. That is what the 2017 Transformer paper meant by relating different positions of one sequence."
       - id: attention-grid
         type: diagram
         shape: comparison
@@ -946,7 +956,7 @@ chapters:
         tests: nearest-word-matters-most
         question: "A teammate says: an LLM understands a word mostly from the word right before it. What is wrong with that?"
         options:
-          - {text: "Each token can look at every token in the window, near or far, by relevance", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
+          - {text: "Each token can weigh every token in the window, near or far", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
           - {text: "Nothing; the previous word decides the meaning", correct: false, why_wrong: "In the river sentence, the word before bank gets 0.02 of its attention."}
           - {text: "It is the word right after that matters most", correct: false, why_wrong: "Neither side wins by position; relevance wins."}
       - id: nearest-pitfall
@@ -961,6 +971,9 @@ chapters:
   - id: layers
     title: Layers stack up understanding
     minutes: 8
+    beat: [mechanism]
+    milestone: "I can explain why models stack many layers."
+    open_question: "After all those layers, how does the model choose the word it writes?"
     why_it_matters: One round of attention links words in pairs. Real understanding, such as working out what it refers to, comes from many rounds stacked.
     must_know:
       - A layer is attention followed by a small per-token refinement, and models stack many layers.
@@ -990,12 +1003,12 @@ chapters:
         question: "\"The trophy didn't fit in the suitcase because it was too big.\" What is too big, and could one quick look at the words settle it?"
         options:
           - {text: "The trophy, and it takes combining several clues", correct: true, why_right: "You need fit, too big and which thing goes inside the other, together."}
-          - {text: "The suitcase, the nearest noun", correct: false, why_wrong: "A suitcase that is too big would hold the trophy fine."}
+          - {text: "The suitcase, since it is the nearest noun to it", correct: false, why_wrong: "A suitcase that is too big would hold the trophy fine."}
       - id: layers-idea
         type: idea
         key: true
-        text: "A layer is one round of attention followed by a small refinement of each token on its own. Models stack many layers, and each works on the embeddings the previous layer produced, so later layers combine clues that early ones linked in pairs. The 2017 Transformer had 6 layers; today's large models have many more."
-        more: "Engineers choose how many layers and how big they are. What each layer ends up doing is learned in training, and researchers study it afterwards, much as you would study a trained model's features."
+        text: "A layer is one round of attention, then a small refinement of each token on its own. Models stack many layers, so later layers combine clues that earlier ones linked in pairs."
+        more: "Each layer works on the embeddings the previous one produced. The 2017 Transformer had 6 layers; today's large models have many more. Engineers choose how many layers and how big they are. What each layer ends up doing is learned in training, and researchers study it afterwards, much as you would study a trained model's features."
       - id: pipeline-layers
         type: diagram
         shape: flow
@@ -1046,6 +1059,9 @@ chapters:
   - id: next-token
     title: The next token is a probability
     minutes: 12
+    beat: [mechanism]
+    milestone: "I can predict how temperature changes the next-token pick."
+    open_question: "If a reply is just likely tokens, what happens when no likely answer exists?"
     why_it_matters: Every reply is built one token at a time from odds. That explains why answers vary, and what temperature really changes.
     must_know:
       - The model gives odds to every token for the next position, picks one, adds it, and repeats.
@@ -1084,8 +1100,8 @@ chapters:
       - id: odds-idea
         type: idea
         key: true
-        text: "The last layer's embedding for the final position becomes a score for every token in the list, and the scores become odds that add up to 1. The model picks one token, adds it to the text, and runs again for the next. Temperature reshapes the odds before the pick: low makes the top token win almost always, high gives the others more chance."
-        more: "As temperature gets close to 0, the model always takes the top token. The odds below come from the toy model's made-up scores for the word after \"The bank by the river was\"."
+        text: "The model turns its last embedding into odds for every token in the list, picks one, adds it, and runs again for the next. Temperature reshapes the odds first: low makes the top token win almost always, high gives the others more chance."
+        more: "The last layer's embedding for the final position becomes a score for every token, and the scores become odds that add up to 1. As temperature gets close to 0, the model always takes the top token. The odds below come from the toy model's made-up scores for the word after \"The bank by the river was\"."
       - id: odds-bars
         type: diagram
         shape: quantity
@@ -1240,8 +1256,8 @@ chapters:
         tests: looks-up-answer
         question: "A teammate says: the model found the answer in its memory, so asking again should give the same words. What is wrong with that?"
         options:
-          - {text: "The reply is built token by token from odds, so a second run can pick differently", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
-          - {text: "Nothing; replies should match word for word", correct: false, why_wrong: "Only a temperature near 0 makes repeat runs nearly identical."}
+          - {text: "Replies are built token by token from odds, so a new run can differ", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
+          - {text: "Nothing; the same question should give the same words", correct: false, why_wrong: "Only a temperature near 0 makes repeat runs nearly identical."}
           - {text: "The model forgets everything after each word", correct: false, why_wrong: "It sees all earlier tokens in the window; the variety comes from the pick."}
       - id: lookup-pitfall
         type: pitfall
@@ -1255,6 +1271,8 @@ chapters:
   - id: training-and-limits
     title: Training, and the limits it leaves
     minutes: 10
+    beat: [boundary, payoff]
+    milestone: "I can explain where hallucinations and the context limit come from."
     why_it_matters: The model's strengths and its two best-known limits, hallucination and the context window, both follow from how it is trained and run.
     must_know:
       - Pretraining teaches next-token prediction on huge text; fine-tuning and RLHF shape it into an assistant.
@@ -1288,16 +1306,17 @@ chapters:
         type: predict
         question: You ask a model for the birthday of a little-known local author. It has no reliable source in its training. What does it most likely do?
         options:
-          - {text: "Says it does not know", correct: false, why_wrong: "Training to predict likely text, and tests that reward right answers, both push it to guess."}
+          - {text: "Says politely that it does not know", correct: false, why_wrong: "Training to predict likely text, and tests that reward right answers, both push it to guess."}
           - {text: "Gives a plausible, confident date", correct: true, why_right: "A likely-looking date is exactly what next-token prediction produces."}
       - id: training-idea
         type: idea
         key: true
-        text: "Pretraining shows the model huge amounts of text and adjusts its numbers to predict each next token better. Fine-tuning on example answers, then RLHF, where people rank replies and the model is trained toward the preferred ones, turn that predictor into an assistant. InstructGPT, trained this way, was preferred to a model more than 100 times larger."
-        more: "Most knowledge comes from pretraining. Fine-tuning and RLHF mostly shape behaviour: following instructions, tone, refusing."
+        text: "Pretraining adjusts the model's numbers to predict each next token in huge amounts of text. Fine-tuning on example answers, then RLHF (people rank replies and the model is trained toward the preferred ones), turn that predictor into an assistant."
+        more: "InstructGPT, trained this way, was preferred to a model more than 100 times larger. Most knowledge comes from pretraining. Fine-tuning and RLHF mostly shape behaviour: following instructions, tone, refusing."
       - id: limits-idea
         type: idea
-        text: "A hallucination is next-token prediction where no pattern gives the answer: a rare fact, such as a birthday, cannot be predicted, so the model writes a fluent guess. The context window is all the text the model can see at once, its working memory. Anything outside it, including earlier chats, does not exist for the model unless it is put back in."
+        text: "A hallucination is next-token prediction with no pattern to follow, so a rare fact like a birthday becomes a fluent guess. The context window is all the text the model can see at once: anything outside it, even earlier chats, does not exist for it."
+        more: "The context window is the model's working memory: text outside it exists for the model only if it is put back in."
       - id: training-flow
         type: diagram
         shape: flow
@@ -1376,9 +1395,9 @@ chapters:
         tests: training-idea
         question: A model gives a fluent but wrong answer about a niche product launched after its training data was collected. Which fix goes after the cause?
         options:
-          - {text: "Put the product's real documentation into the context window, as RAG does", correct: true, why_right: "The fact was never in pretraining, so it has to come in through the window."}
-          - {text: "Ask it to try harder", correct: false, why_wrong: "Effort cannot predict a fact the model never saw."}
-          - {text: "Raise the temperature", correct: false, why_wrong: "Temperature reshapes the same odds; it adds no knowledge."}
+          - {text: "Put the product's real docs in its context, as RAG does", correct: true, why_right: "The fact was never in pretraining, so it has to come in through the window."}
+          - {text: "Tell it in the prompt to try much harder", correct: false, why_wrong: "Effort cannot predict a fact the model never saw."}
+          - {text: "Raise the temperature so it explores more", correct: false, why_wrong: "Temperature reshapes the same odds; it adds no knowledge."}
       - id: limits-recap
         type: recap
         text: Pretraining teaches next-token prediction, so rare facts become fluent guesses; the model sees only its context window.

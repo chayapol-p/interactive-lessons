@@ -4,6 +4,7 @@ How to plan a chapter and its blocks. Every part has a reason; if a part's reaso
 
 ## Contents
 
+0. The lesson arc: one story with milestones
 1. The chapter card
 2. Connecting chapters
 3. Block types
@@ -11,14 +12,31 @@ How to plan a chapter and its blocks. Every part has a reason; if a part's reaso
 5. Code slices
 6. Comparing choices
 7. Length, pace and scope
+8. The text budget
+9. Borrowed at design time
 
 ---
+
+## 0. The lesson arc
+
+A lesson is one story, not a stack of topics. Plan its arc before the chapter cards.
+
+- **`lesson.big_idea`**: the one sentence the learner should still say a month later. Every chapter serves it. It shows on the field guide at the end, never before (it is the answer).
+- **Beats**, in this order: **hook** (the puzzle and the learner's gut answer), **intuition** (make it feel likely), **proof** (show it holds: every case, or evidence the learner makes), **mechanism** (why it holds), **boundary** (when it stops holding), **transfer** (the same idea on a new surface), **payoff** (back to the first question, now answered). Each chapter names its `beat`: one beat or a few in a row. Beats may share a chapter and a beat may run over several chapters (a mechanism in four steps), but never go back (checked). The first chapter is the hook, the last the payoff (checked).
+- **`milestone`** per chapter: "I can…", what the learner can do at its end. The journey strip at the top of each chapter shows the milestones so far and this one; later ones stay hidden, because a milestone ahead can give an answer away.
+- **`open_question`** per chapter (not the last): the question it leaves open, which the next chapter answers. It is the last thing in the chapter. The next chapter's opening guess usually asks it.
+- **"Why it matters"** shows only on the start page, as each chapter's line in the list. Inside a chapter the open question of the last chapter is the reason to read on.
+- The beat names are planning words. They never appear on the page.
+- Why: learners who follow one question from puzzle to answer remember the answer and the reason; learners who read topics in a row remember neither. Each open question keeps one question in the learner's hands at all times.
+
 
 ## 1. The chapter card
 
 Fill these fields for every chapter before choosing blocks.
 
-**`why_it_matters`**: the problem this chapter solves for the learner, in one or two sentences.
+**`beat`**, **`milestone`**, **`open_question`**: the chapter's place in the arc (section 0).
+
+**`why_it_matters`**: the problem this chapter solves for the learner, in one or two sentences. It shows on the start page.
 - Why: a learner who cannot see the problem treats the idea as trivia and forgets it.
 
 **`must_know`**: the 1 to 3 ideas the chapter teaches.
@@ -61,7 +79,7 @@ A chapter is a short sequence of blocks. Use only the blocks the chapter needs.
 - Why: committing to a prediction makes the explanation land. Confidence shows where a wrong idea feels solid.
 - Put it first in the chapter (checked). It shows what the learner knew before, so it never counts as the only test of a goal (checked).
 
-**`idea`**: the explanation. At most 3 sentences, tied to something the learner knows. A `more` panel may hold detail for the curious.
+**`idea`**: the explanation. At most 2 sentences and about 45 words, tied to something the learner knows (checked). A `more` panel may hold detail for the curious.
 - Why: short text keeps attention on the one idea. The `more` panel keeps depth available without forcing it on everyone.
 
 **`diagram`**: only with a brief (see `diagrams.md`).
@@ -134,8 +152,29 @@ Do not use step logs for code that has only one path. A plain `code` block with 
 
 - A chapter takes 5 to 15 minutes, and states its time (checked).
 - A chapter teaches 1 to 3 `must_know` ideas (checked). More means split the chapter.
-- An `idea` block has at most 3 sentences (checked). Detail goes in `more` panels.
+- An `idea` block has at most 2 sentences and about 45 words (checked). Detail goes in `more` panels.
 - At most 2 `check` blocks and 1 `stretch` per chapter (checked).
 - One lesson holds at most 90 minutes of chapters, and fits the learner's `time_minutes` (checked). A longer source becomes several lessons.
 - For a `before-hands-on` lesson, each chapter names its `source_section` and gets at least 10% of that section's hands-on minutes (checked). A 90-minute lab needs a chapter of at least 9 minutes, or two chapters.
 - Why: short, labelled chapters let learners plan their time and finish what they start.
+
+## 8. The text budget
+
+Pictures and the learner's own work carry the lesson; words frame them. Every rule here is checked.
+
+- **Idea:** at most 2 sentences and about 45 words.
+- **Feedback** (`why_right`, `why_wrong`): one sentence, saying one thing.
+- **Captions** (a picture's `understand`, each step's `caption`): about 25 words.
+- **No early answers:** a guess's right answer never shows before the guess, in a chapter title, an objective, a milestone so far, or a caption or totals row above it in its chapter. The giveaway is a chance or count in the right option ("2 in 3") that no wrong option shares, or the whole right option when it is three words or more.
+- **No copying:** a blank's right option is never written word for word in the block just above it.
+- **Fair options:** the right option is never much longer than every wrong one (more than half again as long, and 12 characters more); a learner would pick it by length.
+- Why: in every test round, learners skimmed long text and read answers while scrolling. A short frame around real work keeps their eyes on the work.
+
+## 9. Borrowed at design time
+
+Three of the author's skills hold ideas this skill uses while planning (step 3). Borrow from them at design time; **never call them during a build**: they ask questions and write their own formats, which would stop an unattended build.
+
+- **From story-deck:** one big idea with a point of view, said in under 15 seconds (`lesson.big_idea`); each section ends on a "Next →" question that does not give the answer away and that the next title answers (`open_question`); the title test (read only the titles in order: they tell the story). Unlike a deck, a lesson title never states the finding before the guess.
+- **From attention-principles:** curiosity loops: open the question before you explain, and never let the last loop close before the next one opens (an open question ends each chapter); does unit 1 sell unit 2 (each block makes the next one needed); specific numbers beat summaries ("300 games", not "many games"); disarm the doubt right where it lands (a sceptic gets a play block, not a longer paragraph).
+- **From personal-storytelling:** Problem → Pursuit → Payoff (hook → proof and mechanism → payoff); open in the middle, at the problem, not the background; give the setup before the turn; end each section on an open tension, not the answer; numbers then meaning (one real number, then one sentence on what it means).
+

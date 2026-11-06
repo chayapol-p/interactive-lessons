@@ -28,6 +28,10 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 - **Calm by default:** no animation unless it explains something; respect reduced-motion settings.
 - **Start page leads with work:** a first question from chapter 1 sits above the chapter list. The learner profile is folded under "Who this lesson is for".
 - **One mode line** under the top bar says what is on (Read-along, tutor off). Progress counts work solved, not pages opened.
+- **Journey strip** at the top of each chapter: one numbered dot per chapter (past ones joined in the accent, done ones ticked, this one filled), and "You are here. By the end: you can …" with this chapter's milestone. Later milestones stay hidden, so none gives an answer away.
+- **"Why it matters" shows only on the start page**, as each chapter's line in the chapter list. A chapter opens with its journey strip, title and bridge.
+- **The open question ends each chapter** (but the last), under the recap: "Still open", the question, and "Chapter N answers it." The last chapter ends on its bridge out.
+- **The field guide opens with the big idea** (`lesson.big_idea`), the answer the whole lesson builds to.
 
 ## 1a. Look: colour, type, labels
 
@@ -56,7 +60,7 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 - **The answer waits for the guess:** the first `idea` block after the predict (the key idea that answers it) stays folded behind "Answer to see why" until the guess is made. A **Skip** button opens it without a guess, and the choice is kept. Only that one block folds; everything else stays open. Read-along opens it.
 - Why: in every test round, learners read the answer while scrolling to the guess, so the guess stopped being a guess.
 
-**Idea**: at most 3 sentences. Every `glossary` term in the text is tappable and opens its definition card at the bottom of the screen. A "More" panel holds optional depth.
+**Idea**: at most 2 sentences and about 45 words. Every `glossary` term in the text is tappable and opens its definition card at the bottom of the screen. A "More" panel holds optional depth.
 
 **Diagram**: drawn from its `figure` (see `diagrams.md`). A stepped picture (`frames`) draws every step once and keeps the tallest step's height, so tapping through steps never moves the page. With `animate: true`, a tap moves from the last step to the new one in 0.7 s and a "Play again" button (always in place, so nothing jumps) replays it; reduced motion turns the movement off. A `toy` figure starts its caption with "Toy numbers." A caption under it states the brief's `understand` sentence.
 - A stage with `extends` redraws the earlier stages muted, in the same positions, and highlights what it adds, under a line saying what was added to which chapter's picture. A first stage with `grows_in` notes under it which chapters add to it.

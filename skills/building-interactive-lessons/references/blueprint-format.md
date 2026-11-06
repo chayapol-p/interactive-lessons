@@ -25,6 +25,7 @@ Any field not listed here is an **error**. That catches typos, and it catches YA
 
 **`lesson`**
 - `title` R
+- `big_idea` R: one sentence, the idea the learner should still hold a month later. Shown on the field guide only (`chapter-design.md` section 0).
 - `role` R: `before-hands-on` (a primer for labs the learner does next), `standalone` (the lesson is the whole learning), or `after-hands-on` (a review). See the scope rule in SKILL.md step 1.
 - `learner` R:
   - `knows` R (list), `new_to` R, `wants_to` R
@@ -42,7 +43,10 @@ Any field not listed here is an **error**. That catches typos, and it catches YA
 **`misconceptions`**: `{id, wrong_idea, why_people_believe_it, what_is_true, source}`, all required. Every misconception must be listed by some chapter.
 
 **Chapter**
-- `id`, `title`, `why_it_matters` R
+- `id`, `title`, `why_it_matters` R (shown on the start page only)
+- `beat` R: one beat or a list of beats, from `hook`, `intuition`, `proof`, `mechanism`, `boundary`, `transfer`, `payoff`, in arc order across the lesson; the first chapter has `hook`, the last `payoff`
+- `milestone` R: "I can …", what the learner can do at the chapter's end
+- `open_question` R (every chapter but the last; never on the last): the question the chapter leaves open, ending with "?"
 - `bridge_in` R: `{text, recalls}`. `recalls` lists the `brings_in` ideas the sentence reminds the learner of.
 - `bridge_out` R: `{text, points_to}`. `points_to` is the later chapter the sentence previews, or `beyond` (last chapter only).
 - `minutes` R: 5 to 15
@@ -97,7 +101,7 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
     - {text: "3", correct: true, why_right: "Starts at 0, 450 and 900."}
 ```
 
-**idea**: `text` R (at most 3 sentences), `key` o (`true` when a later chapter or the field guide depends on it), `more` o.
+**idea**: `text` R (at most 2 sentences and about 45 words), `key` o (`true` when a later chapter or the field guide depends on it), `more` o.
 
 **diagram**: `shape` R (`flow`, `structure`, `change-over-time`, `space`, `comparison`, `quantity`), `brief` R with `understand`, `how_it_helps`, `clearer_than_text`, and `figure` R: what the template draws.
 - `figure.kind` R: `tiles` (`tiles` of `{label, state, inside, note, group}`, `state` one of closed, open, picked, hot), `flow` (`parts` of `{id, label, row, note}`, `links` of `{from, to, label}`, `highlight` o), `bars` (`bars` of `{label, value, note}`, `max` o, `mark_below` o), `tokens` (`rows` of `{label, tokens: [{text, id, hot}]}`), `scatter` (`points` of `{label, x, y}`, `highlight`, `x_label`, `y_label`), `grid` (`rows`, `columns`, `values` from 0 to 1, `highlight_row`), `frames` (`frames` of `{label, figure, caption}`, where `caption` o is one line shown under that step, `control: slider | buttons`, `control_label`, `animate` o: `true` moves between steps on a tap, needs `animation` in `lesson.agreed_extras`; a frame may hold bars, tokens, scatter, grid or tiles) or `svg` (`svg`: full markup). See `diagrams.md` section 7.

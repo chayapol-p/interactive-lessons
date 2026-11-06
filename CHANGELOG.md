@@ -9,6 +9,9 @@
 - New `tiles` figure: labelled boxes that are closed, open, picked or hot (doors, cups, cards), alone or as steps.
 - `animate: true` on frames: a tap moves between computed steps in 0.7 s, with Play again; reduced motion steps instead.
 - New `play` block: deal 10 or 100 games from a computed case table and see your counts beside the expected share. The checker proves the cases and a seeded sample, and that the weights add up to 1.
+- The lesson arc: `lesson.big_idea`, and per chapter a `beat` (hook, intuition, proof, mechanism, boundary, transfer, payoff), a `milestone` and an `open_question` the next chapter answers.
+- The page shows a journey strip with "You are here", ends each chapter on its open question, keeps "Why it matters" to the start page, and opens the field guide with the big idea.
+- New checks: the text budget (ideas 2 sentences and about 45 words, one-sentence feedback, captions about 25 words), no early answers, no copying into a blank, and fair option lengths. The three examples were trimmed to pass.
 - `tests/check_page_clicks.py` clicks through the examples (blanks, two wrong blanks, folded cards, steady steps, tutor).
 
 ## 0.3.1 · 5 Nov 2026

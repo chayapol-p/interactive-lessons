@@ -4,6 +4,7 @@
 
 lesson:
   title: Stay or Switch?
+  big_idea: "Switching wins 2 in 3 because the host knows where the car is and must leave it shut."
   role: standalone
   learner:
     knows: [basic chance, such as a coin landing heads half the time]
@@ -126,6 +127,9 @@ chapters:
   - id: every-case
     title: List every case
     minutes: 8
+    beat: [hook, proof]
+    milestone: "I can list every case and count who wins."
+    open_question: "The table says switch, but where does the extra chance come from?"
     why_it_matters: The answer feels obvious to almost everyone. This chapter checks it, case by case.
     must_know:
       - You pick door 1, and the car is equally likely to be behind door 1, 2 or 3.
@@ -222,7 +226,7 @@ chapters:
       - id: cases-idea
         type: idea
         key: true
-        text: "Don't argue about it: list every case. The car is behind door 1, 2 or 3, each equally likely, and you always pick door 1. When the car is behind door 2 or 3, the host has only one goat door he can open, so the other closed door must hide the car."
+        text: "Don't argue: list every case, each equally likely, with your pick always door 1. When the car is behind door 2 or 3, the host has only one goat door to open, so the other closed door hides the car."
         more: "Try it at home with three cups and a coin. A friend hides the coin and, after you pick a cup, lifts an empty one you didn't pick. Play 15 rounds staying and 15 switching, and count the coins."
       - id: cases-table
         type: diagram
@@ -273,7 +277,7 @@ chapters:
             switch-wins: 63
       - id: one-case-idea
         type: idea
-        text: "Picture 300 games. In about 100, the car is behind your door: the host opens door 2 or door 3, but it is still those same 100 games, and staying wins them. In the other 200, he has no choice, and switching wins them all."
+        text: "Picture 300 games: in about 100 the car is behind your door, and whichever door the host opens, staying wins those 100. In the other 200 he has no choice, and switching wins them all."
       - id: cases-key-check
         type: check
         purpose: key
@@ -310,7 +314,7 @@ chapters:
                 output_source: the case table above
               - text: 1 of them
                 correct: false
-                why_wrong: That is staying's count. Staying wins only when the car was behind door 1 all along.
+                why_wrong: "That is staying's count: staying wins only when the car was behind door 1 all along."
                 misconception: host-resets-odds
                 output: "Staying wins 1 case, the car behind door 1. Switching wins the other 2."
                 output_from: worked
@@ -338,6 +342,9 @@ chapters:
   - id: where-the-chance-goes
     title: Where the chance goes
     minutes: 6
+    beat: [mechanism]
+    milestone: "I can say each door's chance before and after the reveal."
+    open_question: "Would switching still win if the host did not know where the car is?"
     why_it_matters: Listing cases proves it. This chapter makes it feel obvious, so you can explain it to anyone.
     must_know:
       - Your door keeps its 1 in 3 when the host opens a door.
@@ -457,7 +464,8 @@ chapters:
       - id: groups-idea
         type: idea
         key: true
-        text: "Split the doors into two groups: your door, with 1 in 3, and the other two, with 2 in 3 together. The host opens a goat door in the other group, which he can always do, so nothing changes for your door: it stays at 1 in 3. The other group keeps its 2 in 3, now all on the one door he left closed."
+        text: "Split the doors into your door, with 1 in 3, and the other two, with 2 in 3 together. The host opens a goat door in the other group, so its whole 2 in 3 lands on the one door he leaves closed."
+        more: "He can always find a goat there, so nothing changes for your door: it stays at 1 in 3."
       - id: before-after
         type: diagram
         shape: change-over-time
@@ -531,6 +539,15 @@ chapters:
                   - label: Door 3
                     value: 0
                     note: opened
+      - id: hundred-check
+        type: check
+        purpose: key
+        tests: groups-idea
+        question: "100 doors, one car. You pick door 1. The host, who knows, opens 98 goat doors and leaves door 57 shut. How often does switching to door 57 win?"
+        options:
+          - {text: "99 times in 100", correct: true, why_right: "Your door keeps 1 in 100; the other 99 doors' chance all lands on door 57."}
+          - {text: "1 time in 2", correct: false, why_wrong: "Two doors are left, but the host chose which one to keep shut."}
+          - {text: "1 time in 100", correct: false, why_wrong: "That is your own door's chance."}
       - id: after-chance
         type: fill_blanks
         instructions:
@@ -565,15 +582,6 @@ chapters:
                 output_source: counting the cases
         hints:
           - Chances always add up to 1. Which door can door 3's share move to?
-      - id: hundred-check
-        type: check
-        purpose: key
-        tests: groups-idea
-        question: "100 doors, one car. You pick door 1. The host, who knows, opens 98 goat doors and leaves door 57 shut. How often does switching to door 57 win?"
-        options:
-          - {text: "99 times in 100", correct: true, why_right: "Your door keeps 1 in 100; the other 99 doors' chance all lands on door 57."}
-          - {text: "1 time in 2", correct: false, why_wrong: "Two doors are left, but the host chose which one to keep shut."}
-          - {text: "1 time in 100", correct: false, why_wrong: "That is your own door's chance."}
       - id: reset-pitfall
         type: pitfall
         misconception: host-resets-odds
@@ -586,6 +594,8 @@ chapters:
   - id: what-the-host-knows
     title: What the host knows
     minutes: 6
+    beat: [boundary, payoff]
+    milestone: "I can say when switching stops helping."
     why_it_matters: Change one thing about the host, and see whether your answer still holds.
     must_know:
       - A host who guesses sometimes reveals the car, which ends the game.
@@ -631,10 +641,10 @@ chapters:
       - id: host-idea
         type: idea
         key: true
-        text: "Same goat, different meaning. A host who knows could never have shown the car; a guesser could have, and just didn't this time. So the 2 'shows the car' games become switching wins for the knowing host, and are simply thrown out for the guesser."
+        text: "Same goat, different meaning: a host who knows could never have shown the car, while a guesser could have and just didn't. So the 2 'shows the car' games become switching wins for the knowing host, and are thrown out for the guesser."
       - id: halves-idea
         type: idea
-        text: "Car behind your door: whichever door he opens, staying wins. Car behind another door: a guessing host opens the car's door half the time, and those games are thrown out. So switching loses half its wins and ends up level with staying."
+        text: "Car behind your door: whichever door he opens, staying wins. Car behind another door: a guessing host opens it half the time and the game is thrown out, so switching loses half its wins and ends level."
       - id: guess-count
         type: fill_blanks
         instructions:
@@ -649,7 +659,7 @@ chapters:
             options:
               - text: "2"
                 correct: true
-                why_right: Car 2 with door 3 opened, and car 3 with door 2 opened. Staying wins the other 2.
+                why_right: Car 2 with door 3 opened and car 3 with door 2 opened; staying wins the other 2.
                 output: "Switching wins 2 of 4 and staying wins 2 of 4: even. Playing it by computer agrees: in 1,000 games where a guessing host showed a goat, switching won 512 and staying 488."
                 output_from: worked
                 output_source: the case table, and 1,000 games played by computer
@@ -673,7 +683,7 @@ chapters:
         type: diagram
         shape: comparison
         brief:
-          understand: "A simulation, the game played by computer: 1,000 games for each host, counting only games where a goat was shown. With a host who knows, switching wins about 2 in 3. With a host who guesses, they come out about equal; a small gap like 488 against 512 is just luck, like coin flips."
+          understand: "A simulation, 1,000 games per host played by computer: with a host who knows, switching wins about 2 in 3; with a guesser, about even."
           how_it_helps: "Buttons switch between a host who knows and one who guesses; bars for staying and switching wins."
           clearer_than_text: Seeing 663 against 337, then about even, ties the reasoning to real play.
         figure:

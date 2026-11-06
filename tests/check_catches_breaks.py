@@ -63,6 +63,22 @@ CARD = "      - id: page-vs-chunk-pitfall\n        type: pitfall\n        miscon
 case("card-before-question", CARD, "", expect="comes right before the pitfall card",
      then=[("      - id: page-vs-chunk-check\n", CARD + "      - id: page-vs-chunk-check\n")])
 
+# The lesson arc and the text budget
+case("idea-too-long", "        text: Search compares your question with pieces of text, and",
+     "        text: Search, the part of the system that looks through everything you stored to find the passages that best answer a question, compares your question with pieces of text, and",
+     expect="keep it to about 45")
+case("feedback-two-sentences", 'why_wrong: "Fewer entries is usually faster; the problem is match quality."',
+     'why_wrong: "Fewer entries is usually faster. The problem is match quality."', expect="more than one sentence")
+case("caption-too-long", "          understand: Search never sees a page, only the chunks cut from it,",
+     "          understand: Search never sees a page as a whole, from its first word to its last, only the chunks that the cutting step made from it,",
+     expect="keep it to about 25")
+case("copied-blank", "        explanation: Overlap does not change a chunk's size.",
+     "        explanation: Overlap does not change a chunk's size; the step is chunk_size - overlap.", expect="word for word")
+case("long-right-option", '{text: "One chunk per question and its answer", correct: true',
+     '{text: "One chunk for each question together with the full answer that goes with it", correct: true', expect="guess it by length")
+case("beat-out-of-order", "    beat: [mechanism]", "    beat: [hook]", expect="keep the arc in order")
+case("no-open-question", '    open_question: "Which size suits the questions your users ask?"\n', "", expect="needs open_question")
+
 # Design rules, broken in the concepts example
 example = (K / "assets/example-concepts-blueprint.yaml").read_text()
 case("theme-clash-green", 'accent: "#5b3cc4"', 'accent: "#2a9d4a"', expect="too close in hue")
@@ -77,6 +93,8 @@ case("play-typed-by-hand", "            stay-wins: 37\n            switch-wins: 
      run_tests=True, expect="not what computed_by prints")
 case("play-not-agreed", "  agreed_extras: [animation, play]", "  agreed_extras: [animation]", expect="a play block is built only after a yes")
 case("animation-not-agreed", "  agreed_extras: [animation, play]", "  agreed_extras: [play]", expect="an animated picture is built only after a yes")
+case("answer-in-milestone", 'milestone: "I can list every case and count who wins."', 'milestone: "I can show why you switch to door 2."',
+     expect="before the guess")
 case("tile-unknown-state", "caption: You pick door 1.\n              figure:\n                kind: tiles\n                tiles:\n                  - label: Door 1\n                    state: picked",
      "caption: You pick door 1.\n              figure:\n                kind: tiles\n                tiles:\n                  - label: Door 1\n                    state: chosen", expect="needs state")
 

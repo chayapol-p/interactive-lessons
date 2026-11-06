@@ -281,6 +281,22 @@ details.stretch summary { cursor: pointer; min-height: 48px; display: flex; alig
 .stage-line { font-size: 0.9375rem; line-height: 1.4; color: var(--muted); }
 .stage-line strong { color: var(--accent); }
 
+/* Journey strip: where this chapter sits in the lesson. Later milestones stay hidden, so none gives an answer away. */
+.journey { display: flex; flex-direction: column; gap: 8px; }
+.journey-steps { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 0; }
+.journey-steps li { flex: 1; display: flex; align-items: center; min-width: 0; }
+.journey-steps li:not(:last-child)::after { content: ""; flex: 1; height: 2px; background: var(--line); margin: 0 4px; }
+.journey-steps li.past:not(:last-child)::after { background: var(--accent); }
+.journey-steps a { flex: none; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: var(--step--1); font-weight: 600; text-decoration: none; border: 1.5px solid var(--line-strong); color: var(--muted); background: var(--surface); }
+.journey-steps li.past a { border-color: var(--accent); color: var(--accent); }
+.journey-steps li.here a { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.journey-now { font-size: 0.9375rem; color: var(--muted); }
+.journey-now strong { color: var(--ink); }
+/* Open question: it closes a chapter, and the next chapter answers it */
+.open-question { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; display: flex; flex-direction: column; gap: 4px; }
+.open-question .question { font-weight: 600; }
+.big-idea { background: var(--accent-soft); border-radius: var(--radius); padding: 14px; font-family: var(--font-read); font-size: var(--step-1); }
+
 /* Start and end pages */
 .hero { padding-top: 28px; display: flex; flex-direction: column; gap: 12px; }
 .hero h1 { font-size: clamp(2rem, 8vw, var(--step-4)); font-weight: 700; letter-spacing: -0.02em; }
@@ -1695,8 +1711,13 @@ function renderPitfall(chapter, block) {
   return wrapper;
 }
 function renderRecap(chapter, block) {
+  // A chapter ends on its open question, which the next chapter answers; the last chapter ends on its bridge out
+  const next = CHAPTERS[chapterIndex(chapter.id) + 1];
   return h("section", { class: "block", id: block.id },
-    h("div", { class: "recap" }, h("div", { class: "eyebrow" }, "Remember"), h("p", { class: "line" }, withTerms(block.text)), h("p", { class: "bridge" }, chapter.bridge_out.text)));
+    h("div", { class: "recap" }, h("div", { class: "eyebrow" }, "Remember"), h("p", { class: "line" }, withTerms(block.text)),
+      chapter.open_question && next ? null : h("p", { class: "bridge" }, chapter.bridge_out.text)),
+    chapter.open_question && next ? h("div", { class: "open-question" }, h("div", { class: "eyebrow" }, "Still open"),
+      h("p", { class: "question" }, withTerms(chapter.open_question)), h("p", { class: "why" }, `Chapter ${chapterIndex(next.id) + 1} answers it.`)) : null);
 }
 const RENDERERS = {
   predict: (c, b) => renderChoiceBlock(c, b, "predict"),
@@ -1788,6 +1809,15 @@ function startPage() {
       pager(null, { href: `#${CHAPTERS[0].id}`, label: "Start chapter 1" })),
   ];
 }
+// The journey strip: one dot per chapter, this one marked, with only this chapter's milestone written out
+function journeyStrip(chapter) {
+  const here = chapterIndex(chapter.id);
+  return h("nav", { class: "journey", "aria-label": "Your place in the lesson" },
+    h("ol", { class: "journey-steps" }, CHAPTERS.map((other, index) => h("li", { class: index < here ? "past" : index === here ? "here" : "ahead" },
+      h("a", { href: `#${other.id}`, "aria-current": index === here ? "step" : null, "aria-label": `Chapter ${index + 1}${index === here ? ", you are here" : ""}${chapterDone(other) ? ", done" : ""}` },
+        chapterDone(other) && index !== here ? "✓" : String(index + 1))))),
+    chapter.milestone ? h("p", { class: "journey-now" }, h("strong", {}, "You are here. "), `By the end: ${chapter.milestone.replace(/^I can /, "you can ")}`) : null);
+}
 function chapterPage(chapter) {
   const index = chapterIndex(chapter.id);
   if (!progress.visited.includes(chapter.id)) { progress.visited.push(chapter.id); saveProgress(); }
@@ -1799,10 +1829,10 @@ function chapterPage(chapter) {
     topBar(`Chapter ${index + 1} of ${CHAPTERS.length}`, `${index + 1} of ${CHAPTERS.length}`),
     h("main", { class: "column" },
       h("div", { class: "chapter-head" },
+        journeyStrip(chapter),
         h("div", { class: "eyebrow" }, eyebrow.join(" · ")),
         h("h1", {}, chapter.title),
-        h("p", { class: "bridge" }, chapter.bridge_in.text),
-        h("p", { class: "why" }, h("strong", {}, "Why it matters: "), chapter.why_it_matters)),
+        h("p", { class: "bridge" }, chapter.bridge_in.text)),
       chapter.blocks.map((block) => (RENDERERS[block.type] || (() => null))(chapter, block)),
       pager(previous, next)),
   ];
@@ -1824,6 +1854,7 @@ function fieldGuidePage() {
     topBar("Field guide", "Guide"),
     h("main", { class: "column" },
       h("div", { class: "hero" }, h("div", { class: "eyebrow" }, "Keep this page"), h("h1", {}, "Field guide"), h("p", { class: "lede" }, CHAPTERS[CHAPTERS.length - 1].bridge_out.text)),
+      LESSON.lesson.big_idea ? h("section", { class: "block" }, h("h2", { class: "section-title" }, "The big idea"), h("p", { class: "big-idea" }, LESSON.lesson.big_idea)) : null,
       h("p", { class: "tally" }, (() => {
         const all = CHAPTERS.flatMap(exercisesOf);
         const solved = all.filter((b) => (progress.blocks[b.id] || {}).passed).length;
