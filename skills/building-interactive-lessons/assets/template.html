@@ -270,6 +270,9 @@ details.stretch summary { cursor: pointer; min-height: 48px; display: flex; alig
 .deal-cell.hot { background: var(--accent); color: var(--on-accent); font-weight: 600; }
 .deal-cell.new { animation: deal-in .25s ease-out both; }
 @keyframes deal-in { from { opacity: 0; transform: scale(.6); } }
+.deal-key { font-size: var(--step--1); color: var(--muted); }
+.deal-key .key { display: inline-block; min-width: 1.6em; padding: 0 4px; border-radius: 4px; text-align: center; font-family: var(--font-code); font-size: 0.75rem; background: var(--surface-2); color: var(--ink); }
+.deal-key .key.hot { background: var(--accent); color: var(--on-accent); }
 .tally-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
 .tally-table td { padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
 .tally-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
@@ -1206,12 +1209,12 @@ function framesFigure(figure) {
 const TILE_WORDS = { closed: "closed", open: "open", picked: "your pick", hot: "highlighted" };
 function tilesFigure(figure) {
   const tiles = figure.tiles;
-  const perRow = Math.min(tiles.length, 6);
+  const perRow = tiles.length <= 6 ? tiles.length : Math.min(6, Math.ceil(tiles.length / 2));   // 10 tiles: 2 rows of 5
   const hasGroups = tiles.some((tile) => tile.group);
   const width = 340, gap = hasGroups ? 16 : 10;   // groups need room between their frames
   const tileWidth = Math.min(90, (width - gap * (perRow + 1)) / perRow);
   const rowWidth = perRow * tileWidth + (perRow - 1) * gap;
-  const left = (width - rowWidth) / 2, top = hasGroups ? 30 : 8, tileHeight = 70, rowHeight = tileHeight + 30;
+  const left = (width - rowWidth) / 2, top = hasGroups ? 30 : 8, tileHeight = 70, rowHeight = tileHeight + (hasGroups ? 42 : 30);
   const rows = Math.ceil(tiles.length / perRow);
   const place = (index) => ({ x: left + (index % perRow) * (tileWidth + gap), y: top + Math.floor(index / perRow) * rowHeight });
   // Group frames around neighbouring tiles of one group, in the same row
@@ -1223,18 +1226,19 @@ function tilesFigure(figure) {
     if (last && last.group === tile.group && last.end === index - 1 && last.y === y) last.end = index;
     else frames.push({ group: tile.group, start: index, end: index, y });
   });
+  const named = new Set();
   return svg("svg", { viewBox: `0 0 ${width} ${top + rows * rowHeight - 8}`, role: "img",
     "aria-label": tiles.map((tile) => `${tile.label}: ${TILE_WORDS[tile.state]}${tile.inside ? ", " + tile.inside : ""}${tile.note ? ", " + tile.note : ""}${tile.group ? " (" + tile.group + ")" : ""}`).join(". ") },
     frames.map((frame) => {
       const a = place(frame.start), b = place(frame.end);
       return [svg("rect", { x: a.x - 5, y: a.y - 5, width: b.x + tileWidth - a.x + 10, height: tileHeight + 26, rx: 8, class: "svg-group" }),
-        svg("text", { x: a.x - 3, y: a.y - 10, class: "svg-text small hot" }, frame.group)];
+        named.has(frame.group) ? null : (named.add(frame.group), svg("text", { x: a.x - 3, y: a.y - 10, class: "svg-text small hot" }, frame.group))];
     }),
     tiles.map((tile, index) => {
       const { x, y } = place(index);
       const look = { closed: "", open: "ghost", picked: "picked", hot: "hot" }[tile.state];
       const inside = tile.inside !== undefined ? tile.inside : tile.state === "open" ? "" : "?";
-      return svg("g", {},
+      return svg("g", { "data-tile": index, "data-look": `${tile.state}|${inside}|${tile.note || ""}` },
         svg("rect", { x, y, width: tileWidth, height: tileHeight, rx: 6, class: `svg-box ${look}` }),
         svg("text", { x: x + tileWidth / 2, y: y + 16, "text-anchor": "middle", class: "svg-text small" }, tile.label),
         svg("text", { x: x + tileWidth / 2, y: y + 46, "text-anchor": "middle", class: `svg-text big${tile.state === "open" ? " dim" : ""}` }, inside),
@@ -1267,6 +1271,23 @@ function animateBetween(fromLayer, toLayer) {
   }
   // Out, then in: the old step fades out in the first half and the new one fades in during the second, so two
   // steps' words never sit on top of each other
+  // Tiles that change between the steps change one after another, left to right, so the eye can follow each door;
+  // the whole move stays under 2 s however many tiles change
+  const oldTiles = [...fromLayer.querySelectorAll("[data-tile]")], newTiles = [...toLayer.querySelectorAll("[data-tile]")];
+  if (newTiles.length && oldTiles.length === newTiles.length) {
+    const changed = newTiles.map((_, i) => i).filter((i) => newTiles[i].getAttribute("data-look") !== oldTiles[i].getAttribute("data-look"));
+    const gap = Math.min(250, 1000 / Math.max(changed.length, 1));
+    changed.forEach((i, order) => {
+      const ghost = oldTiles[i].cloneNode(true);
+      ghost.setAttribute("data-tile-ghost", "");
+      ghost.removeAttribute("data-tile");
+      newTiles[i].after(ghost);
+      newTiles[i].style.opacity = "0";
+      ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: order * gap, fill: "forwards" }).onfinish = () => ghost.remove();
+      newTiles[i].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: order * gap, fill: "forwards" }).onfinish = () => { newTiles[i].style.opacity = ""; };
+    });
+    return;
+  }
   fromLayer.classList.add("leaving");
   fromLayer.animate([{ opacity: 1 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" }).onfinish = () => fromLayer.classList.remove("leaving");
   toLayer.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" });
@@ -1541,10 +1562,22 @@ function renderFillBlanks(chapter, block) {
 }
 
 // ---------- Explain in your own words (AI-graded; a rubric self-check without AI) ----------
-function selfCheck(block) {
+// With no grader, the learner checks their own answer against the rubric. Ticking every point counts the exercise as
+// done ("checked yourself"), so progress and the field guide still show the work.
+function selfCheck(block, state) {
+  const status = h("p", { class: "why", role: "status" }, state && state.passed ? "Every point ticked: done." : "");
+  const boxes = block.rubric.map((criterion, index) => h("input", { type: "checkbox", id: `${block.id}-criterion-${index}`, checked: !!(state && state.passed) }));
+  boxes.forEach((box) => box.addEventListener("change", () => {
+    if (!state) return;
+    const all = boxes.every((other) => other.checked);
+    state.passed = all; state.selfChecked = all;
+    status.textContent = all ? "Every point ticked: done." : "";
+    saveProgress();
+  }));
   return h("div", { class: "feedback neutral" },
     h("p", {}, h("strong", {}, "Check yourself. "), "Tick each point your answer covers, then compare with Show solution."),
-    h("div", { class: "self-check" }, block.rubric.map((criterion, index) => h("label", {}, h("input", { type: "checkbox", id: `${block.id}-criterion-${index}` }), h("span", {}, h("strong", {}, criterion.criterion + ": "), criterion.passing)))));
+    h("div", { class: "self-check" }, block.rubric.map((criterion, index) => h("label", { for: `${block.id}-criterion-${index}` }, boxes[index], h("span", {}, h("strong", {}, criterion.criterion + ": "), criterion.passing)))),
+    status);
 }
 function rubricSolution(block) {
   return [
@@ -1570,7 +1603,7 @@ function renderExplain(chapter, block) {
   async function submit() {
     const answer = editor.value.trim();
     if (!answer) { setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Write an answer first."))); return; }
-    if (!canAskClaude) { state.attempts = (state.attempts || 0) + 1; saveProgress(); setChildren(feedbackHolder, selfCheck(block)); return; }
+    if (!canAskClaude) { state.attempts = (state.attempts || 0) + 1; saveProgress(); setChildren(feedbackHolder, selfCheck(block, state)); return; }
     submitButton.disabled = true;
     setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Grading…")));
     try {
@@ -1687,6 +1720,7 @@ function renderPlay(chapter, block) {
     h("div", { class: "block-label" }, "Play it", h("span", { class: "spacer" }), tutorButton(chapter, block)),
     h("div", { class: "play" },
       h("p", { class: "question" }, withTerms(block.prompt)),
+      h("p", { class: "deal-key" }, block.outcomes.map((outcome, index) => [index ? " · " : "", h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), " ", outcome.label.toLowerCase()])),
       h("div", { class: "btn-row" }, block.deals.map((games, index) => h("button", { class: `btn${index === block.deals.length - 1 ? " primary" : ""}`, type: "button", onclick: () => deal(games) }, `Deal ${games} games`))),
       grid, table));
   draw(false);
@@ -1883,7 +1917,7 @@ function fieldGuidePage() {
           ? h("ul", { class: "plain-list" }, confidentWrong.map(({ chapter, block, state }) => h("li", {}, h("a", { href: `#${chapter.id}`, onclick: jump(chapter, block) }, block.question), ` (you were ${state.confidence === "certain" ? "certain" : "fairly sure"})`)))
           : h("p", { class: "why" }, "Nothing yet. When you answer a prediction or quiz wrongly while fairly sure or certain, it shows up here, so you can go back to it.")),
       exercises.length ? h("section", { class: "block" }, h("h2", { class: "section-title" }, "Your exercises"),
-        h("ul", { class: "plain-list" }, exercises.map(({ chapter, block, state }) => h("li", {}, h("a", { href: `#${chapter.id}`, onclick: jump(chapter, block) }, block.instructions[0]), ` · ${state.passed && !state.solutionShown ? "solved" : state.passed ? "solved after reading the solution" : "read the solution"}`)))) : null,
+        h("ul", { class: "plain-list" }, exercises.map(({ chapter, block, state }) => h("li", {}, h("a", { href: `#${chapter.id}`, onclick: jump(chapter, block) }, block.instructions[0]), ` · ${state.selfChecked ? "checked yourself" : state.passed && !state.solutionShown ? "solved" : state.passed ? "solved after reading the solution" : "read the solution"}`)))) : null,
       localRuns.length ? h("section", { class: "block" }, h("h2", { class: "section-title" }, "Run these on your own machine"),
         localRuns.map(({ chapter, runLocally }) => h("div", { class: "local-run" }, h("strong", {}, chapter.title), h("code", {}, runLocally.command), h("span", {}, runLocally.why)))) : null,
       GLOSSARY.length ? h("details", { class: "fold facts" }, h("summary", {}, "Words used in this lesson"),

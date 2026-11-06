@@ -14,6 +14,7 @@
 - New checks: the text budget (ideas 2 sentences and about 45 words, one-sentence feedback, captions about 25 words), no early answers, no copying into a blank, and fair option lengths. The three examples were trimmed to pass.
 - Stay or Switch? rebuilt as one story in 5 chapters (about 25 minutes): The game · Feel it · Why · When it fails · Use it. Doors as tiles, 100 doors, Deal 100 games (both hosts), the 67 sliding onto door 2, and a 4-answer quiz to carry the idea to a new case; it ends by answering the first question.
 - A chapter with no exercises shows as done only when its quizzes are answered right.
+- From the first user-test round: a phone viewport tag (a phone opened the file at desktop width), glossary words that keep their comma, a key above dealt games, a self-check that counts as done without the tutor, and tiles that change one at a time (10 doors opening in turn).
 - `tests/check_page_clicks.py` clicks through the examples (blanks, two wrong blanks, folded cards, steady steps, tutor).
 
 ## 0.3.1 · 5 Nov 2026

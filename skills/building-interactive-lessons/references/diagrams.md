@@ -30,7 +30,7 @@ Pick the lowest step that carries the idea. Each step up costs build time and th
 
 **Steps 3 and 4 are asked for, never assumed.** In Discover (SKILL.md step 1), offer them for the named moments that need them, with the extra build time, and build them only on a yes. Record each yes in `lesson.agreed_extras` (`animation`, `play`); the checker refuses an animated picture or a play block without it.
 
-- **Animated** (`animate: true` on a `frames` figure): a tap on a step moves from the last step to the new one in 0.7 s: bars with the same label grow or shrink; anything else fades out, then in. Nothing plays by itself, "Play again" replays the last move, and with reduced motion the picture simply steps. Every number shown is a computed step's; only the motion between steps is drawn.
+- **Animated** (`animate: true` on a `frames` figure): a tap on a step moves from the last step to the new one: bars with the same label grow or shrink (0.7 s); tiles that change state change one after another, left to right, all within 2 s, so the eye can follow each door opening; anything else fades out, then in. Nothing plays by itself, "Play again" replays the last move, and with reduced motion the picture simply steps. Every number shown is a computed step's; only the motion between steps is drawn.
 - **Play** (a `play` block): the learner deals 10 or 100 games from a case table that `computed_by` worked out, and sees their counts beside the expected share ("you: 64 of 100 · expected about 67"). Every deal is fresh and random, so the evidence is theirs; a seeded sample deal from the same code is kept for read-along, screenshots and tests. See `blueprint-format.md` section 3.
 - Why ask first: an animation or a game that is not needed is decoration that costs the learner's time. When it is needed (a sceptic who will not believe 2 in 3 until they see it), nothing else will do.
 
@@ -209,7 +209,8 @@ figure:
 **`kind: tiles`** (structure, a list of cases; also a step inside `frames`): a row of labelled boxes, each in a state, for doors, cups, cards or slots.
 - `tiles`: `{label, state, inside, note, group}`. `state` R is `closed`, `open` (dashed, its `inside` shown dim), `picked` (thick accent outline: the learner's choice) or `hot` (accent fill, at most 2). `label` R (at most 10 characters) sits at the top of the tile; `inside` o is the big word in the middle (default `?`, or empty when open); `note` o is a short word under it.
 - Tiles with the same `group`, next to each other, share a dashed frame with the group's name above it (for "your door" against "the other two").
-- At most 12 tiles; up to 6 sit in a row. Inside `frames`, every step is a computed tiles figure, so a door opening is a new step, not a drawn effect.
+- At most 12 tiles: up to 6 sit in one row, and 7 to 12 sit in two even rows (10 tiles: two rows of 5). A group that runs onto the second row keeps one name, on its first frame. Inside `frames`, every step is a computed tiles figure, so a door opening is a new step, not a drawn effect.
+- To show a big version of a small case (10 doors for 3), group "yours" against "the other 9" and open the other group's tiles in one animated step: the learner watches the whole group's chance gather on the one tile left.
 
 ```yaml
 figure:

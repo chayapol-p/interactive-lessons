@@ -159,9 +159,9 @@ chapters:
         type: predict
         question: "Three doors: a car behind one, goats behind two. You pick door 1. The host, who knows where the car is, opens door 3 and shows a goat, then offers you door 2. What should you do?"
         options:
-          - {text: "Stay with door 1", correct: false, why_wrong: "Your first pick was a 1 in 3 guess, and the host's move did not change that."}
+          - {text: "Stay with door 1", correct: false, why_wrong: "You pick a goat 2 times in 3, and then the host has to leave the car behind door 2."}
           - {text: "Switch to door 2", correct: true, why_right: "Door 2 wins whenever your first pick was wrong, which is 2 times in 3."}
-          - {text: "It does not matter, it's 50/50", correct: false, why_wrong: "The two doors are not alike: the host chose which one to leave shut."}
+          - {text: "It does not matter, it's 50/50", correct: false, why_wrong: "If you picked a goat, he had to open the other goat door, so door 2 hides the car."}
       - id: game-picture
         type: diagram
         shape: structure
@@ -242,63 +242,171 @@ chapters:
       - id: hundred-idea
         type: idea
         text: "With 100 doors your pick is right 1 time in 100, and whenever you missed, the host must leave the car shut. So the one door he leaves closed wins the other 99 times."
-      - id: many-doors-slider
+      - id: ten-doors
         type: diagram
         shape: change-over-time
         brief:
-          understand: "Slide from 100 doors down to 3: the same move, less obvious. Bars count wins out of 100 games."
-          how_it_helps: "A slider over 100, 10 and 3 doors: bars out of 100 games for your door and for the one door the host leaves closed."
-          clearer_than_text: At 100 doors, 1 against 99 makes switching feel obvious; sliding down keeps that feeling at 3 doors.
+          understand: "The same game with 10 doors: watch the host open the other group, one door at a time, until one is left."
+          how_it_helps: "Ten doors as tiles in two groups, yours and the other 9; the host's goats open one after another, leaving one door shut."
+          clearer_than_text: Seeing 8 doors open in the other group while yours never moves shows that the left door carries the whole group's chance.
         figure:
           kind: frames
-          control: slider
-          control_label: Doors
+          control: buttons
+          control_label: Step
+          animate: true
           computed_by:
             language: python
             code: |
               import json
-              from monty import door_chances
-              frames = []
-              for doors in [100, 10, 3]:
-                  yours, other = door_chances(doors, True)[:2]
-                  frames.append({"label": str(doors), "figure": {"kind": "bars", "max": 100, "bars": [
-                      {"label": "Your door", "value": round(100 * float(yours)), "note": f"{yours.numerator} in {yours.denominator}"},
-                      {"label": "The other", "value": round(100 * float(other)), "note": f"{other.numerator} in {other.denominator}"}]}})
+              from fractions import Fraction
+              from monty import PICK
+              doors = list(range(1, 11))
+              left = 7                       # in this run the car is behind door 7, so the host must leave it shut
+              yours = Fraction(1, len(doors))
+              def tiles(step):
+                  row = []
+                  for door in doors:
+                      tile = {"label": f"Door {door}", "group": "Yours" if door == PICK else f"The other {len(doors) - 1}"}
+                      if door == PICK:
+                          tile.update(state="picked", note="yours")
+                      elif step >= 1 and door != left:
+                          tile.update(state="open", inside="goat")
+                      else:
+                          tile.update(state="hot" if step == 2 else "closed", **({"note": "left"} if step == 2 else {}))
+                      row.append(tile)
+                  return {"kind": "tiles", "tiles": row}
+              captions = [f"Your door: {yours.numerator} in {yours.denominator}. The other {len(doors) - 1} together: {(1 - yours).numerator} in {(1 - yours).denominator}.",
+                          f"The host, who knows, opens {len(doors) - 2} of the other {len(doors) - 1}: all goats.",
+                          f"Door {left} is all that is left of the other {len(doors) - 1}, so it holds their {(1 - yours).numerator} in {(1 - yours).denominator}."]
+              frames = [{"label": label, "caption": captions[step], "figure": tiles(step)}
+                        for step, label in enumerate(["You pick", "Host opens", "The offer"])]
               print(json.dumps({"frames": frames}))
           frames:
-            - label: '100'
+            - label: You pick
+              caption: 'Your door: 1 in 10. The other 9 together: 9 in 10.'
               figure:
-                kind: bars
-                max: 100
-                bars:
-                  - label: Your door
-                    value: 1
-                    note: 1 in 100
-                  - label: The other
-                    value: 99
-                    note: 99 in 100
-            - label: '10'
+                kind: tiles
+                tiles:
+                  - label: Door 1
+                    group: Yours
+                    state: picked
+                    note: yours
+                  - label: Door 2
+                    group: The other 9
+                    state: closed
+                  - label: Door 3
+                    group: The other 9
+                    state: closed
+                  - label: Door 4
+                    group: The other 9
+                    state: closed
+                  - label: Door 5
+                    group: The other 9
+                    state: closed
+                  - label: Door 6
+                    group: The other 9
+                    state: closed
+                  - label: Door 7
+                    group: The other 9
+                    state: closed
+                  - label: Door 8
+                    group: The other 9
+                    state: closed
+                  - label: Door 9
+                    group: The other 9
+                    state: closed
+                  - label: Door 10
+                    group: The other 9
+                    state: closed
+            - label: Host opens
+              caption: 'The host, who knows, opens 8 of the other 9: all goats.'
               figure:
-                kind: bars
-                max: 100
-                bars:
-                  - label: Your door
-                    value: 10
-                    note: 1 in 10
-                  - label: The other
-                    value: 90
-                    note: 9 in 10
-            - label: '3'
+                kind: tiles
+                tiles:
+                  - label: Door 1
+                    group: Yours
+                    state: picked
+                    note: yours
+                  - label: Door 2
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 3
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 4
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 5
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 6
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 7
+                    group: The other 9
+                    state: closed
+                  - label: Door 8
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 9
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 10
+                    group: The other 9
+                    state: open
+                    inside: goat
+            - label: The offer
+              caption: Door 7 is all that is left of the other 9, so it holds their 9 in 10.
               figure:
-                kind: bars
-                max: 100
-                bars:
-                  - label: Your door
-                    value: 33
-                    note: 1 in 3
-                  - label: The other
-                    value: 67
-                    note: 2 in 3
+                kind: tiles
+                tiles:
+                  - label: Door 1
+                    group: Yours
+                    state: picked
+                    note: yours
+                  - label: Door 2
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 3
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 4
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 5
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 6
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 7
+                    group: The other 9
+                    state: hot
+                    note: left
+                  - label: Door 8
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 9
+                    group: The other 9
+                    state: open
+                    inside: goat
+                  - label: Door 10
+                    group: The other 9
+                    state: open
+                    inside: goat
       - id: deal-games
         type: play
         prompt: "Back to 3 doors and a host who knows. Deal 100 games and count who would win: staying with door 1, or switching."
@@ -344,7 +452,7 @@ chapters:
         figure:
           kind: svg
           svg: |
-            <svg viewBox="0 0 340 204" role="img" aria-label="You pick door 1. Car behind door 1: the host opens 2 or 3, still one case, and staying wins. Car behind door 2: the host opens 3, switching wins. Car behind door 3: the host opens 2, switching wins."><text x="64" y="22" class="svg-text small">Door 1 · 2 · 3 (you pick 1)</text><text x="232" y="22" text-anchor="middle" class="svg-text small">Stay</text><text x="300" y="22" text-anchor="middle" class="svg-text small">Switch</text><text x="4" y="63" class="svg-text small">Car: 1</text><rect x="64" y="44" width="34" height="30" rx="4" class="svg-box hot"/><text x="81" y="63" text-anchor="middle" class="svg-text small">car</text><rect x="104" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="121" y="63" text-anchor="middle" class="svg-text small">goat</text><rect x="144" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="161" y="63" text-anchor="middle" class="svg-text small">goat</text><text x="64" y="88" class="svg-text small dim">opens 2 or 3 (one case)</text><text x="232" y="63" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="300" y="63" text-anchor="middle" class="svg-text dim">✗</text><text x="4" y="115" class="svg-text small">Car: 2</text><rect x="64" y="96" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="115" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="96" width="34" height="30" rx="4" class="svg-box hot"/><text x="121" y="115" text-anchor="middle" class="svg-text small">car</text><rect x="144" y="96" width="34" height="30" rx="4" class="svg-box ghost"/><text x="161" y="115" text-anchor="middle" class="svg-text small dim">open</text><text x="64" y="140" class="svg-text small dim">must open 3</text><text x="232" y="115" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="115" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="4" y="167" class="svg-text small">Car: 3</text><rect x="64" y="148" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="167" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="148" width="34" height="30" rx="4" class="svg-box ghost"/><text x="121" y="167" text-anchor="middle" class="svg-text small dim">open</text><rect x="144" y="148" width="34" height="30" rx="4" class="svg-box hot"/><text x="161" y="167" text-anchor="middle" class="svg-text small">car</text><text x="64" y="192" class="svg-text small dim">must open 2</text><text x="232" y="167" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="167" text-anchor="middle" class="svg-text hot">✓ wins</text></svg>
+            <svg viewBox="0 0 340 204" role="img" aria-label="You pick door 1. Car behind door 1: the host opens 2 or 3, still one case, and staying wins. Car behind door 2: the host opens 3, switching wins. Car behind door 3: the host opens 2, switching wins."><text x="64" y="22" class="svg-text small">Door 1 · 2 · 3 (you pick 1)</text><text x="232" y="22" text-anchor="middle" class="svg-text small">Stay</text><text x="300" y="22" text-anchor="middle" class="svg-text small">Switch</text><text x="4" y="63" class="svg-text small">Car: 1</text><rect x="64" y="44" width="34" height="30" rx="4" class="svg-box hot"/><text x="81" y="63" text-anchor="middle" class="svg-text small">car</text><rect x="104" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="121" y="63" text-anchor="middle" class="svg-text small">goat</text><rect x="144" y="44" width="34" height="30" rx="4" class="svg-box "/><text x="161" y="63" text-anchor="middle" class="svg-text small">goat</text><text x="64" y="88" class="svg-text small dim">he may open 2 or 3</text><text x="232" y="63" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="300" y="63" text-anchor="middle" class="svg-text dim">✗</text><text x="4" y="115" class="svg-text small">Car: 2</text><rect x="64" y="96" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="115" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="96" width="34" height="30" rx="4" class="svg-box hot"/><text x="121" y="115" text-anchor="middle" class="svg-text small">car</text><rect x="144" y="96" width="34" height="30" rx="4" class="svg-box ghost"/><text x="161" y="115" text-anchor="middle" class="svg-text small dim">open</text><text x="64" y="140" class="svg-text small dim">he must open 3</text><text x="232" y="115" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="115" text-anchor="middle" class="svg-text hot">✓ wins</text><text x="4" y="167" class="svg-text small">Car: 3</text><rect x="64" y="148" width="34" height="30" rx="4" class="svg-box "/><text x="81" y="167" text-anchor="middle" class="svg-text small">goat</text><rect x="104" y="148" width="34" height="30" rx="4" class="svg-box ghost"/><text x="121" y="167" text-anchor="middle" class="svg-text small dim">open</text><rect x="144" y="148" width="34" height="30" rx="4" class="svg-box hot"/><text x="161" y="167" text-anchor="middle" class="svg-text small">car</text><text x="64" y="192" class="svg-text small dim">he must open 2</text><text x="232" y="167" text-anchor="middle" class="svg-text dim">✗</text><text x="300" y="167" text-anchor="middle" class="svg-text hot">✓ wins</text></svg>
       - id: one-case-idea
         type: idea
         text: "Picture 300 games: in about 100 the car is behind your door, and whichever door the host opens, staying wins those 100. In the other 200 he has no choice, and switching wins them all."
@@ -430,11 +538,6 @@ chapters:
         evidence: A key check with 4 doors, which the chapter never showed.
         objective: explain-why
         tested_by: [groups-check]
-      - id: no-reset
-        can_do: Spot why opening a door does not start a new game.
-        evidence: A spot-the-mistake check before its card opens.
-        objective: explain-why
-        tested_by: [reset-check]
     brings_in: [first-pick-third, host-rules]
     carries_forward:
       - id: host-knows
@@ -579,7 +682,7 @@ chapters:
                    "figure": {"kind": "bars", "max": 100, "bars": [bar(n, c) for n, c in zip(names, before)]}},
                   {"label": "Two groups", "caption": "Your door: 33. The other two together: 67.",
                    "figure": {"kind": "bars", "max": 100, "bars": [bar(names[0], before[0]), bar("Doors 2 + 3", before[1] + before[2], "together")]}},
-                  {"label": "After", "caption": "Door 3 is open and empty, so door 2 holds all 67.",
+                  {"label": "After", "caption": "Door 3 is open (a goat), so door 2 holds all 67.",
                    "figure": {"kind": "bars", "max": 100, "bars": [bar(n, c) for n, c in zip(names, after)]}},
               ]
               print(json.dumps({"frames": frames}))
@@ -612,7 +715,7 @@ chapters:
                     value: 67
                     note: together
             - label: After
-              caption: Door 3 is open and empty, so door 2 holds all 67.
+              caption: Door 3 is open (a goat), so door 2 holds all 67.
               figure:
                 kind: bars
                 max: 100
@@ -669,15 +772,6 @@ chapters:
                 output_source: counting the cases
         hints:
           - Chances always add up to 1. Which door can door 3's share move to?
-      - id: reset-check
-        type: check
-        purpose: pitfall
-        tests: host-resets-odds
-        question: "A friend says: once the host opens a door, it's a new game, so the chance is shared out again between the two doors left. What is the flaw?"
-        options:
-          - {text: "Nothing about your pick changed, so your door keeps its 1 in 3", correct: true, why_right: "The host's move tells you nothing new about your own door."}
-          - {text: "Nothing: a new game means a fresh 50/50 between the two", correct: false, why_wrong: "No new game starts: your pick was made out of 3 doors, not 2."}
-          - {text: "Your door gains the opened door's share, so stay", correct: false, why_wrong: "The host never touches your door; the share goes to the other closed door."}
       - id: reset-pitfall
         type: pitfall
         misconception: host-resets-odds
@@ -703,11 +797,6 @@ chapters:
         evidence: The learner fills in the switching wins for a guessing host, then judges two shows they have not seen.
         objective: explain-host
         tested_by: [guess-count, host-key-check]
-      - id: not-always
-        can_do: Spot why "always switch" is not always right.
-        evidence: A spot-the-mistake check before its card opens.
-        objective: explain-host
-        tested_by: [always-check]
     brings_in: [host-knows]
     carries_forward:
       - id: knowledge-sets-odds
@@ -733,17 +822,6 @@ chapters:
         type: idea
         key: true
         text: "Same goat, different meaning: a host who knows could never have shown the car, while a guesser could have and just didn't. So the 2 'shows the car' games become switching wins for the knowing host, and are thrown out for the guesser."
-      - id: guesses-table
-        type: diagram
-        shape: comparison
-        brief:
-          understand: The host who knows turns the 2 'shows the car' games into switching wins; the host who guesses throws them away.
-          how_it_helps: "Six rows, one per equally likely way the game goes (3 car spots × 2 doors he might open), with the two hosts side by side."
-          clearer_than_text: Seeing the same two rows end differently for the two hosts shows exactly where the 2 in 3 comes from.
-        figure:
-          kind: svg
-          svg: |
-            <svg viewBox="0 0 340 308" role="img" aria-label="The same 6 equally likely moves for two hosts. A host who guesses shows the car in 2 of them, so those games end; of the 4 left, staying wins 2 and switching 2. A host who knows opens the other door in those 2 moves, so they become switching wins: staying 2, switching 4 of 6."><text x="4" y="18" class="svg-text small">Car / host picks</text><text x="132" y="18" class="svg-text small">Host guesses</text><text x="240" y="18" class="svg-text small">Host knows</text><text x="4" y="44" class="svg-text small">Car 1, host</text><text x="4" y="58" class="svg-text small">picks door 2</text><text x="132" y="44" class="svg-text small">stay ✓</text><text x="240" y="44" class="svg-text small">stay ✓</text><text x="4" y="84" class="svg-text small">Car 1, host</text><text x="4" y="98" class="svg-text small">picks door 3</text><text x="132" y="84" class="svg-text small">stay ✓</text><text x="240" y="84" class="svg-text small">stay ✓</text><text x="4" y="124" class="svg-text small">Car 2, host</text><text x="4" y="138" class="svg-text small">picks door 2</text><text x="132" y="124" class="svg-text small dim">shows the car</text><text x="132" y="138" class="svg-text small dim">game over</text><text x="240" y="124" class="svg-text small hot">switch ✓</text><text x="240" y="138" class="svg-text small">skips it, opens 3</text><text x="4" y="164" class="svg-text small">Car 2, host</text><text x="4" y="178" class="svg-text small">picks door 3</text><text x="132" y="164" class="svg-text small hot">switch ✓</text><text x="240" y="164" class="svg-text small hot">switch ✓</text><text x="4" y="204" class="svg-text small">Car 3, host</text><text x="4" y="218" class="svg-text small">picks door 2</text><text x="132" y="204" class="svg-text small hot">switch ✓</text><text x="240" y="204" class="svg-text small hot">switch ✓</text><text x="4" y="244" class="svg-text small">Car 3, host</text><text x="4" y="258" class="svg-text small">picks door 3</text><text x="132" y="244" class="svg-text small dim">shows the car</text><text x="132" y="258" class="svg-text small dim">game over</text><text x="240" y="244" class="svg-text small hot">switch ✓</text><text x="240" y="258" class="svg-text small">skips it, opens 2</text><line x1="4" y1="266" x2="336" y2="266" class="svg-line dim"/><text x="4" y="286" class="svg-text small">Wins</text><text x="132" y="286" class="svg-text small">stay 2, switch 2</text><text x="132" y="300" class="svg-text small dim">of 4 games left</text><text x="240" y="286" class="svg-text small hot">stay 2, switch 4</text><text x="240" y="300" class="svg-text small dim">of 6</text></svg>
       - id: deal-knowing
         type: play
         prompt: "A host who knows: deal 100 games and count the wins."
@@ -815,6 +893,17 @@ chapters:
             stay-wins: 35
             switch-wins: 32
             car-shown: 33
+      - id: guesses-table
+        type: diagram
+        shape: comparison
+        brief:
+          understand: The host who knows turns the 2 'shows the car' games into switching wins; the host who guesses throws them away.
+          how_it_helps: "Six rows, one per equally likely way the game goes (3 car spots × 2 doors he might open), with the two hosts side by side."
+          clearer_than_text: Seeing the same two rows end differently for the two hosts shows exactly where the 2 in 3 comes from.
+        figure:
+          kind: svg
+          svg: |
+            <svg viewBox="0 0 340 308" role="img" aria-label="The same 6 equally likely moves for two hosts. A host who guesses shows the car in 2 of them, so those games end; of the 4 left, staying wins 2 and switching 2. A host who knows opens the other door in those 2 moves, so they become switching wins: staying 2, switching 4 of 6."><text x="4" y="18" class="svg-text small">Car / host picks</text><text x="132" y="18" class="svg-text small">Host guesses</text><text x="240" y="18" class="svg-text small">Host knows</text><text x="4" y="44" class="svg-text small">Car 1, host</text><text x="4" y="58" class="svg-text small">picks door 2</text><text x="132" y="44" class="svg-text small">stay ✓</text><text x="240" y="44" class="svg-text small">stay ✓</text><text x="4" y="84" class="svg-text small">Car 1, host</text><text x="4" y="98" class="svg-text small">picks door 3</text><text x="132" y="84" class="svg-text small">stay ✓</text><text x="240" y="84" class="svg-text small">stay ✓</text><text x="4" y="124" class="svg-text small">Car 2, host</text><text x="4" y="138" class="svg-text small">picks door 2</text><text x="132" y="124" class="svg-text small dim">shows the car</text><text x="132" y="138" class="svg-text small dim">game over</text><text x="240" y="124" class="svg-text small hot">switch ✓</text><text x="240" y="138" class="svg-text small">skips it, opens 3</text><text x="4" y="164" class="svg-text small">Car 2, host</text><text x="4" y="178" class="svg-text small">picks door 3</text><text x="132" y="164" class="svg-text small hot">switch ✓</text><text x="240" y="164" class="svg-text small hot">switch ✓</text><text x="4" y="204" class="svg-text small">Car 3, host</text><text x="4" y="218" class="svg-text small">picks door 2</text><text x="132" y="204" class="svg-text small hot">switch ✓</text><text x="240" y="204" class="svg-text small hot">switch ✓</text><text x="4" y="244" class="svg-text small">Car 3, host</text><text x="4" y="258" class="svg-text small">picks door 3</text><text x="132" y="244" class="svg-text small dim">shows the car</text><text x="132" y="258" class="svg-text small dim">game over</text><text x="240" y="244" class="svg-text small hot">switch ✓</text><text x="240" y="258" class="svg-text small">skips it, opens 2</text><line x1="4" y1="266" x2="336" y2="266" class="svg-line dim"/><text x="4" y="286" class="svg-text small">Wins</text><text x="132" y="286" class="svg-text small">stay 2, switch 2</text><text x="132" y="300" class="svg-text small dim">of 4 games left</text><text x="240" y="286" class="svg-text small hot">stay 2, switch 4</text><text x="240" y="300" class="svg-text small dim">of 6</text></svg>
       - id: host-key-check
         type: check
         purpose: key
@@ -839,7 +928,7 @@ chapters:
               - text: "2"
                 correct: true
                 why_right: Car 2 with door 3 opened and car 3 with door 2 opened; staying wins the other 2.
-                output: "Switching wins 2 of 4 and staying wins 2 of 4: even. Your two deals above show the same split."
+                output: "Switching wins 2 of 4 and staying wins 2 of 4: even. The guessing host's deal shows the same: staying and switching come out about level."
                 output_from: worked
                 output_source: the case table above
               - text: "3, still 2 in 3 or so"
@@ -858,15 +947,6 @@ chapters:
                 output_source: the case table above
         hints:
           - Cross out the rows that show the car, then count the switching ticks.
-      - id: always-check
-        type: check
-        purpose: pitfall
-        tests: always-switch
-        question: "A friend says: \"I always switch, whatever the host does; it wins 2 in 3.\" When is your friend wrong?"
-        options:
-          - {text: "When the host guesses and the goat he shows is luck", correct: true, why_right: "Then the two closed doors are even, so switching gains nothing."}
-          - {text: "Never: switching wins 2 in 3 in every version", correct: false, why_wrong: "The 2 in 3 needs a host who knows; a guesser leaves it even."}
-          - {text: "When there are more than 3 doors in the game", correct: false, why_wrong: "With more doors and a host who knows, switching wins even more."}
       - id: always-pitfall
         type: pitfall
         misconception: always-switch
@@ -906,7 +986,7 @@ chapters:
       text: What the other side knows when it acts is what sets the odds. Here is the same game with no doors at all.
       recalls: [knowledge-sets-odds]
     bridge_out:
-      text: Next time someone who knows acts before you choose, ask what they had to leave alone.
+      text: Look for it in quiz shows, card games and sales offers, anywhere someone who knows moves first.
       points_to: beyond
     blocks:
       - id: predict-quiz
@@ -972,7 +1052,7 @@ chapters:
         type: check
         purpose: key
         tests: quiz-idea
-        question: "Same quiz, but this friend has not seen the sheet. She crosses out 2 answers at random and, by luck, spares both yours and the right one. Stay or switch?"
+        question: "Same quiz, but this friend has not seen the sheet. She crosses out 2 of the other answers at random, and by luck neither is the right answer. Stay or switch?"
         options:
           - {text: "Either: the two left are even", correct: true, why_right: "Her luck carries no knowledge, so neither answer gains."}
           - {text: "Switch: it still wins 3 in 4", correct: false, why_wrong: "The 3 in 4 needed a friend who knows; a guess carries nothing."}

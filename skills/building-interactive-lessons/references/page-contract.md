@@ -23,7 +23,7 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 - **Slim top bar:** lesson title, "Chapter N of M", a Chapters menu, a thin progress bar, and the **Read-along** switch (section 3). No row of chips that wraps or scrolls sideways.
 - **Start page:** who the lesson is for (say so when the learner profile is assumed), what they will be able to do, total time, and the chapter list with times.
 - **Last page:** the field guide (every recap line), the "confident but wrong" list with links back, and the `run_locally` commands for learners who want to run the real thing.
-- **Phone first:** one column, 16px side margins, no sideways scrolling. Code wraps or scrolls inside its own box.
+- **Phone first:** one column, 16px side margins, no sideways scrolling. Code wraps or scrolls inside its own box. The page carries `<meta name="viewport" content="width=device-width, initial-scale=1">`, so a phone opening the file lays it out at its own width.
 - **Light and dark themes** from colour tokens, with readable contrast in both.
 - **Calm by default:** no animation unless it explains something; respect reduced-motion settings.
 - **Start page leads with work:** a first question from chapter 1 sits above the chapter list. The learner profile is folded under "Who this lesson is for".
@@ -73,7 +73,7 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Compare**: a switch between options. Below it, each option's steps, with step `differs_at` marked and the explanation shown.
 
-**Play** (label "Play it"): the prompt, one button per deal size, then the dealt games as a grid of small cells (each with its outcome's short mark; the hot outcome filled with the accent), and a table: each outcome's count beside the expected share ("you: 64 of 100 · expected about 67"). Each deal is fresh and random; after two or more deals, a line adds up all of them. Read-along shows the seeded sample deal instead, so screenshots repeat.
+**Play** (label "Play it"): the prompt, a key of the marks ("St staying wins · Sw switching wins"), one button per deal size, then the dealt games as a grid of small cells (each with its outcome's short mark; the hot outcome filled with the accent), and a table: each outcome's count beside the expected share ("you: 64 of 100 · expected about 67"). Each deal is fresh and random; after two or more deals, a line adds up all of them. Read-along shows the seeded sample deal instead, laid out in an order fixed by its seed, so screenshots repeat and it still looks like a real deal.
 
 **Fill the blanks, explain, stretch**: see section 3.
 
@@ -153,7 +153,7 @@ capabilities: { sample: {}, db: {}, user: {} }
 
 The page must teach fully with any of these missing:
 
-- **No `sample`:** tutor hidden. Fill the blanks, hints and solutions work as normal. Explain and stretch show the rubric as a self-check beside the reference solution.
+- **No `sample`:** tutor hidden. Fill the blanks, hints and solutions work as normal. Explain and stretch show the rubric as a self-check beside the reference solution; ticking every point of an explain's self-check counts it as done ("checked yourself" in the field guide), so progress still shows the work.
 - **No `db`:** progress kept in browser storage.
 - **Opened as a local file:** everything above that does not need claude.ai still works.
 
