@@ -16,6 +16,8 @@
 - A chapter with no exercises shows as done only when its quizzes are answered right.
 - From the first user-test round: a phone viewport tag (a phone opened the file at desktop width), glossary words that keep their comma, a key above dealt games, a self-check that counts as done without the tutor, and tiles that change one at a time (10 doors opening in turn).
 - From the second round: `hold: true` keeps the opening guess unmarked until the last chapter brings it back; a deal shows how far a fair deal wanders (most deals 57 to 76); hover styles only with a mouse; punctuation stays with a glossary word.
+- From the third round: the first guess comes back only after the last written answer; "You can now…" only after a goal's last test; the progress bar follows the work as it happens; a group that runs onto a second row is one outline; plainer spread wording ("usually between 57 and 76").
+- `scripts/phone_driver.py`: the user-test access path (a phone page kept open per tester).
 - `tests/check_page_clicks.py` clicks through the examples (blanks, two wrong blanks, folded cards, steady steps, tutor).
 
 ## 0.3.1 · 5 Nov 2026

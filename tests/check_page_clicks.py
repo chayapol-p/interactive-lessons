@@ -248,11 +248,30 @@ with sync_playwright() as playwright:
     text = first.inner_text()
     expect("a held guess is noted, not marked", "Noted" in text and "Not quite" not in text and first.locator(".option.wrong, .option.right").count() == 0, text[:200])
     tab.goto(monty + "#use-it"); tab.wait_for_timeout(100)
+    expect("the first guess waits until the last answer is written", "Your first guess" not in block(tab, "use-recap").inner_text())
+    answer = block(tab, "payoff-explain")
+    answer.locator("textarea").fill("Switch, because the host knows.")
+    answer.get_by_role("button", name="Submit").click()
+    tab.wait_for_timeout(100)
     recap = block(tab, "use-recap").inner_text()
     expect("the last chapter brings the first guess back", "you said: Stay with door 1" in recap and "Switch to door 2" in recap, recap[:200])
-    expect("the deal says how far a fair deal wanders", "most deals" in block(new_tab(monty + "?read-along=on#feel-it"), "deal-games").inner_text())
+    expect("the deal says how far a fair deal wanders", "usually between" in block(new_tab(monty + "?read-along=on#feel-it"), "deal-games").inner_text())
     expect("a comma stays with its glossary word", tab.evaluate("() => [...document.querySelectorAll('.term-wrap')].some(w => w.textContent.endsWith(','))") or
            new_tab(monty + "#feel-it").evaluate("() => [...document.querySelectorAll('.term-wrap')].some(w => w.textContent.endsWith(','))"))
+
+    # ---- "You can now" only after a goal's last test; a group over two rows is one outline; progress keeps pace
+    tab = new_tab(monty + "#use-it")
+    count = block(tab, "quiz-count")
+    count.locator(".blank").first.click(); count.locator(".chip").filter(has_text=re.compile("^3$")).click()
+    check(tab, "quiz-count")
+    expect("no 'You can now' before the goal's last test", "You can now" not in count.inner_text(), count.inner_text()[-200:])
+    groups = block(new_tab(monty + "#feel-it"), "ten-doors")
+    expect("the other 9 are one outline across two rows", groups.locator(".frame-layer.current path.svg-group").count() == 1
+           and groups.locator(".frame-layer.current rect.svg-group").count() == 1)
+    tab = new_tab(monty + "#the-game")
+    block(tab, "rules-key-check").locator(".option", has_text="He no longer knows").click()
+    width = tab.evaluate("() => parseFloat(document.querySelector('.progress-fill').style.width)")
+    expect("a quiz answered right moves the progress bar", width > 0, str(width))
 
     # ---- With the tutor off, ticking every point of the self-check counts the answer as done
     tab = new_tab(monty + "#use-it")

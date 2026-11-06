@@ -210,13 +210,8 @@ chapters:
       - Listing every case shows switching wins 2 of the 3 equally likely cases.
     must_get_right:
       - id: count-cases
-        can_do: List the 3 cases and count that switching wins in 2 of them.
-        evidence: The learner fills in how many cases switching wins, and answers a key check with other door numbers.
-        objective: list-cases
-        tested_by: [cases-count, cases-key-check]
-      - id: not-even
-        can_do: Spot why two closed doors are not a 1 in 2 choice.
-        evidence: A spot-the-mistake check on the even-odds idea, before its card opens.
+        can_do: List the 3 cases, count that switching wins 2 of them, and spot why two closed doors are not 1 in 2.
+        evidence: A spot-the-mistake check on the even-odds idea, answered before its card opens.
         objective: list-cases
         tested_by: [even-check]
     brings_in: [host-rules]
@@ -440,7 +435,6 @@ chapters:
             switch-wins: 63
       - id: cases-idea
         type: idea
-        key: true
         text: "Don't argue: list every case, each equally likely, with your pick always door 1. When the car is behind door 2 or 3, the host has only one goat door to open, so the other closed door hides the car."
         more: "Try it at home with three cups and a coin. A friend hides the coin and, after you pick a cup, lifts an empty one you didn't pick. Play 15 rounds staying and 15 switching, and count the coins."
       - id: cases-table
@@ -457,49 +451,6 @@ chapters:
       - id: one-case-idea
         type: idea
         text: "Picture 300 games: in about 100 the car is behind your door, and whichever door the host opens, staying wins those 100. In the other 200 he has no choice, and switching wins them all."
-      - id: cases-key-check
-        type: check
-        purpose: key
-        tests: cases-idea
-        question: "Same game, but this time you pick door 2, and the host, who knows, opens door 1 to show a goat. List the cases: how often does switching to door 3 win?"
-        options:
-          - {text: "2 times in 3", correct: true, why_right: "The door numbers change nothing: your pick is right 1 time in 3, and switching wins the other 2."}
-          - {text: "1 time in 2", correct: false, why_wrong: "The cases are the same 3 as before, with different numbers on the doors."}
-          - {text: "1 time in 3", correct: false, why_wrong: "That is how often staying wins."}
-      - id: cases-count
-        type: fill_blanks
-        instructions:
-          - Fill the blank with how many of the 3 cases switching wins.
-          - Check shows what the case table says for your choice.
-        language: text
-        source: the case table
-        context_note: The case table above, with one row per place the car can be.
-        text: "Of the 3 equally likely cases, switching wins in {{count}}."
-        blanks:
-          - id: count
-            options:
-              - text: 2 of them
-                correct: true
-                why_right: Switching wins whenever the car is not behind your door, and that is 2 of the 3 cases.
-                output: "Car behind door 2: the host must open 3, switching wins. Car behind door 3: he must open 2, switching wins. Only the car behind door 1 makes staying win."
-                output_from: worked
-                output_source: the case table above
-              - text: half of them, since two doors are left
-                correct: false
-                why_wrong: The table has 3 equally likely rows, not 2, and switching wins in 2 of them.
-                misconception: two-doors-even
-                output: "There is no half: the table has 3 equally likely rows, and switching wins in 2 of them."
-                output_from: worked
-                output_source: the case table above
-              - text: 1 of them
-                correct: false
-                why_wrong: "That is staying's count: staying wins only when the car was behind door 1 all along."
-                misconception: host-resets-odds
-                output: "Staying wins 1 case, the car behind door 1. Switching wins the other 2."
-                output_from: worked
-                output_source: the case table above
-        hints:
-          - In which rows does the car sit behind a door you did not pick?
       - id: even-check
         type: check
         purpose: pitfall
@@ -563,7 +514,7 @@ chapters:
       - id: groups-idea
         type: idea
         key: true
-        text: "Split the doors: yours, with 1 in 3, and the other two, with 2 in 3. The host can always find a goat among the other two, so your door learns nothing, and their whole 2 in 3 lands on the door he keeps shut."
+        text: "Split the doors: yours, with 1 in 3, and the other two, with 2 in 3. The host can always find a goat among the other two, so nothing changes for yours, and their whole 2 in 3 lands on the door he keeps shut."
       - id: before-after
         type: diagram
         shape: change-over-time
@@ -729,7 +680,7 @@ chapters:
       - id: host-idea
         type: idea
         key: true
-        text: "Same goat, different meaning: a host who knows can never show the car, but a guesser can, and this time did not. Where a guesser would show the car (2 games in 6), the knowing host opens the other door instead, so switching wins."
+        text: "Same goat, different meaning: a host who knows can never show the car, but a guesser can. In the 2 of 6 ways the game goes where a guesser shows the car, the knowing host opens the other door, so switching wins."
       - id: deal-knowing
         type: play
         prompt: "A host who knows: deal 100 games and count the wins."
@@ -871,7 +822,7 @@ chapters:
     milestone: "I can use it on a new case, and answer the first question."
     why_it_matters: An idea you can use only on three doors is a trick; one you can use anywhere is yours.
     must_know:
-      - When someone who knows acts before you choose, the option they were not free to remove carries the chance.
+      - When someone who knows acts before you choose, the choice they were not allowed to touch carries the chance.
     must_get_right:
       - id: transfer
         can_do: Use the idea on a quiz with 4 answers, and say when it stops working.
@@ -886,7 +837,7 @@ chapters:
     brings_in: [knowledge-sets-odds]
     carries_forward:
       - id: ask-what-they-knew
-        idea: When someone who knows acts before you choose, the option they were not free to remove carries the chance.
+        idea: When someone who knows acts before you choose, the choice they were not allowed to touch carries the chance.
         used_in: [beyond]
         shown_by: [quiz-idea, quiz-tiles]
     misconceptions: []
@@ -913,7 +864,7 @@ chapters:
         shape: structure
         brief:
           understand: Your answer against the other three. Your friend crossed out two of them, and one is left.
-          how_it_helps: "Four answers as tiles: yours picked, two crossed out, and the one she could not remove."
+          how_it_helps: "Four answers as tiles: yours picked, two crossed out, and the one she could not cross out."
           clearer_than_text: It is the three doors again, with one more door; the picture makes the match plain.
         figure:
           kind: tiles
@@ -964,7 +915,7 @@ chapters:
         options:
           - {text: "Either: the two left are even", correct: true, why_right: "Her luck carries no knowledge, so neither answer gains."}
           - {text: "Switch: it still wins 3 in 4", correct: false, why_wrong: "The 3 in 4 needed a friend who knows; a guess carries nothing."}
-          - {text: "Stay: yours survived a cut", correct: false, why_wrong: "Surviving a random cut gives your answer no more than the other."}
+          - {text: "Stay: yours was not crossed out", correct: false, why_wrong: "Not being crossed out by luck gives yours no more chance than the other."}
       - id: payoff-explain
         type: explain
         instructions:
@@ -982,5 +933,5 @@ chapters:
           - {answer: "It doesn't matter, it's 50/50.", misconception: two-doors-even, hint: "Count cases, not doors left."}
       - id: use-recap
         type: recap
-        text: When someone who knows acts before you choose, ask which option they were not free to remove.
+        text: When someone who knows acts before you choose, ask what they were not allowed to touch.
         sums_up: [quiz-idea, quiz-tiles]

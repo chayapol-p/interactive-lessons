@@ -127,6 +127,7 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
 - **Look at the screenshots** for what a script cannot judge: a diagram that reads well, contrast, crowded text.
 - **Judgement calls:** read the list in `references/checks-and-quizzes.md` against the blueprint.
 - **Grader:** try each explain exercise with a right, a wrong and a half-right answer; the verdicts must match. If the build environment cannot reach the AI, publish first, run this test on the live page, and report it.
+- **Test with real users** before a first release: run the `testing-with-real-users` skill if it is installed (fresh persona agents, one new person per round, a fixed report, fix, stop on a correct teach-back with "I get it"). Their access path is `scripts/phone_driver.py`: phone-sized screenshots and taps on the built page, never its files and never Read-along. Without that skill, follow the same loop by hand.
 
 ### 6. Publish and improve
 - In claude.ai, publish `lesson.html` as an artifact with the capabilities in `references/page-contract.md`, and `lesson-blueprint.txt` beside it. Republish to the same file path so the link stays.
@@ -196,6 +197,7 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 - `scripts/build_page.py`: fills the template from the blueprint, and lists the changed chapters
 - `scripts/theme.py`: builds both themes' colours from one accent, checks contrast, and refuses a clash with right, wrong or answer colours
 - `scripts/screenshot_chapters.py`: phone screenshots of the changed chapters, light and dark
+- `scripts/phone_driver.py`: the user-test access path: one open phone page per tester, actions by visible words, a screenshot per call
 - `assets/template.html`: the page template
 - `assets/example-blueprint.yaml`: a complete small code example (text chunking)
 - `assets/example-monty-blueprint.yaml`: a 5-chapter example with no code, told as one story from hook to payoff (Stay or Switch?: doors as tiles, animated steps, Deal 100 games, case tables, a quiz with no doors; every chance worked out by code)

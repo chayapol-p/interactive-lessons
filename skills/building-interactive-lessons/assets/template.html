@@ -435,6 +435,7 @@ function blockState(blockId) {
 }
 function saveProgress() {
   writeLocalProgress();
+  updateProgressBar();
   if (!progressDocument) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flushProgress, 800);
@@ -1244,10 +1245,21 @@ function tilesFigure(figure) {
   const named = new Set();
   return svg("svg", { viewBox: `0 0 ${width} ${top + rows * rowHeight - 8}`, role: "img",
     "aria-label": tiles.map((tile) => `${tile.label}: ${TILE_WORDS[tile.state]}${tile.inside ? ", " + tile.inside : ""}${tile.note ? ", " + tile.note : ""}${tile.group ? " (" + tile.group + ")" : ""}`).join(". ") },
-    frames.map((frame) => {
+    frames.map((frame, index) => {
       const a = place(frame.start), b = place(frame.end);
-      return [svg("rect", { x: a.x - 5, y: a.y - 5, width: b.x + tileWidth - a.x + 10, height: tileHeight + 26, rx: 8, class: "svg-group" }),
-        named.has(frame.group) ? null : (named.add(frame.group), svg("text", { x: a.x - 3, y: a.y - 10, class: "svg-text small hot" }, frame.group))];
+      const box = { left: a.x - 5, right: b.x + tileWidth + 5, top: a.y - 5, bottom: a.y + tileHeight + 21 };
+      const label = named.has(frame.group) ? null : (named.add(frame.group), svg("text", { x: a.x - 3, y: a.y - 10, class: "svg-text small hot" }, frame.group));
+      const before = frames[index - 1];
+      const after = frames[index + 1];
+      // A group that ends one row and starts the next at its first column is drawn as one outline around both rows
+      if (after && after.group === frame.group && after.y > frame.y && frame.end % perRow === perRow - 1 && after.start % perRow === 0) {
+        const c = place(after.start), d = place(after.end);
+        const low = { left: c.x - 5, right: d.x + tileWidth + 5, top: c.y - 5, bottom: c.y + tileHeight + 21 };
+        const outline = `M ${box.left} ${box.top} H ${box.right} V ${low.bottom} H ${low.left} V ${low.top} H ${box.left} Z`;
+        return [svg("path", { d: outline, class: "svg-group", "stroke-linejoin": "round" }), label];
+      }
+      if (before && before.group === frame.group && frame.y > before.y && before.end % perRow === perRow - 1 && frame.start % perRow === 0) return null;
+      return [svg("rect", { x: box.left, y: box.top, width: box.right - box.left, height: box.bottom - box.top, rx: 8, class: "svg-group" }), label];
     }),
     tiles.map((tile, index) => {
       const { x, y } = place(index);
@@ -1404,8 +1416,11 @@ function renderCompare(chapter, block) {
 
 // ---------- Exercise helpers ----------
 function insightFor(chapter, block) {
+  // Say "You can now…" only after the goal's last test in the chapter, so it never claims a skill before it is tested
   const goal = chapter.must_get_right.find((item) => item.tested_by.includes(block.id));
-  return goal ? `You can now: ${goal.can_do}` : "";
+  if (!goal) return "";
+  const lastTest = goal.tested_by.map((id) => chapter.blocks.findIndex((b) => b.id === id)).reduce((a, b) => Math.max(a, b), -1);
+  return chapter.blocks[lastTest] === block ? `You can now: ${goal.can_do}` : "";
 }
 function pitfallLink(misconceptionId) {
   for (const chapter of CHAPTERS) {
@@ -1618,7 +1633,7 @@ function renderExplain(chapter, block) {
   async function submit() {
     const answer = editor.value.trim();
     if (!answer) { setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Write an answer first."))); return; }
-    if (!canAskClaude) { state.attempts = (state.attempts || 0) + 1; saveProgress(); setChildren(feedbackHolder, selfCheck(block, state)); return; }
+    if (!canAskClaude) { state.attempts = (state.attempts || 0) + 1; saveProgress(); setChildren(feedbackHolder, selfCheck(block, state)); revealAfter(block.id); return; }
     submitButton.disabled = true;
     setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, "Grading…")));
     try {
@@ -1630,7 +1645,7 @@ function renderExplain(chapter, block) {
       setChildren(feedbackHolder, h("div", { class: "feedback neutral" }, h("p", {}, failureMessage(failure))));
     } finally {
       submitButton.disabled = false;
-      saveProgress(); drawExtras();
+      saveProgress(); drawExtras(); revealAfter(block.id);
     }
   }
   const submitButton = h("button", { class: "btn primary", type: "button", onclick: submit }, canAskClaude ? "Submit for grading" : "Submit");
@@ -1708,7 +1723,7 @@ function sampleGames(block) {
 // How far a fair deal of `games` wanders: about 19 deals in 20 land within two spreads of the expected count
 function spread(share, games) {
   const middle = share * games, width = 2 * Math.sqrt(games * share * (1 - share));
-  return `${Math.max(0, Math.round(middle - width))} to ${Math.min(games, Math.round(middle + width))}`;
+  return `between ${Math.max(0, Math.round(middle - width))} and ${Math.min(games, Math.round(middle + width))}`;
 }
 function renderPlay(chapter, block) {
   const wrapper = h("section", { class: "block", id: block.id });
@@ -1732,7 +1747,7 @@ function renderPlay(chapter, block) {
       dealt.map((outcome, index) => h("span", { class: `deal-cell${outcomes[outcome].hot ? " hot" : ""}${fresh && !reducedMotion() ? " new" : ""}`, style: fresh ? `animation-delay:${Math.min(index * 8, 900)}ms` : null }, outcomes[outcome].short))));
     setChildren(table, h("table", { class: "tally-table" }, h("tbody", {}, block.outcomes.map((outcome) => h("tr", {},
       h("td", {}, h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), outcome.label),
-      h("td", {}, `you: ${counts[outcome.id]} of ${games}`, h("span", { class: "expected" }, `expected about ${Math.round(expected[outcome.id] * games)}${games >= 100 ? `, most deals ${spread(expected[outcome.id], games)}` : ""}`)))))),
+      h("td", {}, `you: ${counts[outcome.id]} of ${games}`, h("span", { class: "expected" }, `expected about ${Math.round(expected[outcome.id] * games)}${games >= 100 ? ` (usually ${spread(expected[outcome.id], games)})` : ""}`)))))),
       totalGames > games ? h("p", { class: "why" }, `All your deals together, ${totalGames} games: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} (expected about ${Math.round(expected[o.id] * totalGames)})`).join(" · ") + ".") : null,
       readAlong && !totalGames ? h("p", { class: "why" }, "A sample deal, the same every time. Deal again for your own.") : null);
   }
@@ -1774,8 +1789,11 @@ function renderPitfall(chapter, block) {
   return wrapper;
 }
 function heldGuessRecall(chapter) {
-  // In the last chapter, the first held guess comes back with its answer, so the lesson ends where it began
+  // In the last chapter, the first held guess comes back with its answer, so the lesson ends where it began. It waits
+  // until the chapter's written answers are submitted, so it never gives the payoff away.
   if (chapter !== CHAPTERS[CHAPTERS.length - 1]) return null;
+  const answers = chapter.blocks.filter((b) => b.type === "explain");
+  if (!readAlong && !answers.every((b) => { const st = progress.blocks[b.id] || {}; return st.passed || st.attempts; })) return null;
   const held = CHAPTERS.flatMap((c) => c.blocks).find((b) => b.type === "predict" && b.hold && b.options);
   if (!held) return null;
   const state = progress.blocks[held.id] || {};
@@ -1787,8 +1805,12 @@ function heldGuessRecall(chapter) {
 function renderRecap(chapter, block) {
   // A chapter ends on its open question, which the next chapter answers; the last chapter ends on its bridge out
   const next = CHAPTERS[chapterIndex(chapter.id) + 1];
+  const recall = h("div", {});
+  const drawRecall = () => setChildren(recall, heldGuessRecall(chapter));
+  chapter.blocks.filter((b) => b.type === "explain").forEach((b) => onReveal(b.id, drawRecall));
+  drawRecall();
   return h("section", { class: "block", id: block.id },
-    heldGuessRecall(chapter),
+    recall,
     h("div", { class: "recap" }, h("div", { class: "eyebrow" }, "Remember"), h("p", { class: "line" }, withTerms(block.text)),
       chapter.open_question && next ? null : h("p", { class: "bridge" }, chapter.bridge_out.text)),
     chapter.open_question && next ? h("div", { class: "open-question" }, h("div", { class: "eyebrow" }, "Still open"),
@@ -1806,8 +1828,16 @@ const RENDERERS = {
 function chapterIndex(id) { return CHAPTERS.findIndex((chapter) => chapter.id === id); }
 // Progress means work done: the share of exercises passed, across the lesson
 function solvedShare() {
-  const exercises = CHAPTERS.flatMap(exercisesOf);
-  return exercises.length ? exercises.filter((b) => (progress.blocks[b.id] || {}).passed).length / exercises.length : 0;
+  // Work done: exercises passed and quizzes answered right, so the bar keeps pace with the chapter ticks
+  const work = CHAPTERS.flatMap((chapter) => chapter.blocks.filter((b) => EXERCISE_TYPES.includes(b.type) || b.type === "check"));
+  const done = (b) => (progress.blocks[b.id] || {})[b.type === "check" ? "correct" : "passed"] === true;
+  return work.length ? work.filter(done).length / work.length : 0;
+}
+// The bar follows the work as it happens, not only when the page changes
+function updateProgressBar() {
+  const share = Math.round(solvedShare() * 100);
+  document.querySelectorAll(".progress-fill").forEach((fill) => { fill.style.width = `${share}%`; });
+  document.querySelectorAll(".progress-track").forEach((track) => track.setAttribute("aria-label", `${share}% of the work done`));
 }
 function topBar(where, shortWhere) {
   const modes = [];
@@ -1819,7 +1849,7 @@ function topBar(where, shortWhere) {
       h("span", { class: "topbar-where" }, h("span", { class: "where-long" }, where), h("span", { class: "where-short" }, shortWhere || "")),
       h("button", { class: "read-along", type: "button", id: "read-along-toggle", "aria-pressed": readAlong ? "true" : "false", title: "Show every exercise's solution", "aria-label": "Read-along", onclick: () => setReadAlong(!readAlong) }, h("span", { class: "knob", "aria-hidden": "true" }), h("span", { class: "read-along-label" }, "Read-along")),
       h("button", { class: "btn", type: "button", onclick: openChapterMenu, "aria-haspopup": "dialog" }, "Chapters")),
-    h("div", { class: "progress-track", role: "img", "aria-label": `${Math.round(solvedShare() * 100)}% of exercises solved` }, h("div", { class: "progress-fill", style: `width:${Math.round(solvedShare() * 100)}%` })),
+    h("div", { class: "progress-track", role: "img", "aria-label": `${Math.round(solvedShare() * 100)}% of the work done` }, h("div", { class: "progress-fill", style: `width:${Math.round(solvedShare() * 100)}%` })),
     modes.length ? h("p", { class: "mode-line" }, modes.map((mode, index) => [index ? " · " : "", mode])) : null);
 }
 function exercisesOf(chapter) { return chapter.blocks.filter((b) => EXERCISE_TYPES.includes(b.type)); }

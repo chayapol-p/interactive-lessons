@@ -35,7 +35,7 @@ FIND_AND_MARK = """(wanted) => {
   const score = el => (text(el) === want ? 0 : 1) * 1000 + (onScreen(el) ? 0 : 500) + text(el).length;
   const matches = seen.filter(el => text(el).includes(want)).sort((a, b) => score(a) - score(b));
   if (!matches.length) return null;
-  matches[0].scrollIntoView({ block: 'center' });
+  if (!onScreen(matches[0])) matches[0].scrollIntoView({ block: 'center' });   // a thumb taps what it can see; nothing moves first
   matches[0].setAttribute('data-drive-target', '1');
   return text(matches[0]).slice(0, 60);
 }"""
