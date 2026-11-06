@@ -347,9 +347,6 @@ chapters:
                 output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence and on strawberry
         hints:
           - Count the chips in the river row of the picture.
-      - id: letters-pitfall
-        type: pitfall
-        misconception: reads-letters
       - id: token-key-check
         type: check
         purpose: key
@@ -359,9 +356,9 @@ chapters:
           - {text: "It received a few token pieces, not the letters, so it must recall how each piece is spelled", correct: true, why_right: "The letters are hidden inside tokens; reversing them takes a memory of spelling, not a look."}
           - {text: "The word is too long for the context window", correct: false, why_wrong: "One word is a handful of tokens; the window holds many thousands."}
           - {text: "It was not trained on English", correct: false, why_wrong: "It knows the word well; the problem is that it never sees its letters."}
-      - id: cost-pitfall
+      - id: letters-pitfall
         type: pitfall
-        misconception: same-cost-every-language
+        misconception: reads-letters
       - id: cost-check
         type: check
         purpose: pitfall
@@ -371,6 +368,9 @@ chapters:
           - {text: "The Thai bot uses many more tokens, so it costs more and fills its context window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
           - {text: "Both cost the same, because the meaning is the same", correct: false, why_wrong: "Cost counts tokens, not meaning."}
           - {text: "The Thai bot is cheaper, because Thai words are shorter", correct: false, why_wrong: "Fewer characters can still mean far more tokens."}
+      - id: cost-pitfall
+        type: pitfall
+        misconception: same-cost-every-language
       - id: tokens-recap
         type: recap
         text: The model receives a list of token numbers; rare words and less-seen languages split into more tokens.
@@ -928,9 +928,6 @@ chapters:
                 output_source: worked out with the toy model behind this chapter's pictures
         hints:
           - Look at the outlined bank row. Which column is darkest, apart from bank itself?
-      - id: fixed-meaning-pitfall
-        type: pitfall
-        misconception: one-fixed-meaning
       - id: attention-key-check
         type: check
         purpose: key
@@ -940,9 +937,9 @@ chapters:
           - {text: "glass, because glass is what breaks", correct: true, why_right: "Attention weighs relevance: the thing that can break gets the share."}
           - {text: "table, because it is the nearest noun", correct: false, why_wrong: "Nearness does not decide attention; relevance does."}
           - {text: "and, the word right before it", correct: false, why_wrong: "And says nothing about what broke."}
-      - id: nearest-pitfall
+      - id: fixed-meaning-pitfall
         type: pitfall
-        misconception: nearest-word-matters-most
+        misconception: one-fixed-meaning
       - id: nearest-check
         type: check
         purpose: pitfall
@@ -952,6 +949,9 @@ chapters:
           - {text: "Each token can look at every token in the window, near or far, by relevance", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
           - {text: "Nothing; the previous word decides the meaning", correct: false, why_wrong: "In the river sentence, the word before bank gets 0.02 of its attention."}
           - {text: "It is the word right after that matters most", correct: false, why_wrong: "Neither side wins by position; relevance wins."}
+      - id: nearest-pitfall
+        type: pitfall
+        misconception: nearest-word-matters-most
       - id: attention-recap
         type: recap
         text: In attention, each token weighs every other token by relevance and blends in their meanings, so its embedding fits its sentence.
@@ -1222,9 +1222,6 @@ chapters:
                 output_source: worked out with the toy model behind this chapter's pictures
         hints:
           - Slide to 0.2 and read flooded's bar.
-      - id: temperature-pitfall
-        type: pitfall
-        misconception: temperature-is-intelligence
       - id: sampling-key-check
         type: check
         purpose: key
@@ -1234,9 +1231,9 @@ chapters:
           - {text: "A temperature near 0, so the top token is nearly always picked", correct: true, why_right: "Sharp odds mean the same pick on every run."}
           - {text: "A high temperature, so the model thinks harder", correct: false, why_wrong: "High temperature spreads the odds and adds variety, not thought."}
           - {text: "A longer reply, so the label is checked twice", correct: false, why_wrong: "Each extra token is another pick from odds; length adds no consistency."}
-      - id: lookup-pitfall
+      - id: temperature-pitfall
         type: pitfall
-        misconception: looks-up-answer
+        misconception: temperature-is-intelligence
       - id: lookup-check
         type: check
         purpose: pitfall
@@ -1246,6 +1243,9 @@ chapters:
           - {text: "The reply is built token by token from odds, so a second run can pick differently", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
           - {text: "Nothing; replies should match word for word", correct: false, why_wrong: "Only a temperature near 0 makes repeat runs nearly identical."}
           - {text: "The model forgets everything after each word", correct: false, why_wrong: "It sees all earlier tokens in the window; the variety comes from the pick."}
+      - id: lookup-pitfall
+        type: pitfall
+        misconception: looks-up-answer
       - id: next-recap
         type: recap
         text: A reply is built one token at a time from odds over every token; temperature reshapes the odds but adds no knowledge.

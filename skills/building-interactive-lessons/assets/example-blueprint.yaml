@@ -143,9 +143,6 @@ chapters:
           - A page about twenty topics is mostly about other things. What does that do to the match?
         common_wrong_answers:
           - {answer: "Chunks are faster to search.", misconception: whole-page-is-fine, hint: "Speed is not the main reason. Think about how well the page matches."}
-      - id: page-vs-chunk-pitfall
-        type: pitfall
-        misconception: whole-page-is-fine
       - id: page-vs-chunk-check
         type: check
         purpose: pitfall
@@ -155,6 +152,9 @@ chapters:
           - {text: "Nothing, as long as the pages fit the embedding model", correct: false, why_wrong: "Fitting is not the issue. A long page still matches each question weakly."}
           - {text: "Long pages match every question a little and none strongly", correct: true, why_right: "Mixing many topics dilutes the match, so the right page can lose to a vaguely related one."}
           - {text: "Search becomes slower", correct: false, why_wrong: "Fewer entries is usually faster. The problem is match quality."}
+      - id: page-vs-chunk-pitfall
+        type: pitfall
+        misconception: whole-page-is-fine
       - id: why-chunk-recap
         type: recap
         text: Search matches chunks, not pages, because a long page matches everything weakly.
@@ -283,7 +283,7 @@ chapters:
         type: fill_blanks
         instructions:
           - Fill the blank so each chunk shares 50 tokens with the one before it.
-          - Press Run to see what each choice prints.
+          - Press Check to see what your choice prints, and whether it is right.
         language: python
         source: the chunker from Run above
         context_note: The same chunker as above, with the line that sets the step left blank.
@@ -411,9 +411,6 @@ chapters:
           - How long is a typical answer? Would a 200-token chunk hold it, and what else would a 1,500-token chunk hold?
         common_wrong_answers:
           - {answer: "Big, because more context is always safer.", misconception: bigger-is-safer, hint: "Ask what else ends up in a 1,500-token chunk besides the answer."}
-      - id: bigger-is-safer-pitfall
-        type: pitfall
-        misconception: bigger-is-safer
       - id: bigger-is-safer-check
         type: check
         purpose: pitfall
@@ -423,6 +420,9 @@ chapters:
           - {text: "The chunks are too big, so the exact answer is a small part of its chunk", correct: true, why_right: "The answer's chunk is mostly about other things, so its match is diluted."}
           - {text: "The chunks are too small to hold the answer", correct: false, why_wrong: "2,000 tokens easily holds an answer. Size is causing dilution, not cut-offs."}
           - {text: "The overlap is too large", correct: false, why_wrong: "Overlap changes how many chunks there are, not how focused each one is."}
+      - id: bigger-is-safer-pitfall
+        type: pitfall
+        misconception: bigger-is-safer
       - id: size-recap
         type: recap
         text: Pick chunk size from the questions people ask; small is precise, big keeps context.

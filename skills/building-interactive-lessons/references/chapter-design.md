@@ -85,13 +85,15 @@ A chapter is a short sequence of blocks. Use only the blocks the chapter needs.
 **`check`**: a quiz question (see `checks-and-quizzes.md`).
 - Why: a fast test of one key concept or one pitfall.
 
-**`pitfall`**: a card naming one real misconception, why people fall for it, and what is actually true. Usually followed by a `check`.
-- Why: naming a trap before the learner falls into it, then testing it, prevents the most common errors.
+**`pitfall`**: a card naming one real misconception, why people fall for it, and what is actually true. When a `check` tests it, the check comes first and the card opens after the answer.
+- Why: a learner who first tries the trap, then reads why it is a trap, remembers it; a card read first just hands over the check's answer.
 
 **`recap`**: one line that goes into the final field guide, with `sums_up` naming the blocks it summarises. It names only what those blocks show (checked).
 - Why: the field guide is what the learner keeps after the lesson.
 
-**Typical order:** predict → idea → diagram (if briefed) → code → compare (if choices exist) → fill_blanks or explain → stretch (optional) → pitfall → check → recap.
+**Typical order:** predict → idea → diagram (if briefed) → code → compare (if choices exist) → fill_blanks or explain → stretch (optional) → check (spot the mistake) → pitfall → recap.
+
+**The answer waits for the guess:** the first `idea` after the predict is folded on the page until the guess is made (`page-contract.md` section 2). Make that block the one that answers the guess.
 
 **Teach, then test (checked):** every chapter has a `check`, `fill_blanks` or `explain` after its first `idea`, and every `must_get_right` item is tested by one of them.
 
@@ -99,7 +101,7 @@ A chapter is a short sequence of blocks. Use only the blocks the chapter needs.
 
 - Tag an `idea` block `key: true` when a later chapter or the field guide depends on it. Every key idea gets a `check` with `purpose: key` that tests it (checked).
 - Every misconception a chapter lists gets a `pitfall` block in that chapter (checked), and every defined misconception is used by some chapter (checked).
-- Pitfalls get a "spot the mistake" check, or a wrong option in a blank.
+- Pitfalls get a "spot the mistake" check, or a wrong option in a blank. A pitfall check comes right **before** its card (checked): the learner answers first, then the card opens as feedback. Read first, the card gives the answer away.
 - Do not quiz anything that is neither key nor a pitfall.
 - Why: quizzes are expensive attention. Spending them on what matters trains judgement, not recall.
 

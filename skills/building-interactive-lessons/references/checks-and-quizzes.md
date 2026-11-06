@@ -59,7 +59,8 @@ Judgement call: could a learner pass this check by guessing, by matching words, 
 - A `check` has a purpose **(checked)**:
   - `key` tests a `key: true` idea in the same chapter, and every key idea has one **(checked)**;
   - `pitfall` tests a defined misconception **(checked)**.
-- At most 2 `check` blocks per chapter **(checked)**.
+- At most 2 `check` blocks per chapter **(checked)**, never two side by side **(checked)**.
+- **Test, then reveal:** a `pitfall` check comes right before the pitfall card for the misconception it tests **(checked)**. The card stays folded until the check is answered, then opens as feedback.
 
 **Judgement calls**
 - A key-idea check gives a situation the chapter did not show. If a learner can only answer the chapter's own example, they memorised it.

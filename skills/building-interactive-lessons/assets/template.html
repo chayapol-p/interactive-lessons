@@ -250,6 +250,14 @@ details.stretch summary { cursor: pointer; min-height: 48px; display: flex; alig
 .frame-control label strong { color: var(--ink); }
 .frame-control input[type=range] { width: 100%; accent-color: var(--accent); min-height: var(--tap); }
 .switch.frames { overflow-x: visible; }
+/* Stepped pictures: every step sits in the same grid cell, so the box keeps the tallest step's height and the page never jumps */
+.frame-stack { display: grid; }
+.frame-layer { grid-area: 1 / 1; visibility: hidden; min-width: 0; }
+.frame-layer.current { visibility: visible; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Folded until answered: the key idea after a guess, and a common-mistake card after its question */
+.folded { border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--muted); font-size: 0.9375rem; }
+.folded p { flex: 1 1 14rem; }
 .switch.frames button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
 .stage-line { font-size: 0.9375rem; line-height: 1.4; color: var(--muted); }
 .stage-line strong { color: var(--accent); }
@@ -710,6 +718,35 @@ function withTerms(text) {
   return pieces;
 }
 
+// ---------- Folded until answered ----------
+// A block folded behind a question registers a redraw here, keyed by the question's id (and by its own id),
+// so answering the question opens it at once. Read-along opens everything.
+const REVEALERS = {};
+function revealAfter(questionId) { (REVEALERS[questionId] || []).forEach((redraw) => redraw()); }
+function onReveal(key, redraw) { (REVEALERS[key] = REVEALERS[key] || []).push(redraw); }
+function isAnswered(block) {
+  const state = progress.blocks[block.id] || {};
+  return !!state.answeredOnce || (block.options ? state.choice !== undefined : !!state.revealed);
+}
+// The key idea a guess leads to: the first idea block after the chapter's predict block
+function guessFor(chapter, block) {
+  const blocks = chapter.blocks;
+  const predict = blocks.find((b) => b.type === "predict");
+  if (!predict || block.type !== "idea") return null;
+  const firstIdea = blocks.slice(blocks.indexOf(predict) + 1).find((b) => b.type === "idea");
+  return firstIdea === block ? predict : null;
+}
+// The question that opens a common-mistake card: a pitfall check right before it, testing the same misconception
+function questionFor(chapter, block) {
+  const index = chapter.blocks.indexOf(block);
+  const before = chapter.blocks[index - 1];
+  return before && before.type === "check" && before.purpose === "pitfall" && before.tests === block.misconception ? before : null;
+}
+function foldedNotice(label, text, onSkip, skipLabel) {
+  return [h("div", { class: "block-label" }, label),
+    h("div", { class: "folded" }, h("p", {}, text), h("button", { class: "btn quiet", type: "button", onclick: onSkip }, skipLabel))];
+}
+
 // ---------- Predict and check ----------
 function confidenceChooser(state, onChange) {
   const levels = [["unsure", "Unsure"], ["fairly", "Fairly sure"], ["certain", "Certain"]];
@@ -729,7 +766,7 @@ function renderChoiceBlock(chapter, block, kind) {
       guess.addEventListener("input", () => { state.guess = guess.value; saveProgress(); });
       setChildren(wrapper, head, h("p", { class: "question" }, withTerms(block.question)), guess,
         state.revealed ? h("div", { class: "feedback neutral" }, h("p", {}, h("strong", {}, "Answer: "), block.answer)) :
-          h("div", { class: "btn-row" }, h("button", { class: "btn", type: "button", onclick: () => { state.revealed = true; saveProgress(); draw(); } }, "Reveal the answer")));
+          h("div", { class: "btn-row" }, h("button", { class: "btn", type: "button", onclick: () => { state.revealed = true; saveProgress(); draw(); revealAfter(block.id); } }, "Reveal the answer")));
       return;
     }
     const answered = state.choice !== undefined;
@@ -741,7 +778,7 @@ function renderChoiceBlock(chapter, block, kind) {
       }
       const result = answered ? (option.correct ? ", right answer" : index === state.choice ? ", your answer, wrong" : "") : "";
       return h("button", { class: className, type: "button", disabled: answered, "aria-label": option.text + result,
-        onclick: () => { state.choice = index; state.correct = !!option.correct; saveProgress(); draw(); wrapper.querySelector(".feedback")?.focus(); } }, option.text);
+        onclick: () => { state.choice = index; state.correct = !!option.correct; state.answeredOnce = true; saveProgress(); draw(); revealAfter(block.id); wrapper.querySelector(".feedback")?.focus(); } }, option.text);
     });
     let feedback = null;
     if (answered) {
@@ -766,10 +803,22 @@ function renderChoiceBlock(chapter, block, kind) {
 
 // ---------- Idea ----------
 function renderIdea(chapter, block) {
-  return h("section", { class: "block", id: block.id },
-    block.key || canAskClaude ? h("div", { class: "block-label" }, block.key ? "Key idea" : null, h("span", { class: "spacer" }), tutorButton(chapter, block)) : null,
-    h("p", { class: "reading" }, withTerms(block.text)),
-    block.more ? h("details", { class: "more" }, h("summary", {}, "More"), h("p", {}, withTerms(block.more))) : null);
+  const wrapper = h("section", { class: "block", id: block.id });
+  const guess = guessFor(chapter, block);
+  const state = blockState(block.id);
+  function draw() {
+    if (guess && !readAlong && !state.skipped && !isAnswered(guess)) {
+      return setChildren(wrapper, foldedNotice(block.key ? "Key idea" : "Idea", "Answer to see why: make your guess above first.",
+        () => { state.skipped = true; saveProgress(); draw(); }, "Skip"));
+    }
+    setChildren(wrapper,
+      block.key || canAskClaude ? h("div", { class: "block-label" }, block.key ? "Key idea" : null, h("span", { class: "spacer" }), tutorButton(chapter, block)) : null,
+      h("p", { class: "reading" }, withTerms(block.text)),
+      block.more ? h("details", { class: "more" }, h("summary", {}, "More"), h("p", {}, withTerms(block.more))) : null);
+  }
+  if (guess) onReveal(guess.id, draw);
+  draw();
+  return wrapper;
 }
 
 // ---------- Diagrams: drawn from the blueprint's figure ----------
@@ -1072,14 +1121,17 @@ function gridFigure(figure) {
     }));
 }
 // kind: frames. A slider or buttons step through saved states of one data figure.
+// Every step is drawn once and stacked in one grid cell, so the picture keeps the tallest step's height: the page never jumps.
 function framesFigure(figure) {
-  const holder = h("div", {});
   const control = h("div", { class: "frame-control" });
+  const layers = figure.frames.map((frame) => h("div", { class: "frame-layer" },
+    drawFigure(frame.figure), frame.caption ? h("p", { class: "frame-caption" }, frame.caption) : null));
+  const spoken = h("p", { class: "visually-hidden", role: "status" });
   let current = 0;
   function draw() {
     const frame = figure.frames[current];
-    // A frame may carry its own one-line caption, so the words change with the step
-    setChildren(holder, drawFigure(frame.figure), frame.caption ? h("p", { class: "frame-caption", role: "status" }, frame.caption) : null);
+    layers.forEach((layer, index) => { layer.classList.toggle("current", index === current); layer.setAttribute("aria-hidden", index === current ? "false" : "true"); });
+    spoken.textContent = `${figure.control_label}: ${frame.label}.${frame.caption ? " " + frame.caption : ""}`;
     if (figure.control === "slider") {
       const value = control.querySelector("strong");
       if (value) value.textContent = frame.label;
@@ -1097,7 +1149,7 @@ function framesFigure(figure) {
         h("button", { type: "button", "aria-pressed": index === 0 ? "true" : "false", onclick: () => { current = index; draw(); } }, frame.label))));
   }
   draw();
-  return h("div", {}, control, holder);
+  return h("div", {}, control, h("div", { class: "frame-stack" }, layers), spoken);
 }
 function drawFigure(figure, block) {
   switch (figure.kind) {
@@ -1201,7 +1253,7 @@ function insightFor(chapter, block) {
 function pitfallLink(misconceptionId) {
   for (const chapter of CHAPTERS) {
     const block = chapter.blocks.find((b) => b.type === "pitfall" && b.misconception === misconceptionId);
-    if (block) return h("a", { href: `#${chapter.id}`, onclick: () => setTimeout(() => document.getElementById(block.id)?.scrollIntoView(), 50) }, "See the common mistake");
+    if (block) return h("a", { href: `#${chapter.id}`, onclick: () => { blockState(block.id).open = true; saveProgress(); revealAfter(block.id); setTimeout(() => document.getElementById(block.id)?.scrollIntoView(), 50); } }, "See the common mistake");
   }
   return null;
 }
@@ -1324,10 +1376,11 @@ function renderFillBlanks(chapter, block) {
     drawCode(); drawChooser();
     return false;
   }
-  function runIt() { if (!allPicked()) return; showRun = true; active = -1; drawAll(); }
+  // One Check: where each pick leads and the verdict, together. Picking again clears both; checking again is free.
   function check() {
     if (!allPicked()) return;
     marks = picks.map((pick, i) => pick === rightPicks[i]);
+    showRun = true;
     active = -1;
     if (!readAlong) {
       if (marks.every(Boolean)) state.passed = true;
@@ -1353,15 +1406,14 @@ function renderFillBlanks(chapter, block) {
   wrapper.append(
     h("div", { class: "block-label" }, "Try it", h("span", { class: "spacer" }), tutorButton(chapter, block)),
     h("div", { class: "exercise" },
-      h("ul", { class: "instructions" }, block.instructions.map((line) => h("li", {}, line)), h("li", {}, "Tap a blank, then pick what goes there.")),
+      h("ul", { class: "instructions" }, block.instructions.map((line) => h("li", {}, line)), h("li", {}, "Tap a blank, pick what goes there, then Check.")),
       h("div", { class: "code-panel" },
         h("div", { class: "code-panel-head" }, h("span", { class: isText ? "" : "file" }, block.source), h("span", {}, `· ${isText ? "" : (LANGUAGE_NAMES[block.language] || block.language) + " · "}${blanks.length} blank${blanks.length > 1 ? "s" : ""}`)),
         codeHolder, chooserHolder,
         h("div", { class: "code-actions" },
-          h("button", { class: "btn", type: "button", onclick: runIt }, isText ? "See result" : "Run"),
           h("button", { class: "btn primary", type: "button", onclick: check }, "Check"),
-          h("button", { class: "btn", type: "button", onclick: () => { picks = blanks.map(() => null); active = 0; marks = null; showRun = false; if (!readAlong) delete state.passed; remember(); drawAll(); } }, "Reset"))),
-      resultHolder, feedbackHolder, help.row, help.hintsHolder, help.solutionHolder,
+          h("button", { class: "btn quiet", type: "button", onclick: () => { picks = blanks.map(() => null); active = 0; marks = null; showRun = false; if (!readAlong) delete state.passed; remember(); drawAll(); } }, "Reset"))),
+      feedbackHolder, resultHolder, help.row, help.hintsHolder, help.solutionHolder,
       block.run_locally ? localRun(block.run_locally) : null));
   drawAll();
   return wrapper;
@@ -1466,13 +1518,27 @@ function renderStretch(chapter, block) {
 function renderPitfall(chapter, block) {
   const misconception = MISCONCEPTIONS[block.misconception];
   const inferred = /inferred|own knowledge/i.test(misconception.source);
-  return h("section", { class: "block", id: block.id },
-    h("div", { class: "block-label" }, "Common mistake", h("span", { class: "spacer" }), tutorButton(chapter, block)),
-    h("div", { class: "pitfall" },
-      h("p", { class: "wrong-idea" }, h("span", { class: "lead" }, "People often think: "), misconception.wrong_idea),
-      h("p", {}, h("span", { class: "lead" }, "Why people believe it: "), misconception.why_people_believe_it),
-      h("p", {}, h("span", { class: "lead" }, "What is true: "), misconception.what_is_true),
-      h("p", { class: "source" }, inferred ? [h("span", { class: "badge" }, "Inferred"), " "] : null, misconception.source)));
+  const question = questionFor(chapter, block);
+  const state = blockState(block.id);
+  const wrapper = h("section", { class: "block", id: block.id });
+  // Test, then reveal: the card opens as feedback once its question is answered (or when the learner opens it)
+  function draw() {
+    if (question && !readAlong && !state.open && !isAnswered(question)) {
+      return setChildren(wrapper, foldedNotice("Common mistake", "Answer the question above, then this card opens.",
+        () => { state.open = true; saveProgress(); draw(); }, "Open it now"));
+    }
+    setChildren(wrapper,
+      h("div", { class: "block-label" }, "Common mistake", h("span", { class: "spacer" }), tutorButton(chapter, block)),
+      h("div", { class: "pitfall" },
+        h("p", { class: "wrong-idea" }, h("span", { class: "lead" }, "People often think: "), misconception.wrong_idea),
+        h("p", {}, h("span", { class: "lead" }, "Why people believe it: "), misconception.why_people_believe_it),
+        h("p", {}, h("span", { class: "lead" }, "What is true: "), misconception.what_is_true),
+        h("p", { class: "source" }, inferred ? [h("span", { class: "badge" }, "Inferred"), " "] : null, misconception.source)));
+  }
+  if (question) onReveal(question.id, draw);
+  onReveal(block.id, () => { state.open = true; draw(); });
+  draw();
+  return wrapper;
 }
 function renderRecap(chapter, block) {
   return h("section", { class: "block", id: block.id },
@@ -1641,6 +1707,7 @@ function render() {
   const viewKey = view.kind === "chapter" ? view.chapter.id : view.kind;
   const app = document.getElementById("app");
   const scrollY = window.scrollY;
+  for (const key of Object.keys(REVEALERS)) delete REVEALERS[key];   // the old page's blocks are gone
   setChildren(app, view.kind === "chapter" ? chapterPage(view.chapter) : view.kind === "guide" ? fieldGuidePage() : startPage());
   if (viewKey !== lastViewKey) window.scrollTo(0, 0); else window.scrollTo(0, scrollY);
   lastViewKey = viewKey;

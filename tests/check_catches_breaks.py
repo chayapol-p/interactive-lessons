@@ -15,10 +15,14 @@ missed = []
 example = (K / "assets/example-blueprint.yaml").read_text()
 
 
-def case(name, old, new, run_tests=False, expect=""):
-    assert example.count(old) == 1, f"{name}: text to break not found once"
+def case(name, old, new, run_tests=False, expect="", then=()):
+    """Replace old with new (each found exactly once), then each (old, new) pair in `then`, and run the checker."""
+    broken = example
+    for find, put in [(old, new), *then]:
+        assert broken.count(find) == 1, f"{name}: text to break not found once"
+        broken = broken.replace(find, put)
     path = here / f"{name}.yaml"
-    path.write_text(example.replace(old, new))
+    path.write_text(broken)
     command = [sys.executable, str(K / "scripts/check_blueprint.py"), str(path)] + (["--run-tests"] if run_tests else [])
     output = subprocess.run(command, capture_output=True, text=True).stdout
     errors = [line for line in output.splitlines() if line.startswith("ERROR")]
@@ -54,6 +58,10 @@ case("slice-too-long",
      '          print("starts:", starts[:3])                    # the first three starts',
      "\n".join(['          x = 1  # filler'] * 12) + '\n          print("starts:", starts[:3])                    # the first three starts',
      expect="code lines")
+
+CARD = "      - id: page-vs-chunk-pitfall\n        type: pitfall\n        misconception: whole-page-is-fine\n"
+case("card-before-question", CARD, "", expect="comes right before the pitfall card",
+     then=[("      - id: page-vs-chunk-check\n", CARD + "      - id: page-vs-chunk-check\n")])
 
 # Design rules, broken in the concepts example
 example = (K / "assets/example-concepts-blueprint.yaml").read_text()

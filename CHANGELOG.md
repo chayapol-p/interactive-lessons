@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 · unreleased
+- One Check button on fill-the-blanks: the verdict and where each pick leads, together.
+- Stepped pictures keep their tallest step's height, so the page never jumps.
+- Test, then reveal: a "Spot the mistake" question comes before its common-mistake card, which opens once it is answered (the checker's order rule is flipped).
+- The key idea after "Your guess" stays folded until the guess is made, with a Skip button.
+- `tests/check_page_clicks.py` clicks through the examples (blanks, two wrong blanks, folded cards, steady steps, tutor).
+
 ## 0.3.1 · 5 Nov 2026
 - VISION and SKILL now say the same thing: any subject, the default learner, checks after teaching, bridges, diagram limits.
 - The skill's description names any subject, so non-code requests trigger it.

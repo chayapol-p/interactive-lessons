@@ -168,7 +168,7 @@ figure:
 - **`kind: tokens`**: rows of chips, one per piece, each with its number. A leading space shows as a dot. Mark at most 2 chips `hot`.
 - **`kind: scatter`** (space): labelled points on a plain 2D map, at most 12. Label the axes for what they mean, and say "toy" when the map is a sketch. The template places each label clear of the others.
 - **`kind: grid`** (comparison, quantity): a shaded table, at most 8 by 8, each cell's shade and number its value from 0 to 1, with one row outlined (`highlight_row`). Shades come from the theme's checked ramp, so the number in every cell stays readable; values under 0.01 show as `<.01`. Column labels slant, so keep them to one short word. Suits attention, a confusion matrix, a correlation table.
-- **`kind: frames`** (change over time): a `slider` for an ordered setting (temperature, size, time) or `buttons` for separate cases (two sentences), stepping through 2 to 8 saved states of one data kind. Button labels share one row: at most 3 buttons, each at most 12 characters. Every state is computed, so the picture never interpolates or invents a value.
+- **`kind: frames`** (change over time): a `slider` for an ordered setting (temperature, size, time) or `buttons` for separate cases (two sentences), stepping through 2 to 8 saved states of one data kind. Button labels share one row: at most 3 buttons, each at most 12 characters. Every state is computed, so the picture never interpolates or invents a value. The page draws every step once and keeps the tallest one's height, so stepping never makes the page jump; keep step captions similar in length anyway.
 
 ```yaml
 figure:

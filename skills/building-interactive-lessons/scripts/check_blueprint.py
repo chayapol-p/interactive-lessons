@@ -986,18 +986,19 @@ def check_chapter_teaching_and_tests(chapter, misconception_ids, problems):
 # ===== Checks on each block, by type =====
 
 def check_block_rhythm(chapter, problems):
-    """A pitfall comes right before the check that tests it, and no two pitfalls or two checks sit side by side."""
+    """Test, then reveal: a pitfall check comes right before the pitfall card it opens, and no two pitfalls or two
+    checks sit side by side."""
     blocks = chapter.get("blocks") or []
     for before, after in zip(blocks, blocks[1:]):
         if before.get("type") == after.get("type") and before.get("type") in ("pitfall", "check"):
             problems.error(after.get("id"), f"two {before.get('type')} blocks in a row ('{before.get('id')}' and '{after.get('id')}'); "
-                           "put each pitfall right before the check that tests it, and space the rest with other blocks")
+                           "put each pitfall check right before the card it opens, and space the rest with other blocks")
     for index, block in enumerate(blocks):
         if block.get("type") == "check" and block.get("purpose") == "pitfall":
-            previous = blocks[index - 1] if index else {}
-            if not (previous.get("type") == "pitfall" and previous.get("misconception") == block.get("tests")):
-                problems.error(block.get("id"), f"a pitfall check comes right after the pitfall card for '{block.get('tests')}', "
-                               "so the learner applies the trap while it is fresh")
+            following = blocks[index + 1] if index + 1 < len(blocks) else {}
+            if not (following.get("type") == "pitfall" and following.get("misconception") == block.get("tests")):
+                problems.error(block.get("id"), f"a pitfall check comes right before the pitfall card for '{block.get('tests')}': "
+                               "the learner answers first, then the card opens as feedback (test, then reveal)")
 
 
 def check_answer_options(block_id, options, allowed_range, problems):

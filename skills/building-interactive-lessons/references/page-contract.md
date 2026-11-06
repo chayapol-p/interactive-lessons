@@ -52,11 +52,13 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Bridge line** (top of each chapter): the chapter's `bridge_in`, in a muted style.
 
-**Predict**: the question, options or an input, and a 3-step confidence choice (unsure, fairly sure, certain). Nothing below is hidden; the learner can skip.
+**Predict**: the question, options or an input, and a 3-step confidence choice (unsure, fairly sure, certain).
+- **The answer waits for the guess:** the first `idea` block after the predict (the key idea that answers it) stays folded behind "Answer to see why" until the guess is made. A **Skip** button opens it without a guess, and the choice is kept. Only that one block folds; everything else stays open. Read-along opens it.
+- Why: in every test round, learners read the answer while scrolling to the guess, so the guess stopped being a guess.
 
 **Idea**: at most 3 sentences. Every `glossary` term in the text is tappable and opens its definition card at the bottom of the screen. A "More" panel holds optional depth.
 
-**Diagram**: drawn from its `figure` (see `diagrams.md`). A `toy` figure starts its caption with "Toy numbers." A caption under it states the brief's `understand` sentence.
+**Diagram**: drawn from its `figure` (see `diagrams.md`). A stepped picture (`frames`) draws every step once and keeps the tallest step's height, so tapping through steps never moves the page. A `toy` figure starts its caption with "Toy numbers." A caption under it states the brief's `understand` sentence.
 - A stage with `extends` redraws the earlier stages muted, in the same positions, and highlights what it adds, under a line saying what was added to which chapter's picture. A first stage with `grows_in` notes under it which chapters add to it.
 
 **Code**
@@ -69,7 +71,8 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Fill the blanks, explain, stretch**: see section 3.
 
-**Pitfall**: a card with the wrong idea ("People often think: …", never struck through, so a learner who just got it right never reads it as a mark against them), why people believe it, and what is true. It comes before the check that tests it.
+**Pitfall**: a card with the wrong idea ("People often think: …", never struck through, so a learner who just got it right never reads it as a mark against them), why people believe it, and what is true.
+- **Test, then reveal:** when a "Spot the mistake" check tests the card's misconception, the check comes first and the card stays folded until the check is answered; then it opens as feedback. An "Open it now" button opens it early. Read-along opens it, and so does a "See the common mistake" link from a wrong blank.
 
 **Check**: the question and options. On click: mark right or wrong, reveal the correct option, show the explanation of the option picked, then the correct one's.
 
@@ -83,8 +86,8 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Fill the blanks** (the default exercise)
 - The real code with its line comments. Each blank is a small picker showing its 3 or 4 options.
-- **Run** shows the recorded output for the chosen options (section 4).
-- **Check** marks each blank right or wrong. For a wrong pick, it shows that option's one-line `why_wrong` and opens the pitfall card of its misconception.
+- **One Check button** does both jobs at once: it marks each blank right or wrong, shows each wrong pick's one-line `why_wrong` with a link to its misconception's card, and shows the recorded output for the chosen options (section 4). Picking again clears the marks and the output; checking again is free.
+- Why one button: with a separate Run and Check, learners pressed only one of them and missed half the feedback.
 
 **Explain**
 - A text box. **Submit** sends the answer to the AI grader with the rubric (see `ai-tutor-and-grader.md`). Feedback names the first unmet criterion only.
@@ -111,7 +114,7 @@ Why the buttons are always there: a learner who is stuck and cannot see the answ
 The page never runs code. Every output comes from a real run at build time (see `blueprint-format.md` section 2).
 
 - **Code slice:** Run shows `recorded_output`.
-- **Fill the blanks** (blanks are numbered in the order they appear in the code):
+- **Fill the blanks** (Check shows it; blanks are numbered in the order they appear in the code):
   - every blank right → the right output;
   - one blank wrong → that option's recorded output, marked "What this choice prints";
   - two or more blanks wrong → no combined output exists, so show the output for the first wrong blank and say "Fix one blank at a time: this is what happens with only this blank changed". Never invent a combined output.
@@ -153,4 +156,4 @@ The page must teach fully with any of these missing:
 - `check_blueprint.py lesson-blueprint.yaml --run-tests --page lesson.html` passes: every script check, and the page carries this blueprint.
 - `screenshot_chapters.py lesson.html` reports no sideways scroll and no page errors for the changed chapters (all chapters on a first build).
 - The screenshots read well at phone width in both themes, diagrams included.
-- On a first build, click through one chapter: a wrong blank shows its own output and its reason, Show solution and Use this fill the blanks, and Read-along opens every solution.
+- On a first build, click through one chapter: Check on a wrong blank shows its own output and its reason, Show solution and Use this fill the blanks, a common-mistake card opens after its question, and Read-along opens every solution. `tests/check_page_clicks.py` in the skill's repo runs these clicks on the examples.

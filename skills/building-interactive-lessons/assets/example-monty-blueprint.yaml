@@ -237,11 +237,20 @@ chapters:
       - id: one-case-idea
         type: idea
         text: "Picture 300 games. In about 100, the car is behind your door: the host opens door 2 or door 3, but it is still those same 100 games, and staying wins them. In the other 200, he has no choice, and switching wins them all."
+      - id: cases-key-check
+        type: check
+        purpose: key
+        tests: cases-idea
+        question: "Same game, but this time you pick door 2, and the host, who knows, opens door 1 to show a goat. List the cases: how often does switching to door 3 win?"
+        options:
+          - {text: "2 times in 3", correct: true, why_right: "The door numbers change nothing: your pick is right 1 time in 3, and switching wins the other 2."}
+          - {text: "1 time in 2", correct: false, why_wrong: "The cases are the same 3 as before, with different numbers on the doors."}
+          - {text: "1 time in 3", correct: false, why_wrong: "That is how often staying wins."}
       - id: cases-count
         type: fill_blanks
         instructions:
           - Fill the blank with how many of the 3 cases switching wins.
-          - See what the table shows for each choice.
+          - Check shows what the table says for your choice.
         language: text
         source: the case table
         context_note: The table above, with one row per place the car can be.
@@ -271,18 +280,6 @@ chapters:
                 output_source: the case table above
         hints:
           - In which rows does the car sit behind a door you did not pick?
-      - id: cases-key-check
-        type: check
-        purpose: key
-        tests: cases-idea
-        question: "Same game, but this time you pick door 2, and the host, who knows, opens door 1 to show a goat. List the cases: how often does switching to door 3 win?"
-        options:
-          - {text: "2 times in 3", correct: true, why_right: "The door numbers change nothing: your pick is right 1 time in 3, and switching wins the other 2."}
-          - {text: "1 time in 2", correct: false, why_wrong: "The cases are the same 3 as before, with different numbers on the doors."}
-          - {text: "1 time in 3", correct: false, why_wrong: "That is how often staying wins."}
-      - id: even-pitfall
-        type: pitfall
-        misconception: two-doors-even
       - id: even-check
         type: check
         purpose: pitfall
@@ -292,6 +289,9 @@ chapters:
           - {text: "There are 3 equally likely cases, not 2, and the other closed door wins in 2 of them", correct: true, why_right: "Counting doors left is not counting cases."}
           - {text: "Nothing: once a door is open, the two left share the chance evenly, like a coin", correct: false, why_wrong: "Opening a door is not a new coin toss; the table shows switching winning 2 of 3 cases."}
           - {text: "Your door gains the opened door's share, so staying is now better", correct: false, why_wrong: "The host never touches your door; the opened door's share goes to the other closed door."}
+      - id: even-pitfall
+        type: pitfall
+        misconception: two-doors-even
       - id: cases-recap
         type: recap
         text: List every case. Your pick is right 1 time in 3, and switching wins in every case where it was wrong, 2 times in 3.
@@ -522,7 +522,7 @@ chapters:
         type: fill_blanks
         instructions:
           - Fill the blank with how many of the 4 games left switching wins.
-          - See what the table shows.
+          - Check shows what the table says.
         language: text
         source: the guessing host's table
         context_note: The table above; only the moves that show a goat count.

@@ -165,6 +165,7 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 | "figure link … is not a part of this figure" | A later stage links to a part no stage defines → add the part, or fix the id |
 | "page … is stale" | The blueprint changed after the build → rebuild with `build_page.py` |
 | "changed.json belongs to another build" | The last build failed → fix the blueprint and rebuild |
+| "a pitfall check comes right before the pitfall card" | The card sits before its question, so it gives the answer away → move the check above the card |
 | "the question names 'X', which no earlier block explains" | A quiz leans on a detail of the example → explain the example and that detail earlier, or explain it in brackets in the question |
 | "option 'X' is only a detail of the example" | An answer is a clause number or file name → write what that choice means |
 | "the picture has … boxes" or "highlights … boxes" | The diagram says too much → cut boxes that travel together, or split it; highlight only what this chapter is about |

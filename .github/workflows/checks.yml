@@ -16,6 +16,11 @@ jobs:
           python3 skills/building-interactive-lessons/scripts/check_blueprint.py skills/building-interactive-lessons/assets/example-monty-blueprint.yaml --run-tests
       - name: The checker catches every deliberate break
         run: python3 tests/check_catches_breaks.py
+      - name: The example pages behave when clicked
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          python3 tests/check_page_clicks.py
       - name: Skill and plugin versions match
         run: |
           python3 - <<'PY'
