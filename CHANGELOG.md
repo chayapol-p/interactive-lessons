@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 · unreleased
+## 0.4.0 · 6 Nov 2026
 - One Check button on fill-the-blanks: the verdict and where each pick leads, together.
 - Stepped pictures keep their tallest step's height, so the page never jumps.
 - Test, then reveal: a "Spot the mistake" question comes before its common-mistake card, which opens once it is answered (the checker's order rule is flipped).

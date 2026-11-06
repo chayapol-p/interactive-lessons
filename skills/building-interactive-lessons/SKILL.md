@@ -1,11 +1,11 @@
 ---
 name: building-interactive-lessons
-description: Builds an interactive, AI-powered lesson as one web page on any subject (a concept, rules, a policy, a formula) or from docs or a code repo. Plans first (discover the learner, verify the material, plan chapters that build on each other), then fills a ready page template from the plan, with predictions, real code or text with recorded results, fill-in-the-blank exercises built on real mistakes, AI-graded explanations, an ask-the-tutor box, quizzes on key ideas and pitfalls, and diagrams only where they have a stated purpose. Also revises a lesson it built from feedback. Use for "teach me this", "make a lesson", "turn this repo into a tutorial", "learning artifact", "interactive tutorial", "course for this lab", "fix this chapter of the lesson". Not for reference docs, slide decks, or a quick explanation in chat.
+description: Builds an interactive, AI-powered lesson as one web page on any subject (a concept, rules, a policy, a formula) or from docs or a code repo. Plans first (discover the learner, verify the material, plan chapters that build on each other), then fills a ready page template from the plan, told as one story from a hook to a payoff, with predictions, pictures that step, move or let the learner play, real code or text with recorded results, fill-in-the-blank exercises built on real mistakes, AI-graded explanations, an ask-the-tutor box, quizzes on key ideas and pitfalls, and diagrams only where they have a stated purpose. Also revises a lesson it built from feedback. Use for "teach me this", "make a lesson", "turn this repo into a tutorial", "learning artifact", "interactive tutorial", "course for this lab", "fix this chapter of the lesson". Not for reference docs, slide decks, or a quick explanation in chat.
 license: MIT
 compatibility: Needs Python 3 with PyYAML (checker and build) and ruamel.yaml (recording outputs), node for JavaScript slices, and Playwright with Chromium or Chrome for phone screenshots. Best in claude.ai, where a published artifact can ask Claude (tutor and grader) and keep progress. Elsewhere it produces one HTML file with the AI features hidden.
 metadata:
   author: chayapol.par
-  version: 0.3.1
+  version: 0.4.0
 ---
 
 # Building interactive lessons
@@ -25,6 +25,8 @@ Turns a topic, docs or a repo into a lesson the learner works through: predict, 
 9. **Real material, small.** Any subject works: code, rules, formulas, concepts. A code slice is the real code that carries the idea, at most 15 code lines, with short line comments, and hidden `setup`; the tutor can show the code around it. A text exercise is the real sentence, rule or formula. No minimum length: never pad.
 10. **Test the idea, not the example.** Explain an example (a lab, a codebase, a rule book) before using it, and never ask the learner to recall its details, such as a clause number. A quiz must be answerable by someone who learned the idea but has never seen the example.
 11. **The page comes from the template.** `scripts/build_page.py` fills `assets/template.html` with the blueprint. Never hand-write or hand-edit the page; change the blueprint and rebuild.
+12. **One story, and nothing gives the answer early.** A big idea, chapters in beats from hook to payoff, each ending on an open question the next one answers. No answer shows before its guess, a "Spot the mistake" question comes before its card, and words stay inside the text budget (`references/chapter-design.md` sections 0 and 8).
+13. **The lowest picture that carries the idea.** Stepped by default for a change; animation or play only for a named moment, after a yes in Discover (`references/diagrams.md` section 0).
 
 ## When to run or offer it (mode: suggest first)
 

@@ -28,7 +28,8 @@ jobs:
           import json, re, sys
           plugin = json.load(open(".claude-plugin/plugin.json"))["version"]
           skill = re.search(r"^\s*version:\s*(\S+)", open("skills/building-interactive-lessons/SKILL.md").read(), re.M).group(1)
-          if plugin != skill:
-              sys.exit(f"plugin.json says {plugin}, SKILL.md says {skill}")
+          evals = json.load(open("evals/evals.json"))["version"]
+          if len({plugin, skill, evals}) != 1:
+              sys.exit(f"plugin.json says {plugin}, SKILL.md says {skill}, evals.json says {evals}")
           print("versions match:", plugin)
           PY

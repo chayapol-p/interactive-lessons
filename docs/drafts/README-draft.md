@@ -102,7 +102,7 @@ It worked if the check prints `0 errors, 0 warnings`. Open `/tmp/lesson/lesson.h
 | `scripts/theme.py` | Builds both themes' colours from one accent and checks their contrast |
 | `scripts/screenshot_chapters.py` | Phone screenshots of the changed chapters, light and dark |
 | `assets/template.html` | The lesson page: blanks, hints, solutions, read-along, pictures, tutor, grader, progress |
-| `assets/` examples | 3 blueprints that pass every check: Stay or Switch? (3 chapters, no code), text chunking (code) and How LLMs Work (6 chapters) |
+| `assets/` examples | 3 blueprints that pass every check: Stay or Switch? (5 chapters, no code, told as one story), text chunking (code) and How LLMs Work (6 chapters) |
 | `references/` | 6 guides: blueprint format, chapter design, quizzes, diagrams, tutor and grader, page behaviour |
 
 ## What the checks catch
