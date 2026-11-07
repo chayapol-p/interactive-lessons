@@ -11,7 +11,7 @@
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/tutorial-vs-lesson-dark.png">
   <img src="docs/images/tutorial-vs-lesson.png" width="100%" alt="Diagram that shows a tutorial you only read beside a lesson where a wrong pick shows its real result.">
 </picture>
-<p><em>Lesson 1 · A tutorial asks you to read. A lesson asks you to commit to an answer, then shows you where it leads.</em></p>
+<p><em>Lesson 1 · In a lesson you commit to an answer first, then see where it leads.</em></p>
 
 <p align="center">
   <picture>
@@ -23,7 +23,7 @@
     <img src="docs/images/lesson-shot.png" width="320" alt="Screenshot of a fill-the-blank exercise where a wrong pick shows its worked result, a reason and a pitfall link.">
   </picture>
 </p>
-<p align="center"><em>A real build of the bundled Monty Hall example. Left: tap After, and door 3's chance moves onto door 2, never onto yours. Right: the learner said 1 in 2, and sees why it is 2 in 3.</em></p>
+<p align="center"><em>A real build of the bundled Monty Hall example. Left: tap After, and door 3's chance moves onto door 2, and yours stays at 1 in 3. Right: the learner said 1 in 2, and sees why it is 2 in 3.</em></p>
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/strip-dark.png"><img src="docs/images/strip.png" width="100%" alt=""></picture>
 
@@ -44,7 +44,7 @@ You ask your agent for a lesson on a topic, some docs or a repo. The skill guess
 5. **Check.** One command runs every script check, then `screenshot_chapters.py` shoots each chapter at phone width, light and dark.
 6. **Publish and revise.** Publish as a claude.ai artifact. A feedback round edits the blueprint and re-checks only what changed.
 
-**Each chapter** opens with a guess, teaches one idea at a time, and asks you to fill 1 to 3 blanks in real material: a code slice, a sentence, a rule or a formula. Every wrong option is a real mistake and shows where it really leads. An AI tutor sits beside every block. It hints, but never hands over a solution; **Hint** and **Show solution** are always yours to press.
+**Each chapter** opens with a guess, teaches one idea at a time, and asks you to fill 1 to 3 blanks in real material: a code slice, a sentence, a rule or a formula. Every wrong option is a real mistake and shows where it really leads. An AI tutor sits beside every block. It gives hints and keeps the solution back. **Hint** and **Show solution** are buttons you press yourself.
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/strip-dark.png"><img src="docs/images/strip.png" width="100%" alt=""></picture>
 
@@ -76,6 +76,7 @@ Make a 15-minute lesson on why the house always wins at roulette, with pictures.
 **What should happen**
 - The `building-interactive-lessons` skill offers to run.
 - It shows what it assumed you know and asks up to 4 questions: depth, topics, length and colour.
+- Where a moment needs it, it may offer a moving picture or a game you can play, and builds one only if you say yes.
 - It shows a one-screen chapter map and waits for your go.
 - It builds `lesson.html`, and the check ends with `0 errors, 0 warnings`.
 
@@ -95,31 +96,32 @@ It worked if the check prints `0 errors, 0 warnings`. Open `/tmp/lesson/lesson.h
 
 | Part | What it does |
 | --- | --- |
-| `SKILL.md` | The skill: 11 rules, 6 steps, the Revise path and a time budget |
+| `SKILL.md` | The skill: 13 rules, 6 steps, the Revise path and a time budget |
 | `scripts/record_outputs.py` | Runs every code slice, blank option and picture's code, and writes the real results into the blueprint |
 | `scripts/check_blueprint.py` | Every script check in one command: shape, tests after teaching, blanks, bridges, pictures, results, a stale page |
 | `scripts/build_page.py` | Fills the template from the blueprint and lists the chapters that changed |
 | `scripts/theme.py` | Builds both themes' colours from one accent and checks their contrast |
 | `scripts/screenshot_chapters.py` | Phone screenshots of the changed chapters, light and dark |
+| `scripts/phone_driver.py` | Lets a test learner use a lesson like a person on a phone: tap, scroll and type, with one screenshot after each step |
 | `assets/template.html` | The lesson page: blanks, hints, solutions, read-along, pictures, tutor, grader, progress |
 | `assets/` examples | 3 blueprints that pass every check: Stay or Switch? (5 chapters, no code, told as one story), text chunking (code) and How LLMs Work (6 chapters) |
 | `references/` | 6 guides: blueprint format, chapter design, quizzes, diagrams, tutor and grader, page behaviour |
 
 ## What the checks catch
 
-- **12 deliberate breaks, 12 caught.** `tests/check_catches_breaks.py` breaks the 2 example blueprints one way at a time: a wrong result, two right options, a wrong option that prints the same as the right one, an unknown field, a promise no chapter keeps, a slice too long, a colour that clashes with "wrong", and more. The checker names each one.
-- **Where the rules came from:** most rules come from problems found in real lessons, such as a 7-chapter RAG workshop lesson and a 6-chapter How LLMs Work lesson.
-- **Limits:** the 19 trigger prompts and 17 behaviour cases in `evals/evals.json` are written but not yet run as a suite, so this README makes no pass-rate claim. The AI grader is tested by hand on the live page, not by a script.
+- **26 deliberate breaks, 26 caught.** `tests/check_catches_breaks.py` breaks the 3 example blueprints one way at a time: a wrong result, two right options, a wrong option that prints the same as the right one, an unknown field, a promise no chapter keeps, a slice too long, a colour that clashes with "wrong", and more. The checker names each one.
+- **Where the rules came from:** most rules come from problems found in real lessons, such as a RAG workshop lesson with 7 chapters and a How LLMs Work lesson with 6 chapters.
+- **Limits:** the 21 trigger prompts and 23 behaviour cases in `evals/evals.json` are written but not yet run as a suite, so this README makes no pass-rate claim. The AI grader is tested by hand on the live page. No script tests it yet.
 
 ## Why it works this way
 
-- **You produce, not only read.** Every chapter asks for a guess, a filled blank or an answer in your own words.
+- **You answer at every step.** Every chapter asks for a guess, a filled blank or an answer in your own words.
 - **Every result is real.** The page runs no code. Each result is recorded from a real run, quoted from a named source, or worked out in steps.
 - **Wrong answers teach.** Each wrong option is a real mistake, with its own reason and its own result.
-- **Test the idea, not the example.** A quiz never asks you to recall a detail of the example, such as a rule number.
+- **Quizzes test the idea.** A quiz never asks you to recall a detail of the example, such as a rule number.
 - **Assume, then confirm.** It starts from what it knows about you and checks it with you before it builds.
 
-The full list of 18 principles, with the source of each, is in [VISION.md](VISION.md).
+The full list of 24 principles, with the source of each, is in [VISION.md](VISION.md).
 
 ## Credits
 
