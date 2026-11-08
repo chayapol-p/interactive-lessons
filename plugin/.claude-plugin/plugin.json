@@ -13,5 +13,9 @@
     "education",
     "interactive",
     "quiz"
-  ]
+  ],
+  "homepage": "https://github.com/chayapol-p/interactive-lessons",
+  "repository": "https://github.com/chayapol-p/interactive-lessons",
+  "documentationUrl": "https://github.com/chayapol-p/interactive-lessons#readme",
+  "supportUrl": "https://github.com/chayapol-p/interactive-lessons/issues"
 }
