@@ -151,6 +151,10 @@ It worked if the check prints `0 errors, 0 warnings`. Open `/tmp/lesson/lesson.h
 
 The full list of 24 principles, with the source of each, is in [VISION.md](VISION.md).
 
+## Privacy
+
+A lesson page loads its fonts from Google Fonts. The tutor and the grader send your question and the lesson's context to Claude through your own account. In claude.ai, the page saves your answers to that lesson so you can come back. The plugin itself collects nothing and runs no server.
+
 ## Credits
 
 Ideas come from open teaching skills (make-it-learnable, teach, ape-teach, explain-diff, code-learn-skill), DataCamp's exercise design, PRIMM and Mayer's principles of multimedia learning. Links are in [VISION.md](VISION.md#8-influences-and-credits).
