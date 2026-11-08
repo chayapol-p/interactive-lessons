@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
 Build the README's pictures in the marked-worksheet style: ruled school paper, a margin line,
-and red-pen notes. Paper by day, slate by night.
+red-pen notes, and the plugin icon's mark (a filled-in blank, ticked in red pen). Paper by day,
+slate by night. Strokes are bold, like the icon's, so the pictures and the icon read as one set.
 
 It draws each picture in a light and a dark variant:
   banner        the project name on a worksheet header
   tutorial-vs-lesson  a tutorial page against a lesson page
   how-it-works  the six steps the skill walks through
   strip         a thin ruled divider for above each README section
+  social-preview  the card GitHub shows when the repo link is shared (light only)
 
   Input:  nothing; every picture is drawn from the data in this file
   Output: <output folder>/<picture>.html and <picture>-dark.html, one <svg> per page
@@ -26,6 +28,11 @@ PROJECT_NAME = "Interactive Lessons"
 CANVAS_WIDTH = 960                     # every picture shares this width; it exports to 1920 pixels
 RULE_SPACING = 30                      # distance between the ruled lines of the paper
 MARGIN_X = 44                          # where the paper's margin line runs
+
+## Stroke weights: bold like the icon, quiet paper underneath
+PLAIN_STROKE = 2.2                     # a box that is not the focus
+FOCAL_STROKE = 4                       # a box that is the focus, in the accent colour
+ARROW_STROKE = 2.6
 
 ## Colours by role, light and dark. Drawing functions use these names, never colour codes.
 LIGHT_PALETTE = {
@@ -72,11 +79,11 @@ def line_arrow(colors, points, color_role="ink", dashed=False):
     (from_x, from_y), (to_x, to_y) = points[-2], points[-1]
     if from_y == to_y:      # the last piece runs sideways
         direction = 1 if to_x > from_x else -1
-        head = f"M{to_x},{to_y} l{-10 * direction},-6 v12 z"
+        head = f"M{to_x},{to_y} l{-12 * direction},-7 v14 z"
     else:                   # the last piece runs up or down
         direction = 1 if to_y > from_y else -1
-        head = f"M{to_x},{to_y} l-6,{-10 * direction} h12 z"
-    return (f'<path d="{path}" fill="none" stroke="{colors[color_role]}" stroke-width="2"{dash_pattern}/>'
+        head = f"M{to_x},{to_y} l-7,{-12 * direction} h14 z"
+    return (f'<path d="{path}" fill="none" stroke="{colors[color_role]}" stroke-width="{ARROW_STROKE}"{dash_pattern}/>'
             f'<path d="{head}" fill="{colors[color_role]}"/>')
 
 
@@ -91,16 +98,20 @@ def pen_stroke(colors, x, y, width):
 def paper_box(colors, x, y, width, height, stroke_role="soft", dashed=False, corner=6):
     dash_pattern = ' stroke-dasharray="6,6"' if dashed else ""
     return (f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="{corner}" fill="{colors["panel"]}" '
-            f'stroke="{colors[stroke_role]}" stroke-width="{2 if stroke_role == "accent" else 1.4}"{dash_pattern}/>')
+            f'stroke="{colors[stroke_role]}" stroke-width="{FOCAL_STROKE if stroke_role == "accent" else PLAIN_STROKE}"{dash_pattern}/>')
 
 
-# Draw a step box: a number in the hand face, the step's name, and a short line under it.
-def step_box(colors, x, y, number, name, label, focal=False):
+# Draw a step box: a number in the hand face, the step's name, a short line under it, and a red-pen tick if marked.
+def step_box(colors, x, y, number, name, label, focal=False, ticked=False):
     width, height = 236, 92
-    return (paper_box(colors, x, y, width, height, "accent" if focal else "soft")
-            + pen_text(colors, x + 18, y + 40, number, size=30, color_role="accent" if focal else "soft")
-            + print_text(colors, x + 50, y + 38, name, size=21, weight=700, color_role="accent" if focal else "ink")
-            + print_text(colors, x + 50, y + 66, label, size=15, color_role="soft"))
+    box = (paper_box(colors, x, y, width, height, "accent" if focal else "soft", corner=10)
+           + pen_text(colors, x + 18, y + 40, number, size=30, color_role="accent" if focal else "soft")
+           + print_text(colors, x + 50, y + 38, name, size=21, weight=700, color_role="accent" if focal else "ink")
+           + print_text(colors, x + 50, y + 66, label, size=15, color_role="soft"))
+    if ticked:
+        # The tick starts inside the box and breaks out past its top right corner, as on the icon
+        box += pen_tick(colors, x + width - 58, y + 30, size=0.15, stroke_share=0.8)
+    return box
 
 
 # ---- Sheet helpers: paper and the repeating mark ----
@@ -112,6 +123,21 @@ def worksheet_paper(colors, height, slug):
             f'<rect width="{CANVAS_WIDTH}" height="{height}" fill="{colors["ground"]}"/>'
             f'<rect width="{CANVAS_WIDTH}" height="{height}" fill="url(#{slug}-rules)"/>'
             f'<path d="M{MARGIN_X} 0 V{height}" stroke="{colors["margin"]}" stroke-width="2"/>')
+
+
+# Draw the icon's red-pen tick: a short stroke down, then a long stroke up. Size 1 is the icon's own tick;
+# stroke_share below 1 thins the stroke for small ticks that sit beside text.
+def pen_tick(colors, x, y, size, stroke_share=1.0):
+    return (f'<path d="M{x},{y} l{101.5 * size:.1f},{116 * size:.1f} l{217.5 * size:.1f},{-304.5 * size:.1f}" '
+            f'fill="none" stroke="{colors["note"]}" stroke-width="{max(58 * size * stroke_share, 3):.1f}" '
+            f'stroke-linecap="round" stroke-linejoin="round"/>')
+
+
+# Draw the icon's mark: a blue-edged answer box with the tick breaking out of it. Size 1 is the icon at 1024 px.
+def answer_mark(colors, x, y, size):
+    box = (f'<rect x="{x}" y="{y}" width="{440 * size:.1f}" height="{260 * size:.1f}" rx="{34 * size:.1f}" '
+           f'fill="{colors["panel"]}" stroke="{colors["accent"]}" stroke-width="{max(40 * size, 3):.1f}"/>')
+    return box + pen_tick(colors, x + 130 * size, y + 160 * size, size)
 
 
 # Draw the repeating mark: a red-pen circle with the picture's lesson number, top right.
@@ -132,7 +158,7 @@ def banner_svg(colors, slug):
     parts = [worksheet_paper(colors, BANNER_HEIGHT, slug),
              print_text(colors, 80, 92, PROJECT_NAME, size=52, weight=700),
              pen_text(colors, 82, 140, "any subject · every result is real", size=30),
-             lesson_mark(colors, "✓")]
+             answer_mark(colors, CANVAS_WIDTH - 210, 52, 0.3)]
     return wrap_svg(slug, BANNER_HEIGHT, PROJECT_NAME,
                     "The project name written on a ruled worksheet, with a red-pen note: any subject, every result is real.",
                     "".join(parts))
@@ -140,7 +166,7 @@ def banner_svg(colors, slug):
 
 # ---- Picture: a tutorial against a lesson ----
 
-CONTRAST_HEIGHT = 470
+CONTRAST_HEIGHT = 500
 
 
 # Draw the contrast: a page of tutorial text you only read, against a lesson moment where a wrong pick shows its result.
@@ -151,7 +177,7 @@ def tutorial_vs_lesson_svg(colors, slug):
     parts.append(print_text(colors, 80, 96, "A tutorial", size=22, color_role="soft", weight=700))
     for row, width in enumerate([300, 330, 280, 320, 260, 310, 290, 200]):
         parts.append(f'<rect x="80" y="{128 + row * 30}" width="{width}" height="9" rx="4.5" fill="{colors["soft"]}" opacity="0.32"/>')
-    parts.append(pen_text(colors, 230, 420, "read · nod · forget", size=28, color_role="soft", anchor="middle"))
+    parts.append(pen_text(colors, 230, 462, "read · nod · forget", size=28, color_role="soft", anchor="middle"))
 
     # The arrow between them
     parts.append(line_arrow(colors, [(436, 240), (520, 240)]))
@@ -160,7 +186,7 @@ def tutorial_vs_lesson_svg(colors, slug):
     parts.append(print_text(colors, 560, 96, "A lesson", size=22, color_role="accent", weight=700))
     parts.append(print_text(colors, 560, 136, "After the host opens door 3,", size=19))
     parts.append(print_text(colors, 560, 162, "door 2's chance of hiding the car is", size=19))
-    parts.append(f'<rect x="560" y="176" width="112" height="40" rx="4" fill="{colors["panel"]}" stroke="{colors["note"]}" stroke-width="2.5"/>')
+    parts.append(f'<rect x="560" y="176" width="112" height="40" rx="6" fill="{colors["panel"]}" stroke="{colors["note"]}" stroke-width="{FOCAL_STROKE}"/>')
     parts.append(print_text(colors, 576, 203, "1 in 2  ✗", size=19, color_role="note", weight=700))
     parts.append(pen_stroke(colors, 684, 200, 34))
     parts.append(pen_text(colors, 726, 200, "see why ↓", size=27))
@@ -168,12 +194,17 @@ def tutorial_vs_lesson_svg(colors, slug):
     parts.append(print_text(colors, 580, 264, "What this choice leads to", size=16, color_role="soft", weight=700))
     for row, line in enumerate(["1 in 2 would mean your door's chance", "grew from 1 in 3, but the host never", "touches your door. Door 2 holds 2 in 3."]):
         parts.append(print_text(colors, 580, 292 + row * 22, line, size=17))
-    parts.append(pen_text(colors, 730, 420, "guess · pick · see why", size=28, color_role="accent", anchor="middle"))
+
+    # The right answer, filled in and ticked, as on the icon
+    parts.append(f'<rect x="560" y="364" width="112" height="40" rx="6" fill="{colors["panel"]}" stroke="{colors["accent"]}" stroke-width="{FOCAL_STROKE}"/>')
+    parts.append(print_text(colors, 576, 391, "2 in 3", size=19, color_role="accent", weight=700))
+    parts.append(pen_tick(colors, 636, 380, size=0.12, stroke_share=0.8))
+    parts.append(pen_text(colors, 730, 462, "guess · pick · see why", size=28, color_role="accent", anchor="middle"))
 
     parts.append(lesson_mark(colors, 1))
     return wrap_svg(slug, CONTRAST_HEIGHT, "A tutorial against a lesson",
                     "Left, a tutorial: lines of text you read, nod at and forget. Right, a lesson: in the Monty Hall game the "
-                    "learner says door 2's chance is 1 in 2, and sees why it is really 2 in 3.",
+                    "learner says door 2's chance is 1 in 2, sees why, and then fills in 2 in 3, ticked in red pen.",
                     "".join(parts))
 
 
@@ -189,6 +220,7 @@ STEPS = [  # number, name, short line; the first row runs left to right, the sec
     ("6", "Publish", "then revise from use"),
 ]
 FOCAL_STEPS = {"Discover", "Check"}    # at most two accents per picture
+TICKED_STEP = "Check"                  # the step that marks the work right, as the icon does
 
 
 # Draw the six steps in two rows, joined by right-angled arrows, with two red-pen notes.
@@ -217,7 +249,8 @@ def how_it_works_svg(colors, slug):
 
     # The boxes
     for (number, name, label), (left, top) in zip(STEPS, places):
-        parts.append(step_box(colors, left, top, number, name, label, focal=name in FOCAL_STEPS))
+        parts.append(step_box(colors, left, top, number, name, label,
+                              focal=name in FOCAL_STEPS, ticked=name == TICKED_STEP))
 
     # Red-pen notes, each right under the step it is about
     parts.append(pen_text(colors, lefts[0] + 8, row_tops[0] + box_height + 42, "you confirm what it assumed", size=25))
@@ -239,8 +272,27 @@ STRIP_HEIGHT = 36
 def strip_svg(colors, slug):
     parts = [f'<rect width="{CANVAS_WIDTH}" height="{STRIP_HEIGHT}" fill="{colors["ground"]}"/>',
              f'<path d="M0 {STRIP_HEIGHT // 2} H{CANVAS_WIDTH}" stroke="{colors["rule"]}" stroke-width="1.5"/>',
-             f'<path d="M{MARGIN_X} 0 V{STRIP_HEIGHT}" stroke="{colors["margin"]}" stroke-width="2"/>']
+             f'<path d="M{MARGIN_X} 0 V{STRIP_HEIGHT}" stroke="{colors["margin"]}" stroke-width="2"/>',
+             pen_tick(colors, CANVAS_WIDTH - 52, 17, size=0.07)]
     return wrap_svg(slug, STRIP_HEIGHT, "Section divider", "A thin strip of ruled paper between README sections.", "".join(parts))
+
+
+# ---- Picture: the social preview card ----
+
+SOCIAL_HEIGHT = 480                    # 960 x 480 exports to 1920 x 960, GitHub's 2:1 card
+
+
+# Draw the card GitHub shows when the repo link is shared: the icon's mark, the name and the promise.
+def social_preview_svg(colors, slug):
+    parts = [worksheet_paper(colors, SOCIAL_HEIGHT, slug),
+             answer_mark(colors, 100, 168, 0.36),
+             print_text(colors, 320, 210, PROJECT_NAME, size=54, weight=700),
+             pen_text(colors, 322, 262, "any subject · every result is real", size=34),
+             print_text(colors, 322, 330, "A Claude Code plugin that turns any topic, doc or repo", size=20, color_role="soft"),
+             print_text(colors, 322, 358, "into a lesson you work through.", size=20, color_role="soft")]
+    return wrap_svg(slug, SOCIAL_HEIGHT, PROJECT_NAME,
+                    "The plugin's mark, a filled-in blank ticked in red pen, beside the project name and its promise.",
+                    "".join(parts))
 
 
 # ---- Page wrapper ----
@@ -280,7 +332,9 @@ PICTURES = [  # file name, page heading, drawing function
     ("tutorial-vs-lesson", "A tutorial against a lesson", tutorial_vs_lesson_svg),
     ("how-it-works", "How it works", how_it_works_svg),
     ("strip", "Section divider", strip_svg),
+    ("social-preview", "Social preview", social_preview_svg),
 ]
+LIGHT_ONLY_PICTURES = {"social-preview"}   # GitHub shows one card, so it has no dark variant
 
 
 # Write a light and a dark page for every picture into the output folder.
@@ -288,6 +342,8 @@ def write_all_pictures(output_folder: Path) -> None:
     output_folder.mkdir(parents=True, exist_ok=True)
     for suffix, colors in (("", LIGHT_PALETTE), ("-dark", DARK_PALETTE)):
         for file_name, heading, draw_picture in PICTURES:
+            if suffix == "-dark" and file_name in LIGHT_ONLY_PICTURES:
+                continue
             slug = f"{file_name}{suffix}"
             page_file = output_folder / f"{slug}.html"
             page_file.write_text(picture_page(colors, heading, draw_picture(colors, slug)), encoding="utf-8")

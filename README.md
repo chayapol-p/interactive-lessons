@@ -9,7 +9,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/tutorial-vs-lesson-dark.png">
-  <img src="docs/images/tutorial-vs-lesson.png" width="100%" alt="Diagram that shows a tutorial you only read beside a lesson where a wrong pick shows its real result.">
+  <img src="docs/images/tutorial-vs-lesson.png" width="100%" alt="Diagram that shows a tutorial you only read beside a lesson where a wrong pick shows its real result, then the right answer, ticked in red pen.">
 </picture>
 <p><em>Lesson 1 · In a lesson you commit to an answer first, then see where it leads.</em></p>
 
