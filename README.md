@@ -3,9 +3,13 @@
   <img src="docs/images/banner.png" width="100%" alt="Interactive Lessons">
 </picture>
 
-**Reading a tutorial isn't learning.** Interactive Lessons turns any subject into a lesson where you guess, pick, and see where a wrong choice really leads.
+<h3 align="center">Reading a tutorial isn't learning.</h3>
 
-[Install](#install) · [How it works](#how-it-works) · [Try it](#try-it) · [Vision and principles](VISION.md)
+<p align="center">Interactive Lessons turns any subject into a lesson where you guess, pick, and see where a wrong choice really leads.</p>
+
+<p align="center"><a href="#install">Install</a> · <a href="#how-it-works">How it works</a> · <a href="#what-a-lesson-gives-you">What a lesson gives you</a> · <a href="#try-it">Try it</a> · <a href="VISION.md">Vision and principles</a></p>
+
+<br>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/tutorial-vs-lesson-dark.png">
@@ -24,6 +28,8 @@
   </picture>
 </p>
 <p align="center"><em>A real build of the bundled Monty Hall example. Left: tap After, and door 3's chance moves onto door 2, and yours stays at 1 in 3. Right: the learner said 1 in 2, and sees why it is 2 in 3.</em></p>
+
+**Try the lesson itself:** [Stay or Switch?](https://claude.ai/artifact/FRiZUdRWFHotBmPBw1juau) is the bundled example, live in claude.ai. It has 5 chapters of about 5 minutes each. The tutor and the grader ask to use your own Claude account.
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/strip-dark.png"><img src="docs/images/strip.png" width="100%" alt=""></picture>
 
@@ -45,6 +51,28 @@ You ask your agent for a lesson on a topic, some docs or a repo. The skill guess
 6. **Publish and revise.** Publish as a claude.ai artifact. A feedback round edits the blueprint and re-checks only what changed.
 
 **Each chapter** opens with a guess, teaches one idea at a time, and asks you to fill 1 to 3 blanks in real material: a code slice, a sentence, a rule or a formula. Every wrong option is a real mistake and shows where it really leads. An AI tutor sits beside every block. It gives hints and keeps the solution back. **Hint** and **Show solution** are buttons you press yourself.
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/strip-dark.png"><img src="docs/images/strip.png" width="100%" alt=""></picture>
+
+## What a lesson gives you
+
+- **Pictures that move, or that you play.** Where the motion is the idea, a tap plays it: the host opens 8 goat doors one at a time, and one door is left. Where a number is hard to believe, you deal 100 games yourself and count the wins.
+- **A tutor that knows the lesson.** Every question you ask carries the chapter's goal, the block you are on, the code around it and the mistakes people often make there. When the answer is not in the lesson and it is unsure, it says so.
+- **Checks that test the idea.** Each key idea and each common mistake gets a quiz, and a mistake's card opens only after you answer it. When you explain something in your own words, an AI grader checks it against a rubric and names the first problem.
+- **A field guide at the end.** The big idea, one line per chapter with a link back, the questions you got wrong while sure, and where each fact comes from.
+- **Progress that keeps.** In claude.ai the page saves each learner's answers, so they can stop and come back.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/ten-doors-dark.gif">
+    <img src="docs/images/ten-doors.gif" width="320" alt="Animation of ten doors: you pick door 1, the host opens 8 of the other 9 one at a time, all goats, and door 7 is left.">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/field-guide-dark.png">
+    <img src="docs/images/field-guide.png" width="320" alt="Screenshot of the field guide: the big idea, then one line for each of the 5 chapters.">
+  </picture>
+</p>
+<p align="center"><em>From the same example. Left: the host opens the other doors one at a time, so door 7 carries their whole 9 in 10. Right: the field guide on the last page.</em></p>
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/strip-dark.png"><img src="docs/images/strip.png" width="100%" alt=""></picture>
 
