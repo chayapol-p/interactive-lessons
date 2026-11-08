@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SKILL = Path(os.environ.get("SKILL_FOLDER", REPO / "skills" / "building-interactive-lessons"))
+SKILL = Path(os.environ.get("SKILL_FOLDER", REPO / "plugin" / "skills" / "building-interactive-lessons"))
 IMAGES = REPO / "docs" / "images"
 
 # Build the example lesson with the skill's own build script

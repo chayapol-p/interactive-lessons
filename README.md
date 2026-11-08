@@ -111,7 +111,7 @@ Make a 15-minute lesson on why the house always wins at roulette, with pictures.
 **Without an agent,** build the Monty Hall example from the repo root:
 
 ```bash
-cd skills/building-interactive-lessons
+cd plugin/skills/building-interactive-lessons
 python3 scripts/check_blueprint.py assets/example-monty-blueprint.yaml --run-tests
 python3 scripts/build_page.py assets/example-monty-blueprint.yaml --out /tmp/lesson/lesson.html
 ```

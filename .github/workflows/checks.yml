@@ -11,9 +11,9 @@ jobs:
       - run: pip install pyyaml ruamel.yaml
       - name: Example blueprints pass every check
         run: |
-          python3 skills/building-interactive-lessons/scripts/check_blueprint.py skills/building-interactive-lessons/assets/example-blueprint.yaml --run-tests
-          python3 skills/building-interactive-lessons/scripts/check_blueprint.py skills/building-interactive-lessons/assets/example-concepts-blueprint.yaml --run-tests
-          python3 skills/building-interactive-lessons/scripts/check_blueprint.py skills/building-interactive-lessons/assets/example-monty-blueprint.yaml --run-tests
+          python3 plugin/skills/building-interactive-lessons/scripts/check_blueprint.py plugin/skills/building-interactive-lessons/assets/example-blueprint.yaml --run-tests
+          python3 plugin/skills/building-interactive-lessons/scripts/check_blueprint.py plugin/skills/building-interactive-lessons/assets/example-concepts-blueprint.yaml --run-tests
+          python3 plugin/skills/building-interactive-lessons/scripts/check_blueprint.py plugin/skills/building-interactive-lessons/assets/example-monty-blueprint.yaml --run-tests
       - name: The checker catches every deliberate break
         run: python3 tests/check_catches_breaks.py
       - name: Install a browser for the click checks
@@ -28,8 +28,8 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, re, sys
-          plugin = json.load(open(".claude-plugin/plugin.json"))["version"]
-          skill = re.search(r"^\s*version:\s*(\S+)", open("skills/building-interactive-lessons/SKILL.md").read(), re.M).group(1)
+          plugin = json.load(open("plugin/.claude-plugin/plugin.json"))["version"]
+          skill = re.search(r"^\s*version:\s*(\S+)", open("plugin/skills/building-interactive-lessons/SKILL.md").read(), re.M).group(1)
           evals = json.load(open("evals/evals.json"))["version"]
           if len({plugin, skill, evals}) != 1:
               sys.exit(f"plugin.json says {plugin}, SKILL.md says {skill}, evals.json says {evals}")

@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "interactive-lessons",
-      "source": "./",
+      "source": "./plugin",
       "description": "Turns any subject, docs or a code repo into an interactive lesson page where every result is real."
     }
   ]

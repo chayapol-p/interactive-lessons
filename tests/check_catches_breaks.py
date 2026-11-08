@@ -9,7 +9,7 @@ from pathlib import Path
 
 import tempfile
 
-K = Path(__file__).resolve().parent.parent / "skills" / "building-interactive-lessons"
+K = Path(__file__).resolve().parent.parent / "plugin" / "skills" / "building-interactive-lessons"
 here = Path(tempfile.mkdtemp())
 missed = []
 example = (K / "assets/example-blueprint.yaml").read_text()

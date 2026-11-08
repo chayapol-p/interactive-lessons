@@ -14,7 +14,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILL = ROOT / "skills" / "building-interactive-lessons"
+SKILL = ROOT / "plugin" / "skills" / "building-interactive-lessons"
 BUILD_FOLDER = Path(tempfile.mkdtemp())
 failures = []
 

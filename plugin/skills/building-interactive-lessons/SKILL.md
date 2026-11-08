@@ -5,7 +5,7 @@ license: MIT
 compatibility: Needs Python 3 with PyYAML (checker and build) and ruamel.yaml (recording outputs), node for JavaScript slices, and Playwright with Chromium or Chrome for phone screenshots. Best in claude.ai, where a published artifact can ask Claude (tutor and grader) and keep progress. Elsewhere it produces one HTML file with the AI features hidden.
 metadata:
   author: chayapol.par
-  version: 0.4.0
+  version: 0.4.1
 ---
 
 # Building interactive lessons

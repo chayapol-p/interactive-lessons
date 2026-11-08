@@ -8,7 +8,7 @@ quiet paper, square corners (the marketplace rounds them), and it must still rea
 
   Input:  nothing; the icon is drawn from the data in this file
   Output: <output folder>/icon.html, one 1024 x 1024 <svg>
-          (export it to .claude-plugin/icon.png with readme-kit's export_png.py, or any
+          (export it to plugin/.claude-plugin/icon.png with readme-kit's export_png.py, or any
           headless browser screenshot of the <svg> at 1024 px)
 
 Run: python3 docs/diagram/build_icon.py docs/diagram

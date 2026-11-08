@@ -1103,11 +1103,12 @@ function authoredFigure(block) {
 function tokensFigure(figure) {
   return h("div", { class: "token-rows" }, figure.rows.map((row) => h("div", {},
     row.label ? h("p", { class: "token-row-label" }, row.label) : null,
-    h("div", { class: "token-chips", role: "list", "aria-label": `${row.tokens.length} tokens` }, row.tokens.map((token) => {
-      const leadingSpace = token.text.startsWith(" ");
-      return h("span", { class: `token-chip${token.hot ? " hot" : ""}`, role: "listitem", "aria-label": `token "${token.text}"${token.id !== undefined ? ", number " + token.id : ""}` },
-        h("span", { class: "token-text" }, leadingSpace ? h("span", { class: "token-space" }, "·") : null, leadingSpace ? token.text.slice(1) : token.text),
-        token.id !== undefined ? h("span", { class: "token-id" }, String(token.id)) : null);
+    h("div", { class: "token-chips", role: "list", "aria-label": row.tokens.length + " tokens" }, row.tokens.map((piece) => {
+      const leadingSpace = piece.text.startsWith(" ");
+      const hasNumber = piece.id !== undefined;
+      return h("span", { class: piece.hot ? "token-chip hot" : "token-chip", role: "listitem", "aria-label": 'token "' + piece.text + '"' + (hasNumber ? ", number " + piece.id : "") },
+        h("span", { class: "token-text" }, leadingSpace ? h("span", { class: "token-space" }, "·") : null, leadingSpace ? piece.text.slice(1) : piece.text),
+        hasNumber ? h("span", { class: "token-id" }, String(piece.id)) : null);
     })))));
 }
 // kind: scatter. Labelled points on a plain 2D map; highlighted points stand out.

@@ -1,6 +1,6 @@
 {
  "skill": "building-interactive-lessons",
- "version": "0.4.0",
+ "version": "0.4.1",
  "notes": "Trigger cases test the description. Functional cases test behaviour; exact checks first (free), judge checks second. Run each functional case 3 times and compare with a run without the skill. Regression cases come from the first real test (a 7-chapter RAG lesson).",
  "trigger_cases": {
   "should_trigger": [

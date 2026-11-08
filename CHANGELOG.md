@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 · 8 Nov 2026
+- The plugin now lives in its own folder, `plugin/`. The marketplace file at the repo root points there, so the install command is unchanged, and the README's picture tools in `docs/` are no longer part of the plugin.
+- The plugin has an icon: a filled-in blank, ticked in red pen.
+- The word-piece picture in the template calls each piece `piece`, so no name inside the page's code looks like a credential.
+
 ## 0.4.0 · 6 Nov 2026
 - One Check button on fill-the-blanks: the verdict and where each pick leads, together.
 - Stepped pictures keep their tallest step's height, so the page never jumps.
