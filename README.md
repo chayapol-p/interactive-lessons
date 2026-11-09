@@ -129,7 +129,7 @@ Make a 15-minute lesson on why the house always wins at roulette, with pictures.
 ## How a lesson is checked
 
 - **Three reviewers who did not write it.** A content reviewer works through every rule and runs every example again. A learner reviewer uses the page at phone width as a new learner and ends by teaching the big idea back. A scene reviewer taps through every step of every moving picture, light and dark, with motion on and off.
-- **No agents, no pretending.** In a plain claude.ai chat the agent runs the same checklists itself and tells you the lesson was self-checked, not reviewed.
+- **Without agents.** In a plain claude.ai chat the agent runs the same checklists itself, and tells you the lesson was only self-checked.
 - **The scripted edition** on `full` runs the same rules as scripts, with 26 deliberate breaks that its tests catch.
 - **Where the rules came from:** most come from problems found in real lessons, such as a RAG workshop lesson with 7 chapters and a How LLMs Work lesson with 6 chapters.
 - **Limits:** the trigger prompts and behaviour cases in `evals/evals.json` are written but not yet run as a suite, so this README makes no pass-rate claim.

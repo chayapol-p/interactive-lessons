@@ -66,6 +66,7 @@ Judgement call: could a learner pass this check by guessing, by matching words, 
 - A key-idea check gives a situation the chapter did not show. If a learner can only answer the chapter's own example, they memorised it.
 - A pitfall check shows code or a statement containing the misconception and asks what is wrong.
 - Options are similar in length and style. No "all of the above", no trick wording. The right option is never much longer than the wrong ones **(checked)**.
+- The right option moves: the page keeps blueprint order, so a lesson whose right answer is always first can be passed without reading **(checked)**.
 - A guess's right answer never shows before the guess **(checked)**, and a blank's right option is never written in the block just above it **(checked)**. See `chapter-design.md` section 8.
 
 **After an answer**: mark the choice right or wrong, reveal the correct option, show the picked option's explanation first, then the correct one's.

@@ -61,6 +61,8 @@ The numbers below are the limits. "About" means a soft limit: a few words over i
 - [ ] Every fact's `status` is `confirmed` or `inferred`. A confirmed fact names its `source`.
 - [ ] Every misconception is listed by some chapter, and every chapter's listed misconception exists.
 - [ ] Every glossary term appears somewhere in the lesson's text.
+- [ ] Every claim an idea, a picture or a feedback line makes about how the subject works matches a confirmed fact. A simplification says what it leaves out. (A picture that shows a mechanism working the wrong way teaches the wrong mechanism, however well it reads.)
+- [ ] A text option marked `output_from: source` says only what its source says; anything worked out goes under `worked`, with the steps.
 
 ## 4. The story arc
 
@@ -69,6 +71,7 @@ The numbers below are the limits. "About" means a soft limit: a few words over i
 - [ ] The first chapter is the hook; the last is the payoff.
 - [ ] Every `milestone` starts "I can ".
 - [ ] Every chapter but the last has an `open_question` ending in "?"; the last chapter has none.
+- [ ] Each `open_question` is the question the next chapter's opening predict picks up.
 
 ## 5. Chapter links and bridges
 
@@ -96,6 +99,8 @@ The numbers below are the limits. "About" means a soft limit: a few words over i
 - [ ] Every listed misconception has a `pitfall` block in the chapter; every pitfall's misconception is listed by the chapter.
 - [ ] No two `check` blocks and no two `pitfall` blocks sit side by side.
 - [ ] A `check` with `purpose: pitfall` sits right before the pitfall card for the misconception it tests (test, then reveal).
+- [ ] No pitfall card sits before any check whose answer it states.
+- [ ] A `must_get_right` item whose `can_do` says "explain" is tested by an `explain` block; one tested only by a pick-one check says "spot", "choose" or "predict" instead.
 
 ## 7. Blocks: predict, idea, check, recap, compare, code
 
@@ -134,9 +139,11 @@ The numbers below are the limits. "About" means a soft limit: a few words over i
 - [ ] An `idea` has at most about 45 words; detail goes in `more`.
 - [ ] Each `why_right` and `why_wrong` is one sentence.
 - [ ] A diagram's caption (`brief.understand`) and every step caption have at most about 25 words.
-- [ ] **No early answers.** A predict's right answer never shows before the guess: not in a chapter title, an objective, a milestone up to this chapter, nor in a picture above it in the chapter (caption, step captions, tile words, text drawn in an svg). The giveaway is a chance or count in the right option ("2 in 3", "60%") that no wrong option shares, or the whole right option when it is 3 words or more.
+- [ ] **No early answers.** A predict's right answer never shows before the guess: not in a chapter title, an objective, a milestone up to this chapter, nor in a picture above it in the chapter (caption, step captions, tile words, text drawn in an svg). The giveaway is a chance or count in the right option ("2 in 3", "60%") that no wrong option shares, or the whole right option when it is 3 words or more. Read the earlier text the learner meets on the way too: the previous chapter's `bridge_out`, this chapter's `bridge_in`, and every idea and `more` above the guess.
+- [ ] **A guess the learner can get wrong.** Each predict has a gut answer that the stated learner might really pick. A yes or no they already know from their own work is not a guess.
 - [ ] **No copying.** A blank's right option (4 characters or more) is not written word for word in the block just above the exercise.
-- [ ] **Fair length.** The right option is not more than 1.5 times as long as the longest wrong option and 12 or more characters longer.
+- [ ] **Fair length.** The right option is not more than 1.5 times as long as the longest wrong option and 12 or more characters longer. Across the lesson, it is longer than every wrong option in no more than about half the questions.
+- [ ] **Fair position.** The page keeps options in blueprint order, so vary where the right option sits. Across the lesson it takes each position about equally, and it is never first in every question.
 - [ ] **Test the idea, not the example.** A predict or check question names an example detail (a section number such as 9.1.6, "Law 13", "clause 2", a file name such as `chunker.py`, a lab number) only if an earlier block showed it, or the question explains it in brackets right after it. No option is only an example detail.
 - [ ] **No promises in prose.** No block says that a later chapter adds to, extends or redraws something ("the next chapter adds…", "this grows across the chapters"). Plan it as a growing diagram (section 13) instead.
 
@@ -189,6 +196,7 @@ The numbers below are the limits. "About" means a soft limit: a few words over i
 - [ ] A slider or buttons control has 2 to 8 values and a `start` that is the index of one of them. Buttons: at most 3 values, each at most 12 characters.
 - [ ] A run control has `trials` (whole numbers from 1 to 1000, one button each), and the script sets `scene.run(trials, settings)`, which returns one line summing up the trials.
 - [ ] A scene with `data` has `computed_by` (python that prints `{"data": ...}`), and `data` is exactly what it prints.
+- [ ] Every share or weight a scene's end state uses is in its data and drawn, so what the learner sees adds up.
 
 **Play block**
 - [ ] `unit` is what one deal makes, plural and lower case ("games", "replies").

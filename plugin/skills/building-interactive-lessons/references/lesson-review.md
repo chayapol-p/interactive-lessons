@@ -72,6 +72,9 @@ A teach-back that matches the big idea and an honest "I get it" is a pass. Anyth
 > 5. Motion lands where a jump lands: reach a step with Next and screenshot it; then Next and Back to return to it by jump; screenshot again. The two must match.
 > 6. Every run button gives a one-line summary.
 > 7. With reduced motion (emulate `prefers-reduced-motion: reduce`), every step jumps straight to its end picture.
+> 8. Play again visibly replays the move into the step: the picture leaves the step and moves back into it.
+> 9. No label sits on another label or on a dot it does not name; every share the end picture uses is drawn; no share shows 0% or 100% unless it is.
+> 10. Every button and control is at least 44 px tall.
 >
 > Save one screenshot per scene step and theme, and read them in order like a comic strip: does each step show one change, and does its caption say where to look?
 > Report in the fixed format (section 6). Fix nothing.

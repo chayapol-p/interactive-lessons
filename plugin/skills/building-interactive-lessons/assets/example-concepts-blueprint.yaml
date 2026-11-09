@@ -330,12 +330,6 @@ chapters:
         blanks:
           - id: unit
             options:
-              - text: 8 token numbers
-                correct: true
-                why_right: Seven words and the full stop are 8 tokens, each sent as its number.
-                output: "8 numbers: 773, 5657, 546, 279, 10674, 504, 45098, 18. Nothing else reaches the model."
-                output_from: source
-                output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence
               - text: 34 letters
                 correct: false
                 why_wrong: The letters never reach the model; it gets the token numbers only.
@@ -350,6 +344,12 @@ chapters:
                 output: "8 tokens, not 7 words: the full stop is its own token. A rare word such as strawberry would add 3."
                 output_from: source
                 output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence and on strawberry
+              - text: 8 token numbers
+                correct: true
+                why_right: Seven words and the full stop are 8 tokens, each sent as its number.
+                output: "8 numbers: 773, 5657, 546, 279, 10674, 504, 45098, 18. Nothing else reaches the model."
+                output_from: source
+                output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence
         hints:
           - Count the chips in the river row of the picture.
       - id: token-key-check
@@ -370,9 +370,9 @@ chapters:
         tests: same-cost-every-language
         question: "The same tokenizer needs 2 tokens for \"Bangkok\" and 14 for the city's Thai name. A Thai support bot and an English one answer the same questions. What do you expect?"
         options:
-          - {text: "The Thai bot uses many more tokens, so it costs more and fills its window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
           - {text: "Both cost the same, because the meaning is the same", correct: false, why_wrong: "Cost counts tokens, not meaning."}
           - {text: "The Thai bot is cheaper, because Thai words are shorter", correct: false, why_wrong: "Fewer characters can still mean far more tokens."}
+          - {text: "The Thai bot uses many more tokens, so it costs more and fills its window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
       - id: cost-pitfall
         type: pitfall
         misconception: same-cost-every-language
@@ -501,12 +501,6 @@ chapters:
         blanks:
           - id: place
             options:
-              - text: next to money and interest
-                correct: true
-                why_right: Loan is used in the same kind of sentences as money and interest, so training puts it beside them.
-                output: "In the toy map, loan is at (0.1, 0.9), right beside money at (0.15, 1.0) and interest at (0.0, 1.0)."
-                output_from: worked
-                output_source: read from the toy map's numbers
               - text: next to loam, which is spelled almost the same
                 correct: false
                 why_wrong: Positions come from how words are used, not from how they are spelled.
@@ -521,6 +515,12 @@ chapters:
                 output: "The next number is just the next row of the table, usually an unrelated piece of text. Meaning is in the embedding, not the number."
                 output_from: worked
                 output_source: follows from how an embedding table is looked up
+              - text: next to money and interest
+                correct: true
+                why_right: Loan is used in the same kind of sentences as money and interest, so training puts it beside them.
+                output: "In the toy map, loan is at (0.1, 0.9), right beside money at (0.15, 1.0) and interest at (0.0, 1.0)."
+                output_from: worked
+                output_source: read from the toy map's numbers
         hints:
           - Is the position about spelling, about the number, or about how the word is used?
       - id: spelling-pitfall
@@ -895,17 +895,17 @@ chapters:
         blanks:
           - id: word
             options:
-              - text: river
-                correct: true
-                why_right: River gets the biggest share after bank itself, because their meanings overlap most.
-                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
-                output_from: worked
-                output_source: worked out with the toy model behind this chapter's pictures
               - text: the, right before it
                 correct: false
                 why_wrong: Attention goes by relevance, not distance; the gets almost nothing.
                 misconception: nearest-word-matters-most
                 output: "The word before bank gets only 0.02 of its attention. Distance does not matter; overlap of meaning does."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: river
+                correct: true
+                why_right: River gets the biggest share after bank itself, because their meanings overlap most.
+                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
                 output_from: worked
                 output_source: worked out with the toy model behind this chapter's pictures
               - text: was
@@ -917,12 +917,6 @@ chapters:
                 output_source: worked out with the toy model behind this chapter's pictures
           - id: side
             options:
-              - text: water
-                correct: true
-                why_right: River and flooded are about water, so blending them in moves bank toward water.
-                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
-                output_from: worked
-                output_source: worked out with the toy model behind this chapter's pictures
               - text: money
                 correct: false
                 why_wrong: That is bank in the money sentence; here its neighbours are about water.
@@ -935,6 +929,12 @@ chapters:
                 why_wrong: The embedding is only the start; attention moves it.
                 misconception: one-fixed-meaning
                 output: "Bank starts at water 0.50, money 0.50, and leaves attention at water 0.75, money 0.14. It moved."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: water
+                correct: true
+                why_right: River and flooded are about water, so blending them in moves bank toward water.
+                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
                 output_from: worked
                 output_source: worked out with the toy model behind this chapter's pictures
         hints:
@@ -957,9 +957,9 @@ chapters:
         tests: nearest-word-matters-most
         question: "A teammate says: an LLM understands a word mostly from the word right before it. What is wrong with that?"
         options:
-          - {text: "Each token can weigh every token in the window, near or far", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
           - {text: "Nothing; the previous word decides the meaning", correct: false, why_wrong: "In the river sentence, the word before bank gets 0.02 of its attention."}
           - {text: "It is the word right after that matters most", correct: false, why_wrong: "Neither side wins by position; relevance wins."}
+          - {text: "Each token can weigh every token in the window, near or far", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
       - id: nearest-pitfall
         type: pitfall
         misconception: nearest-word-matters-most
@@ -1003,8 +1003,8 @@ chapters:
         type: predict
         question: "\"The trophy didn't fit in the suitcase because it was too big.\" What is too big, and could one quick look at the words settle it?"
         options:
-          - {text: "The trophy, and it takes combining several clues", correct: true, why_right: "You need fit, too big and which thing goes inside the other, together."}
           - {text: "The suitcase, since it is the nearest noun to it", correct: false, why_wrong: "A suitcase that is too big would hold the trophy fine."}
+          - {text: "The trophy, and it takes combining several clues", correct: true, why_right: "You need fit, too big and which thing goes inside the other, together."}
       - id: layers-idea
         type: idea
         key: true
@@ -1048,9 +1048,9 @@ chapters:
         tests: layers-idea
         question: A smaller model with fewer layers misreads which person a pronoun points to in long sentences. What does that suggest?
         options:
-          - {text: "It has fewer rounds to combine the clues that settle the pronoun", correct: true, why_right: "Depth is what lets clues be combined step by step."}
           - {text: "Its tokenizer split the pronoun wrongly", correct: false, why_wrong: "Pronouns are short, common tokens; the problem is combining clues."}
           - {text: "Its layers were programmed without a pronoun rule", correct: false, why_wrong: "Nobody programs such rules; layers learn what they do."}
+          - {text: "It has fewer rounds to combine the clues that settle the pronoun", correct: true, why_right: "Depth is what lets clues be combined step by step."}
       - id: layers-recap
         type: recap
         text: A layer is attention plus a per-token refinement; stacking many layers builds meaning from combined clues.
@@ -1096,8 +1096,8 @@ chapters:
         type: predict
         question: You send the same prompt twice and get two different replies. Is something broken?
         options:
-          - {text: "Yes, a model should always give the same answer", correct: false, why_wrong: "Variety is built in: each token is picked from odds."}
           - {text: "No, each token is picked from odds, so picks can differ", correct: true, why_right: "Two runs can take different paths from the same odds."}
+          - {text: "Yes, a model should always give the same answer", correct: false, why_wrong: "Variety is built in: each token is picked from odds."}
       - id: odds-idea
         type: idea
         key: true
@@ -1136,7 +1136,8 @@ chapters:
               import json, random
               from toy_llm import NEXT_SCORES, softmax
               temperatures = ["0.2", "0.7", "1.0", "1.5"]
-              odds = {t: [round(share, 4) for share in softmax(list(NEXT_SCORES.values()), float(t))] for t in temperatures}
+              # 6 decimals, so a tiny chance is never stored as 0
+              odds = {t: [round(share, 6) for share in softmax(list(NEXT_SCORES.values()), float(t))] for t in temperatures}
               # One example draw, low enough on the strip to land in the top word's slice at every temperature
               example_draw = round(random.Random(7).random() * 0.4, 3)
               print(json.dumps({"data": {"words": list(NEXT_SCORES), "temperatures": temperatures, "odds": odds, "example_draw": example_draw}}))
@@ -1154,29 +1155,29 @@ chapters:
               - '1.5'
             odds:
               '0.2':
-                - 0.9972
-                - 0.0025
-                - 0.0003
-                - 0.0
-                - 0.0
+                - 0.997176
+                - 0.002472
+                - 0.000335
+                - 0.000017
+                - 0.000001
               '0.7':
-                - 0.7445
-                - 0.1341
-                - 0.0757
-                - 0.0321
-                - 0.0136
+                - 0.744453
+                - 0.13407
+                - 0.075712
+                - 0.03213
+                - 0.013635
               '1.0':
-                - 0.5971
-                - 0.1798
-                - 0.1206
-                - 0.0662
-                - 0.0363
+                - 0.59712
+                - 0.179849
+                - 0.120557
+                - 0.066163
+                - 0.036311
               '1.5':
-                - 0.459
-                - 0.2062
-                - 0.158
-                - 0.1059
-                - 0.071
+                - 0.458965
+                - 0.206226
+                - 0.157955
+                - 0.10588
+                - 0.070974
             example_draw: 0.13
           script: |
             // Layout: the strip on top, then one row per word with its share and a bin that fills with draws
@@ -1186,6 +1187,13 @@ chapters:
             const oddsAt = (settings) => scene.data.odds[temperatures[settings.temperature]];
             // Which slice a point from 0 to 1 lands in
             const sliceAt = (point, shares) => { let edge = 0; for (let i = 0; i < shares.length; i += 1) { edge += shares[i]; if (point < edge) return i; } return shares.length - 1; };
+
+            // A share as a percentage: a word that can still be drawn never shows 0%, and one that can still lose never shows 100%
+            function percentText(share) {
+              if (share > 0 && share < 0.005) return "<1%";
+              if (share < 1 && share > 0.995) return ">99%";
+              return `${Math.round(share * 100)}%`;
+            }
 
             // The strip: one slice per word; a label only where the slice is wide enough to hold it
             scene.add("text", { x: left, y: stripTop - 10, class: "svg-text small" }, "All the odds, as one strip");
@@ -1208,7 +1216,7 @@ chapters:
                 const width = (right - left) * share;
                 scene.move(slices[i], { x, width });
                 scene.move(sliceLabels[i], { x: x + width / 2, opacity: width >= 48 ? 1 : 0 });
-                scene.write(shareTexts[i], `${Math.round(share * 100)}%`);
+                scene.write(shareTexts[i], percentText(share));
                 x += width;
               });
               // Step 2: one draw lands in a slice, and that word lights up
@@ -1351,12 +1359,6 @@ chapters:
         blanks:
           - id: effect
             options:
-              - text: almost certain to be picked
-                correct: true
-                why_right: Low temperature sharpens the odds, so the top token takes nearly all of them.
-                output: "Flooded's chance goes from 0.60 at temperature 1.0 to 1.00 at 0.2 (rounded)."
-                output_from: worked
-                output_source: worked out with the toy model behind this chapter's pictures
               - text: less likely, because the model is less confident
                 correct: false
                 why_wrong: Low temperature makes the top token more likely, not less.
@@ -1371,6 +1373,12 @@ chapters:
                 output: "The same 5 words keep the same order at every temperature; only their shares change."
                 output_from: worked
                 output_source: worked out with the toy model behind this chapter's pictures
+              - text: almost certain to be picked
+                correct: true
+                why_right: Low temperature sharpens the odds, so the top token takes nearly all of them.
+                output: "Flooded's chance goes from 0.60 at temperature 1.0 to 1.00 at 0.2 (rounded)."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
         hints:
           - Slide to 0.2 and read flooded's share.
       - id: sampling-key-check
@@ -1379,8 +1387,8 @@ chapters:
         tests: odds-idea
         question: You want a classifier prompt to give the same label every time it sees the same text. What setting helps most?
         options:
-          - {text: "A temperature near 0, so the top token is nearly always picked", correct: true, why_right: "Sharp odds mean the same pick on every run."}
           - {text: "A high temperature, so the model thinks harder", correct: false, why_wrong: "High temperature spreads the odds and adds variety, not thought."}
+          - {text: "A temperature near 0, so the top token is nearly always picked", correct: true, why_right: "Sharp odds mean the same pick on every run."}
           - {text: "A longer reply, so the label is checked twice", correct: false, why_wrong: "Each extra token is another pick from odds; length adds no consistency."}
       - id: temperature-pitfall
         type: pitfall
@@ -1391,9 +1399,9 @@ chapters:
         tests: looks-up-answer
         question: "A teammate says: the model found the answer in its memory, so asking again should give the same words. What is wrong with that?"
         options:
-          - {text: "Replies are built token by token from odds, so a new run can differ", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
           - {text: "Nothing; the same question should give the same words", correct: false, why_wrong: "Only a temperature near 0 makes repeat runs nearly identical."}
           - {text: "The model forgets everything after each word", correct: false, why_wrong: "It sees all earlier tokens in the window; the variety comes from the pick."}
+          - {text: "Replies are built token by token from odds, so a new run can differ", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
       - id: lookup-pitfall
         type: pitfall
         misconception: looks-up-answer
@@ -1441,8 +1449,8 @@ chapters:
         type: predict
         question: You ask a model for the birthday of a little-known local author. It has no reliable source in its training. What does it most likely do?
         options:
-          - {text: "Says politely that it does not know", correct: false, why_wrong: "Training to predict likely text, and tests that reward right answers, both push it to guess."}
           - {text: "Gives a plausible, confident date", correct: true, why_right: "A likely-looking date is exactly what next-token prediction produces."}
+          - {text: "Says politely that it does not know", correct: false, why_wrong: "Training to predict likely text, and tests that reward right answers, both push it to guess."}
       - id: training-idea
         type: idea
         key: true
@@ -1484,12 +1492,6 @@ chapters:
         blanks:
           - id: act
             options:
-              - text: writes a plausible, confident date
-                correct: true
-                why_right: A rare fact has no pattern to predict from, so the model writes a likely-looking guess.
-                output: "Rare facts like a birthday cannot be predicted from patterns alone, so the model produces a fluent guess."
-                output_from: source
-                output_source: "OpenAI (2025), Why language models hallucinate"
               - text: looks it up in its database and finds an error
                 correct: false
                 why_wrong: There is no database; the reply is predicted token by token.
@@ -1504,6 +1506,12 @@ chapters:
                 output: "Last week's chat is outside the context window, so the model cannot see it unless an app puts it back in."
                 output_from: source
                 output_source: "Claude docs, Context windows"
+              - text: writes a plausible, confident date
+                correct: true
+                why_right: A rare fact has no pattern to predict from, so the model writes a likely-looking guess.
+                output: "Rare facts like a birthday cannot be predicted from patterns alone, so the model produces a fluent guess."
+                output_from: source
+                output_source: "OpenAI (2025), Why language models hallucinate"
         hints:
           - Is there any pattern in text that would predict this one author's birthday?
       - id: database-pitfall
@@ -1530,8 +1538,8 @@ chapters:
         tests: training-idea
         question: A model gives a fluent but wrong answer about a niche product launched after its training data was collected. Which fix goes after the cause?
         options:
-          - {text: "Put the product's real docs in its context, as RAG does", correct: true, why_right: "The fact was never in pretraining, so it has to come in through the window."}
           - {text: "Tell it in the prompt to try much harder", correct: false, why_wrong: "Effort cannot predict a fact the model never saw."}
+          - {text: "Put the product's real docs in its context, as RAG does", correct: true, why_right: "The fact was never in pretraining, so it has to come in through the window."}
           - {text: "Raise the temperature so it explores more", correct: false, why_wrong: "Temperature reshapes the same odds; it adds no knowledge."}
       - id: limits-recap
         type: recap

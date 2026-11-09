@@ -146,7 +146,7 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** the author's own rounds; the testing-with-real-users skill holds the method for any artifact a person uses.
 
 ### 4.25 Checked by someone who did not write it
-- **Rule:** before publishing, three fresh reviewers check the lesson: a content reviewer works through every rule and runs every result again, a learner reviewer uses the page as a new learner and teaches the big idea back, and a scene reviewer taps through every step of every moving picture, light and dark, with motion on and off. Where agents cannot be started, the author runs the same checklists and says the lesson was self-checked, not reviewed. The scripted edition on the `full` branch runs the same rules as scripts.
+- **Rule:** before publishing, three fresh reviewers check the lesson: a content reviewer works through every rule and runs every result again, a learner reviewer uses the page as a new learner and teaches the big idea back, and a scene reviewer taps through every step of every moving picture, light and dark, with motion on and off. Where agents cannot be started, the author runs the same checklists and says the lesson was only self-checked. The scripted edition on the `full` branch runs the same rules as scripts.
 - **Why:** Anthropic's plugin directory accepts no scripts from publishers that are not Verified, and a lesson must still be checked as hard. A reviewer who did not write the lesson catches what its author cannot see, and saying how a lesson was checked lets the author judge how far to trust it.
 - **From:** the author's decision for the directory edition (Nov 2026); 4.24's test rounds.
 

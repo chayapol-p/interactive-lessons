@@ -149,7 +149,7 @@ Motion patterns that carry ideas well:
 - **Stagger**: many similar moves start one after another, so each can be followed and their order shows.
 - **Hold**: after a move, nothing moves until the learner taps. The pause is where they read the change.
 
-Classes for colour (both themes work): `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-bar`, `svg-group`. Never set a colour by hand. A class also sets a stroke width, which beats a `stroke-width` attribute; to make a width carry data (a line as thick as a share), set `element.style.strokeWidth`.
+Classes for colour (both themes work): `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`, and `halo` for a label a line may cross), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-bar`, `svg-group`. Never set a colour by hand. A class also sets a stroke width, which beats a `stroke-width` attribute; to make a width carry data (a line as thick as a share), set `element.style.strokeWidth`.
 
 Ready-to-copy scenes for each motion pattern, checked on a real page, are in `components/scenes.md`. The scene reviewer (`lesson-review.md` section 5) opens each scene and steps through every step and every control value, light and dark, with and without motion. It fails a scene that throws, draws outside its box, shows a number its data does not hold, has two steps that look the same, or ends a step in a different picture with motion than without, and reads one image per step like a comic strip.
 
@@ -180,6 +180,9 @@ Marked **(checked)** where `self-checks.md` holds the rule, and **(scene review)
 - It fits 340 by its height, readable at phone width, in both themes **(scene review)**.
 - Each step changes something visible **(scene review)**.
 - Its caption names where to look, within the text budget **(checked)**.
+- Every share or weight its end state uses is drawn; no share is shown as 0% or 100% unless it is **(scene review)**.
+- No label sits on another label or on a dot it does not name **(scene review)**.
+- Play again visibly replays the move into the current step **(scene review)**.
 
 ## 9. Signs a picture is not working
 

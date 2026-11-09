@@ -70,7 +70,7 @@ def fill_blanks(code: str, chosen_text_by_blank: dict) -> str:
     return code
 ```
 
-**Writing results back:** edit the blueprint's YAML in place, so its comments stay. Write a many-line output as a `|` block. Then work through `self-checks.md` section 15: every wrong option must print something different from the right one, and every recorded value must match a fresh run.
+**Writing results back:** edit only the lines that change, so the blueprint's comments and layout stay (a YAML library that rewrites the whole file loses them). Write a many-line output as a `|` block. Write numbers as plain decimals (`0.000001`, never `1e-06`): YAML reads `1e-06` as text, so the page would get a word where a number should be. Then work through `self-checks.md` section 15: every wrong option must print something different from the right one, and every recorded value must match a fresh run.
 
 ## 3. Fill the page template
 

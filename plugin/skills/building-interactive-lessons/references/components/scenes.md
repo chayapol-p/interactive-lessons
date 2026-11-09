@@ -47,7 +47,10 @@ A scene costs about 10–25k tokens. Propose it with its reason and cost, and bu
 - Build the elements once, at the top. Read every number from `scene.data`; never type one.
 - `scene.show = (step, from, settings) => { ... }` draws the **whole state** of `step`, from any step: the learner can jump. Use `scene.move` (or `scene.play` with a library timeline) for anything that should move; it jumps when motion is reduced, on Back, and on the first draw.
 - With a `run` control, `scene.run = (trials, settings) => { ... }` runs the trials with `scene.random()` and returns one line that sums them up.
-- Colour only through classes (`svg-box`, `svg-text`, `svg-line`, `svg-dot`, `svg-bar`, with `hot`, `dim`, `ghost`, `small`). A width that carries data goes in `element.style.strokeWidth`.
+- Every share or weight the end state uses is drawn. A blend whose parts do not add up on screen leaves the learner asking where the rest went.
+- A share is never shown as 0% or 100% unless it is: show `<1%` and `>99%`, and store enough decimals in `computed_by` that a tiny share is not rounded to 0.
+- Labels never sit on another dot or label: place each on its own dot's row, on the side away from the crowd, and move it down a row while it hits one. Give a label that a line may cross the `halo` class.
+- Colour only through classes (`svg-box`, `svg-text`, `svg-line`, `svg-dot`, `svg-bar`, with `hot`, `dim`, `ghost`, `small`, and `halo` on text). A width that carries data goes in `element.style.strokeWidth`.
 
 ## 2. Strip and draws
 
@@ -71,7 +74,8 @@ computed_by:
     import json, random
     from toy_llm import NEXT_SCORES, softmax
     temperatures = ["0.2", "0.7", "1.0", "1.5"]
-    odds = {t: [round(share, 4) for share in softmax(list(NEXT_SCORES.values()), float(t))] for t in temperatures}
+    # 6 decimals, so a tiny chance is never stored as 0
+    odds = {t: [round(share, 6) for share in softmax(list(NEXT_SCORES.values()), float(t))] for t in temperatures}
     example_draw = round(random.Random(7).random() * 0.4, 3)   # lands in the top word's slice at every setting
     print(json.dumps({"data": {"words": list(NEXT_SCORES), "temperatures": temperatures, "odds": odds, "example_draw": example_draw}}))
 ```
@@ -86,6 +90,13 @@ const rowsTop = 136, rowGap = 22, binLeft = 150, binWidth = 165;
 const oddsAt = (settings) => scene.data.odds[temperatures[settings.temperature]];
 // Which slice a point from 0 to 1 lands in
 const sliceAt = (point, shares) => { let edge = 0; for (let i = 0; i < shares.length; i += 1) { edge += shares[i]; if (point < edge) return i; } return shares.length - 1; };
+
+// A share as a percentage: a word that can still be drawn never shows 0%, and one that can still lose never shows 100%
+function percentText(share) {
+  if (share > 0 && share < 0.005) return "<1%";
+  if (share < 1 && share > 0.995) return ">99%";
+  return `${Math.round(share * 100)}%`;
+}
 
 // The strip: one slice per word; a label only where the slice is wide enough to hold it
 scene.add("text", { x: left, y: stripTop - 10, class: "svg-text small" }, "All the odds, as one strip");
@@ -108,7 +119,7 @@ scene.show = (step, from, settings) => {
     const width = (right - left) * share;
     scene.move(slices[i], { x, width });
     scene.move(sliceLabels[i], { x: x + width / 2, opacity: width >= 48 ? 1 : 0 });
-    scene.write(shareTexts[i], `${Math.round(share * 100)}%`);
+    scene.write(shareTexts[i], percentText(share));
     x += width;
   });
   // Step 2: one draw lands in a slice, and that word lights up
@@ -224,45 +235,99 @@ GSAP's MotionPathPlugin and DrawSVGPlugin load with it (`building-the-page.md` s
 - **For:** a weighted average, attention, a vote, a centre of mass.
 - **Beats:** mechanism. **Learner role:** drive.
 - **Breaks:** "a word has one fixed meaning", "every input counts the same".
-- **Blueprint:** steps "Before", "The shares", "The pull"; a `buttons` control with one value per case; data `{start: [x, y], sentences: {<case>: {points: [{word, x, y, share}], end: [x, y]}}}`, where `end` is the weighted blend printed by `computed_by`.
+- **Blueprint:** steps "Before", "The shares", "The pull"; a `buttons` control (here `sentence`) with one value per case. Data: `{name, control, start: [x, y], sentences: {<case>: {points: [{word, x, y, share}], self, end: [x, y]}}}`, where `self` is the point's share of itself (drawn as a ring, so every share the blend uses is on screen) and `end` is the weighted blend:
+
+```yaml
+computed_by:
+  language: python
+  code: |
+    import json
+    from toy_llm import MEANING, RIVER, MONEY, attention_row, after_attention
+    sentences = {}
+    for name, words in [("River", RIVER), ("Money", MONEY)]:
+        shares = dict(zip(words, attention_row("bank", words)))
+        # Words with meaning on the map get their own point; words about neither water nor money share one point
+        content = [w for w in words if w != "bank" and max(MEANING[w][:2]) > 0]
+        others = [w for w in words if w != "bank" and w not in content]
+        points = [{"word": w, "x": MEANING[w][0], "y": MEANING[w][1], "share": round(shares[w], 2)} for w in content]
+        points.append({"word": ", ".join(dict.fromkeys(o.lower() for o in others)), "x": 0.0, "y": 0.0,
+                       "share": round(sum(shares[o] for o in others), 2)})
+        end = after_attention("bank", words)
+        sentences[name] = {"points": points, "self": round(shares["bank"], 2), "end": [round(end[0], 2), round(end[1], 2)]}
+    print(json.dumps({"data": {"name": "bank", "control": "sentence", "start": MEANING["bank"][:2], "sentences": sentences}}))
+```
 - **Script:**
 
 ```js
+// Pull: lines from one point to every other, as thick as its weight; then the point slides to the weighted blend
 // The map: about water to the right, about money upwards, both from 0 to 1
-const px = (x) => 50 + x * 240, py = (y) => 215 - y * 180;
+const px = (x) => 50 + x * 240, py = (y) => 205 - y * 170;
 scene.add("line", { x1: px(0), y1: py(0), x2: px(1.05), y2: py(0), class: "svg-line dim" });
 scene.add("line", { x1: px(0), y1: py(0), x2: px(0), y2: py(1.08), class: "svg-line dim" });
-scene.add("text", { x: px(1.05), y: py(0) + 26, "text-anchor": "end", class: "svg-text small" }, "about water →");
+scene.add("text", { x: px(1.05), y: py(0) + 34, "text-anchor": "end", class: "svg-text small" }, "about water →");
 scene.add("text", { x: px(0) - 6, y: py(1.08) - 8, class: "svg-text small" }, "↑ about money");
-const names = ["River", "Money"];
-const slots = 4;   // the most points a sentence has
-// One line, dot and label per word; lines sit under the dots
+const cases = Object.keys(scene.data.sentences);
+const slots = Math.max(...cases.map((name) => scene.data.sentences[name].points.length));
+
+// One line, dot and label per word, lines under dots; then the moving point, its own share as a ring, and its label
 const lines = [...Array(slots)].map(() => scene.add("line", { x1: 0, y1: 0, x2: 0, y2: 0, class: "svg-line hot", "stroke-linecap": "round", opacity: 0 }));
 const dots = [...Array(slots)].map(() => scene.add("circle", { cx: px(0), cy: py(0), r: 5, class: "svg-dot", opacity: 0 }));
-const labels = [...Array(slots)].map(() => scene.add("text", { x: px(0), y: py(0), class: "svg-text small", opacity: 0 }, ""));
-// Bank: the point that moves
-const bank = scene.add("circle", { cx: px(scene.data.start[0]), cy: py(scene.data.start[1]), r: 7, class: "svg-dot hot" });
-const bankLabel = scene.add("text", { x: px(scene.data.start[0]), y: py(scene.data.start[1]) - 12, "text-anchor": "middle", class: "svg-text hot" }, "bank");
+const labels = [...Array(slots)].map(() => scene.add("text", { x: px(0), y: py(0), class: "svg-text small halo", opacity: 0 }, ""));
+const start = { x: px(scene.data.start[0]), y: py(scene.data.start[1]) };
+const selfRing = scene.add("circle", { cx: start.x, cy: start.y, r: 12, class: "svg-line hot", fill: "none", opacity: 0 });
+const selfLabel = scene.add("text", { x: start.x, y: start.y + 28, "text-anchor": "middle", class: "svg-text small halo", opacity: 0 }, "");
+const mover = scene.add("circle", { cx: start.x, cy: start.y, r: 7, class: "svg-dot hot" });
+const moverLabel = scene.add("text", { x: start.x + 11, y: start.y + 4, class: "svg-text hot halo" }, scene.data.name);
+
+// Two boxes overlap when neither is wholly left, right, above or below the other
+function boxesOverlap(first, second) {
+  const apart = first.x + first.width < second.x || second.x + second.width < first.x
+    || first.y + first.height < second.y || second.y + second.height < first.y;
+  return !apart;
+}
+
+// Place each label on its dot's row, on the side away from the map's middle; move it down a row while it hits
+// a label already placed or another dot
+function placeLabels(points) {
+  const placed = points.map((point) => ({ x: px(point.x) - 6, y: py(point.y) - 6, width: 12, height: 12 }));
+  points.forEach((point, i) => {
+    const onLeft = point.x > 0.5;
+    const x = px(point.x), y = py(point.y);
+    scene.set(labels[i], { x: onLeft ? x - 9 : x + 9, y: y + 4, "text-anchor": onLeft ? "end" : "start" });
+    for (const row of [0, 1, 2, 3]) {
+      scene.set(labels[i], { y: y + 4 + row * 13 });
+      const box = labels[i].getBBox();
+      const hits = placed.filter((other, j) => j !== i && boxesOverlap(box, other));
+      if (!hits.length) { placed.push(box); break; }
+    }
+  });
+}
 
 scene.show = (step, from, settings) => {
-  const sentence = scene.data.sentences[names[settings.sentence]];
+  // The case the learner picked, and where the point stands at this step
+  const sentence = scene.data.sentences[cases[settings[scene.data.control]]];
   const where = step >= 2 ? sentence.end : scene.data.start;
-  const bx = px(where[0]), by = py(where[1]);
-  scene.move(bank, { cx: bx, cy: by }, { duration: 900 });
-  scene.move(bankLabel, { x: bx, y: by - 12 }, { duration: 900 });
+  const moverX = px(where[0]), moverY = py(where[1]);
+  scene.move(mover, { cx: moverX, cy: moverY }, { duration: 900 });
+  scene.move(moverLabel, { x: moverX + 11, y: moverY + 4 }, { duration: 900 });
+
+  // Every other word: its dot, its label, and a line from the point as thick as the word's share
   lines.forEach((line, i) => {
     const point = sentence.points[i];
-    if (!point) { scene.set(line, { opacity: 0 }); scene.set(dots[i], { opacity: 0 }); scene.set(labels[i], { opacity: 0 }); return; }
-    const x = px(point.x), y = py(point.y);
-    scene.set(dots[i], { cx: x, cy: y, opacity: 1 });
-    // Labels sit beside their point, on the side with room, and alternate above and below so neighbours never collide
-    const onLeft = point.x > 0.6;
-    scene.set(labels[i], { x: onLeft ? x - 8 : x + 8, y: y + (i % 2 ? 16 : -8), "text-anchor": onLeft ? "end" : "start", opacity: 1 });
+    if (!point) { [line, dots[i], labels[i]].forEach((element) => scene.set(element, { opacity: 0 })); return; }
+    scene.set(dots[i], { cx: px(point.x), cy: py(point.y), opacity: 1 });
     scene.write(labels[i], `${point.word} ${point.share}`);
-    // The line runs from bank to the word, as thick as the word's share
+    scene.set(labels[i], { opacity: 1 });
     line.style.strokeWidth = String(1.5 + point.share * 18);   // a style, so it wins over the class's width
-    scene.move(line, { x1: bx, y1: by, x2: x, y2: y, opacity: step >= 1 ? 0.55 : 0 }, { duration: 900 });
+    scene.move(line, { x1: moverX, y1: moverY, x2: px(point.x), y2: py(point.y), opacity: step >= 1 ? 0.55 : 0 }, { duration: 900 });
   });
+  placeLabels(sentence.points);
+
+  // The point's share of itself: a ring where it started, the part of its old meaning it keeps
+  selfRing.style.strokeWidth = String(1.5 + sentence.self * 18);
+  scene.write(selfLabel, `${scene.data.name} itself ${sentence.self}`);
+  scene.move(selfRing, { opacity: step >= 1 ? 0.55 : 0 });
+  scene.move(selfLabel, { opacity: step >= 1 ? 1 : 0 });
 };
 ```
 
