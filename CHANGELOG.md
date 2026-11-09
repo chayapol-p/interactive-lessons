@@ -11,6 +11,7 @@
 - `play` gains `unit` ("Deal 100 replies").
 - The LLM example's temperature picture is now a scene: a strip of odds, one draw, then the learner sets the temperature and draws 10 or 100 words.
 - The Monty Hall example's two animated pictures carry their motion answers.
+- From the first agent review: Play again replays the move into the step (it redrew the same state); switch buttons reach 44 px; a `halo` text class for scene labels; scenes show tiny and near-certain shares as `<1%` and `>99%`, which `check_scenes.py` accepts as bounds; the examples spread the right option across positions.
 
 ## 0.4.1 · 8 Nov 2026
 - The plugin now lives in its own folder, `plugin/`. The marketplace file at the repo root points there, so the install command is unchanged, and the README's picture tools in `docs/` are no longer part of the plugin.

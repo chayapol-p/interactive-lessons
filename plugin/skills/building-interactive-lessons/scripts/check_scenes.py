@@ -115,6 +115,17 @@ def allowed(shown, known):
     return False
 
 
+def without_allowed_bounds(text, known):
+    """Drop "<1%" and ">99%" when the data holds a share below 1% (above 0) or above 99% (below 1): the scene shows a
+    tiny or near-certain share as a bound, so it never shows 0% or 100% for a share that is neither."""
+    def is_allowed(match):
+        bound = float(match.group(2)) / 100
+        if match.group(1) == "<":
+            return any(0 < number < bound for number in known)
+        return any(bound < number < 1 for number in known)
+    return re.sub(r"([<>])\s?(\d+(?:\.\d+)?)%", lambda match: "" if is_allowed(match) else match.group(0), text)
+
+
 def overlapping(boxes):
     """Pairs of labels that cover each other by more than a third of the smaller one."""
     pairs = []
@@ -263,6 +274,7 @@ def main():
                         if state["outside"]:
                             problems.append(f"{label}, {name}: drawn outside the box: {', '.join(state['outside'][:4])}")
                         for text in state["texts"]:
+                            text = without_allowed_bounds(text, known)
                             for shown in re.findall(r"-?\d+(?:\.\d+)?", text.replace(",", "")):
                                 if not allowed(shown, known):
                                     problems.append(f"{label}, {name}: shows {shown} (in \"{text}\"), which is not in its data, captions or control values; read numbers from scene.data")

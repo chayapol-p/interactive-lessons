@@ -131,9 +131,9 @@ chapters:
         tests: chunk-idea
         question: A FAQ page answers 30 short questions. Which unit gives search the best chance of matching one of them?
         options:
-          - {text: "One chunk per question and its answer", correct: true, why_right: "Each chunk is about one thing, so the right one can match strongly."}
           - {text: "The whole FAQ page as one entry", correct: false, why_wrong: "29 other answers dilute the match for any one question."}
           - {text: "One chunk per sentence", correct: false, why_wrong: "A question and its answer would be split apart, so no single chunk holds both."}
+          - {text: "One chunk per question and its answer", correct: true, why_right: "Each chunk is about one thing, so the right one can match strongly."}
       - id: explain-why-chunk-answer
         type: explain
         instructions:
@@ -153,8 +153,8 @@ chapters:
         tests: whole-page-is-fine
         question: A teammate says "just store each docs page as one entry, it keeps everything together". What goes wrong?
         options:
-          - {text: "Nothing, as long as the pages fit the embedding model", correct: false, why_wrong: "Fitting is not the issue: a long page still matches each question weakly."}
           - {text: "Long pages match every question a little and none strongly", correct: true, why_right: "Mixing many topics dilutes the match, so the right page can lose to a vaguely related one."}
+          - {text: "Nothing, as long as the pages fit the embedding model", correct: false, why_wrong: "Fitting is not the issue: a long page still matches each question weakly."}
           - {text: "Search becomes slower", correct: false, why_wrong: "Fewer entries is usually faster; the problem is match quality."}
       - id: page-vs-chunk-pitfall
         type: pitfall
@@ -199,8 +199,8 @@ chapters:
         question: A 1,200-token page, chunk size 500, overlap 50. How many chunks?
         options:
           - {text: "2", correct: false, why_wrong: "That counts only full chunks, but the short last chunk counts too."}
-          - {text: "3", correct: true, why_right: "Chunks start at 0, 450 and 900, and the last one is short."}
           - {text: "4", correct: false, why_wrong: "That treats overlap as extra tokens added to each chunk."}
+          - {text: "3", correct: true, why_right: "Chunks start at 0, 450 and 900, and the last one is short."}
       - id: stride-idea
         type: idea
         key: true
@@ -306,15 +306,15 @@ chapters:
         blanks:
           - id: stride
             options:
-              - text: chunk_size - overlap
-                correct: true
-                why_right: Each chunk moves forward its size, minus the part it shares with the next one.
-                output: "starts: [0, 450, 900]"
               - text: overlap
                 correct: false
                 why_wrong: That moves only 50 tokens, so every chunk is nearly a copy of the last.
                 misconception: overlap-adds-tokens
                 output: "starts: [0, 50, 100]"
+              - text: chunk_size - overlap
+                correct: true
+                why_right: Each chunk moves forward its size, minus the part it shares with the next one.
+                output: "starts: [0, 450, 900]"
               - text: chunk_size + overlap
                 correct: false
                 why_wrong: Adding the overlap moves the window further, so 50 tokens between chunks are never stored.
@@ -351,9 +351,9 @@ chapters:
         tests: stride-idea
         question: Size 800, overlap 100, a 2,000-token page. Where does the third chunk start?
         options:
-          - {text: "1,400", correct: true, why_right: "The stride is 700, so starts are 0, 700 and 1,400."}
           - {text: "1,600", correct: false, why_wrong: "That steps by the full size and ignores the overlap."}
           - {text: "1,800", correct: false, why_wrong: "That adds the overlap instead of subtracting it."}
+          - {text: "1,400", correct: true, why_right: "The stride is 700, so starts are 0, 700 and 1,400."}
       - id: stride-recap
         type: recap
         text: Stride equals size minus overlap. More overlap means more chunks, never bigger ones.
@@ -405,9 +405,9 @@ chapters:
         tests: trade-off-idea
         question: Questions are short lookups such as "max file size?". Answers are one line. What size do you start with?
         options:
-          - {text: "Small, around 200 tokens", correct: true, why_right: "One-line answers need little context, and small chunks match lookups strongly."}
           - {text: "Big, around 1,500 tokens", correct: false, why_wrong: "Big chunks would mix many settings and weaken the match."}
           - {text: "It does not matter for lookups", correct: false, why_wrong: "Size changes how focused each chunk is, which matters most for lookups."}
+          - {text: "Small, around 200 tokens", correct: true, why_right: "One-line answers need little context, and small chunks match lookups strongly."}
       - id: defend-size-choice
         type: explain
         instructions:
@@ -427,8 +427,8 @@ chapters:
         tests: bigger-is-safer
         question: Search keeps ranking a vaguely related chunk above the one with the exact answer. Chunks are 2,000 tokens. What is the most likely cause?
         options:
-          - {text: "The chunks are too big, so the answer is a small part of one", correct: true, why_right: "The answer's chunk is mostly about other things, so its match is diluted."}
           - {text: "The chunks are too small to hold the whole answer", correct: false, why_wrong: "2,000 tokens easily hold an answer; size is causing dilution, not cut-offs."}
+          - {text: "The chunks are too big, so the answer is a small part of one", correct: true, why_right: "The answer's chunk is mostly about other things, so its match is diluted."}
           - {text: "The overlap is too large, so chunks repeat each other", correct: false, why_wrong: "Overlap changes how many chunks there are, not how focused each one is."}
       - id: bigger-is-safer-pitfall
         type: pitfall
