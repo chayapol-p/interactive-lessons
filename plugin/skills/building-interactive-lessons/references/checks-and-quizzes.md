@@ -1,6 +1,6 @@
 # Checks and quizzes
 
-How to test what the learner must get right, fairly and usefully. Rules marked **(checked)** are enforced by `scripts/check_blueprint.py`. The rest are judgement calls: read them against the blueprint in step 5.
+How to test what the learner must get right, fairly and usefully. Rules marked **(checked)** are in `self-checks.md`, which the author and the content reviewer work through. The rest are judgement calls: the content reviewer reads them against the blueprint (`lesson-review.md`).
 
 ## Contents
 
@@ -40,7 +40,7 @@ Judgement call: could a learner pass this check by guessing, by matching words, 
 - A text option's result names where it comes from: `output_from: source` or `worked`, with `output_source` **(checked)**. A wrong option must lead somewhere different from the right one **(checked)**.
 - 1 to 3 blanks, each marked once in the code as `{{blank-id}}` **(checked)**.
 - Each blank has 3 or 4 options and exactly one right option **(checked)**.
-- Every option has a recorded output **(checked)**, and with `--run-tests` that output is what the code really prints with that option **(checked)**.
+- Every option has a recorded output **(checked)**, and that output is what the code really prints with that option **(checked)**.
 - A wrong option prints something different from the right one **(checked)**. If it prints the same, Run cannot show the learner what goes wrong: change the code (for example, print the value that the mistake changes) or pick another option.
 - Each wrong option names a misconception and gives a one-line reason **(checked)**.
 - The code keeps its line comments: at least one per 4 code lines, at most 15 code lines **(checked)**.
@@ -66,6 +66,7 @@ Judgement call: could a learner pass this check by guessing, by matching words, 
 - A key-idea check gives a situation the chapter did not show. If a learner can only answer the chapter's own example, they memorised it.
 - A pitfall check shows code or a statement containing the misconception and asks what is wrong.
 - Options are similar in length and style. No "all of the above", no trick wording. The right option is never much longer than the wrong ones **(checked)**.
+- The right option moves: the page keeps blueprint order, so a lesson whose right answer is always first can be passed without reading **(checked)**.
 - A guess's right answer never shows before the guess **(checked)**, and a blank's right option is never written in the block just above it **(checked)**. See `chapter-design.md` section 8.
 
 **After an answer**: mark the choice right or wrong, reveal the correct option, show the picked option's explanation first, then the correct one's.

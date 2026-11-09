@@ -1,9 +1,10 @@
 ## Summary
 
 ## Checks run
-- [ ] All 3 example blueprints pass with `--run-tests`
-- [ ] `tests/check_catches_breaks.py` passes
+- [ ] CI passes (file types, YAML and JSON, template build, versions)
+- [ ] Review reports attached for one example lesson (`references/lesson-review.md`)
 - [ ] Screenshots attached, if the page template changed
+- [ ] Ported to `full`, or a note on why not
 - [ ] Version bumped and CHANGELOG updated
 
 ## AI use

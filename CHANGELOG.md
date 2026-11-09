@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.0 · 9 Nov 2026
+**Two editions.** `main` is the directory edition: the plugin holds only Markdown, YAML, JSON and images, and agents do what the scripts did. The scripted edition moves to the `full` branch, and the GitHub install points there. Both make the same lessons.
+
+- **No scripts in the plugin.** Recording results, building the page and checking it become steps the agent follows: `references/building-the-page.md` (record every result with the agent's own code tool, fill the template), `references/self-checks.md` (every checker rule as a checklist) and `references/lesson-review.md` (three fresh reviewers: content, learner, scenes and layout; a self-check where agents cannot start, said plainly).
+- **The page template is Markdown:** `assets/page-template.md`, one html block with two placeholders. The page now works out the theme's colours itself from `theme.accent`, with the same contrast checks, and keeps Ink blue if an accent fails (`references/theme.md`). `example-monty-cases.py` is gone; its tables stay in the Monty blueprint.
+- **A component catalogue** in `references/components/`: every block, figure, scene recipe and page part, each with what it is for, its story beat, the learner's role, a recipe, its rules and when it is the wrong pick.
+- **A topic map** (`references/topic-map.md`): for 11 kinds of topic, the component that carries each beat from hook to payoff, and the moving picture most worth proposing.
+- **`references/principles.md`:** why each rule exists, with its sources.
+- **Pictures are designed from the idea, not picked from a menu.** `references/visual-design.md`: five questions per key idea, congruence, the change test, six learner roles, storyboards, cost, and the research behind each rule.
+- **Scenes:** a picture written for one idea, with learner-paced steps, up to 2 controls (slider, buttons, run), every number from `computed_by`, and a script that sets `scene.show`. A scene may name a motion library, anime.js (MIT) or GSAP, loaded from jsDelivr only when asked. `components/scenes.md` gives 5 ready scenes, each checked on a real page: strip and draws, travel along a path (anime.js and GSAP), pull, pour.
+- **Motion is asked for with its cost:** Discover asks how much motion with a recommendation; the chapter map lists each proposed moving picture with its reason and token cost. `motion` is required on every moving picture.
+- `play` gains `unit` ("Deal 100 replies"). The LLM example's temperature picture is a scene, and it adds a run-by-run scene in anime.js.
+
 ## 0.4.1 · 8 Nov 2026
 - The plugin now lives in its own folder, `plugin/`. The marketplace file at the repo root points there, so the install command is unchanged, and the README's picture tools in `docs/` are no longer part of the plugin.
 - The plugin has an icon: a filled-in blank, ticked in red pen.

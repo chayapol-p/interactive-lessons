@@ -7,8 +7,13 @@
   "plugins": [
     {
       "name": "interactive-lessons",
-      "source": "./plugin",
-      "description": "Turns any subject, docs or a code repo into an interactive lesson page where every result is real."
+      "source": {
+        "source": "git-subdir",
+        "url": "chayapol-p/interactive-lessons",
+        "path": "plugin",
+        "ref": "full"
+      },
+      "description": "The scripted edition (branch full): the same lessons as the directory edition, recorded, built and checked by scripts."
     }
   ]
 }

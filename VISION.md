@@ -36,8 +36,8 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** PRIMM (Predict, Run, Investigate, Modify, Make), a method for teaching programming that outperformed normal lessons in a 13-school study; Mayer's "generative activity" principle; DataCamp's hands-on exercises.
 
 ### 4.2 Plan the learning before building the page
-- **Rule:** discover the learner, verify the material, then plan chapters as data (a blueprint). The page comes last, and a script fills a shared page template from the blueprint. Nobody writes the page by hand.
-- **Why:** most weak lessons fail in their structure, not their styling. A blueprint can be checked by a script before any page exists. A shared template means every lesson gets the same tested behaviour, and a revision changes only the blueprint.
+- **Rule:** discover the learner, verify the material, then plan chapters as data (a blueprint). The page comes last, filled from a shared page template with the blueprint. Nobody writes the page by hand.
+- **Why:** most weak lessons fail in their structure, not their styling. A blueprint can be checked, rule by rule, before any page exists. A shared template means every lesson gets the same tested behaviour, and a revision changes only the blueprint.
 - **From:** make-it-learnable's "a spec, not a template" design for the plan; the first real test, where hand-building the page cost the most time, for the template.
 
 ### 4.3 Every chapter states what the learner must get right, and how we will know
@@ -51,7 +51,7 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** Mayer's pre-training principle; lucas-ataides/teach's "build from what the learner already knows".
 
 ### 4.5 One idea per block, in short steps
-- **Rule:** a block holds one idea, explained in at most 2 sentences and about 45 words, tied to something the learner already knows. Feedback is one sentence; a caption is about 25 words. A script checks the budget.
+- **Rule:** a block holds one idea, explained in at most 2 sentences and about 45 words, tied to something the learner already knows. Feedback is one sentence; a caption is about 25 words. The self-checks hold the budget.
 - **Why:** short, learner-paced segments are easier to absorb than a long stream.
 - **From:** Mayer's segmenting and coherence principles; DataCamp's one objective per lesson; ape-teach's one milestone at a time.
 
@@ -85,7 +85,7 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** ape-teach's minimal code; code-learn-skill's staged code; Claude Code's Learning style, where the learner writes the small strategic piece.
 
 ### 4.12 Every output is real, and the lesson works without AI
-- **Rule:** the page runs no code. Every result it shows is real: a code result, including each wrong option's, is recorded from a real run; a text result is quoted from a named source or worked out in steps; the numbers in a picture are printed by code at build time. A script proves each run before publishing. Fill-in-the-blank exercises need no AI. The AI tutor and the grader for written answers add depth when the viewer allows them.
+- **Rule:** the page runs no code. Every result it shows is real: a code result, including each wrong option's, is recorded from a real run; a text result is quoted from a named source or worked out in steps; the numbers in a picture are printed by code at build time. A reviewer runs each one again before publishing. Fill-in-the-blank exercises need no AI. The AI tutor and the grader for written answers add depth when the viewer allows them.
 - **Why:** an invented output teaches a false lesson. Running code inside the page proved fragile in the first test, and recorded real outputs show the same truth with nothing to break. AI calls can be declined or unavailable, so the core of the lesson must not depend on them.
 
 ### 4.13 The learner decides when to see the answer; the tutor never hands it over
@@ -104,7 +104,7 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** ape-teach's field guide; make-it-learnable's calibration readout.
 
 ### 4.16 Test the idea, not the example
-- **Rule:** explain an example (a lab, a codebase, a rule book) before using it, and never ask the learner to recall its details, such as a clause number. A script flags quiz questions that lean on unexplained example details.
+- **Rule:** explain an example (a lab, a codebase, a rule book) before using it, and never ask the learner to recall its details, such as a clause number. The self-checks flag quiz questions that lean on unexplained example details.
 - **Why:** in the first badminton-rules lessons, quizzes asked for rule numbers the learner had never been shown. They tested memory of the example, not the idea.
 - **From:** the author's own use of the skill.
 
@@ -114,13 +114,13 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** the author's own use of the skill.
 
 ### 4.18 The learner's colour, the lesson's meaning
-- **Rule:** each lesson takes one accent colour chosen with the learner (a colour they like, their organisation's, or the topic's world). Right, wrong and answer-shown colours stay fixed for everyone, and are never shown by colour alone. A script builds every other colour from the accent and checks contrast in both themes.
+- **Rule:** each lesson takes one accent colour chosen with the learner (a colour they like, their organisation's, or the topic's world). Right, wrong and answer-shown colours stay fixed for everyone, and are never shown by colour alone. The page works out every other colour from the accent and checks contrast in both themes.
 - **Why:** a page that feels like theirs invites the learner in; a "right" that changes colour between lessons teaches nothing but confusion.
 - **From:** a six-seat design review of the template, led by the author.
 
-### 4.19 The picture ladder
-- **Rule:** each moment gets the lowest step of picture that carries it: words, a still picture, a stepped picture the learner taps through (the default for any change), an animated one (when the motion is the idea), or play (the learner makes the evidence). Animation and play are offered for named moments, with their build cost, and built only on a yes. Every number in any step is computed.
-- **Why:** in testing, the picture a tester named as the best part was a stepped one: one door's bar dropping to zero while another's doubles. An animation where nothing moves is only decoration, so asking first keeps the expensive steps for the moments that need them.
+### 4.19 Design each picture from the idea
+- **Rule:** the skill designs a picture by reasoning about the idea, not by picking from a menu. For each key idea it answers five questions (what is hidden, what changes and what stays, why a still picture would fail, which wrong belief the picture breaks, what the learner does), matches the picture's structure to the idea's, and moves it only where the manner of change is what must be learned. Ready-made figures are cheap parts; when none carries the storyboard, it writes a scene for that idea: learner-paced steps, optional controls and trials, every number from computed data. Moving pictures cost tokens, so each is proposed with its reason and cost and built only once the author agrees.
+- **Why:** a fixed set of picture types made every lesson look alike: a deal of cards built for Monty Hall came back for a model choosing its next word. Research is sober about motion (three meta-analyses find a small average gain, about g = 0.23) but clear about when it pays: when the learner must learn how something changes, its order, path or amount. In testing, the picture a tester named as the best part was one where a share visibly moved from one door to another.
 - **From:** Mayer's multimedia and signalling principles; the author's test rounds.
 
 ### 4.20 One story, with milestones
@@ -129,7 +129,7 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **From:** the author's story-deck (big idea, "Next →" questions), attention-principles (curiosity loops) and personal-storytelling (problem, pursuit, payoff) skills, borrowed at design time.
 
 ### 4.21 Nothing gives the answer early
-- **Rule:** a guess's answer never appears before the guess: not in a title, a goal, a milestone, a caption or a totals row. The idea that answers a guess stays folded until the guess is made (with a Skip button). A blank's answer is never written in the block just above it, and the right option is never the longest. Scripts check each of these.
+- **Rule:** a guess's answer never appears before the guess: not in a title, a goal, a milestone, a caption or a totals row. The idea that answers a guess stays folded until the guess is made (with a Skip button). A blank's answer is never written in the block just above it, and the right option is never the longest. The self-checks hold each of these.
 - **Why:** in every early test round, learners read the answer while scrolling to the question, and the guess stopped being a guess. A prediction only works when the learner commits before they know.
 
 ### 4.22 Learners make the evidence
@@ -145,16 +145,21 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **Why:** an author cannot unsee what they know. The test rounds found what no script did: a caption that contradicted its picture, an ending that showed the answer before the learner wrote theirs, and a fair dealer that a numbers-minded learner distrusted because the page never said how far a fair deal wanders. Setting up the phone access path found one more: the page had no phone viewport tag.
 - **From:** the author's own rounds; the testing-with-real-users skill holds the method for any artifact a person uses.
 
+### 4.25 Checked by someone who did not write it
+- **Rule:** before publishing, three fresh reviewers check the lesson: a content reviewer works through every rule and runs every result again, a learner reviewer uses the page as a new learner and teaches the big idea back, and a scene reviewer taps through every step of every moving picture, light and dark, with motion on and off. Where agents cannot be started, the author runs the same checklists and says the lesson was only self-checked. The scripted edition on the `full` branch runs the same rules as scripts.
+- **Why:** Anthropic's plugin directory accepts no scripts from publishers that are not Verified, and a lesson must still be checked as hard. A reviewer who did not write the lesson catches what its author cannot see, and saying how a lesson was checked lets the author judge how far to trust it.
+- **From:** the author's decision for the directory edition (Nov 2026); 4.24's test rounds.
+
 ## 5. How it works
 
 1. **Discover:** who the learner is, what they know, what they should be able to do afterwards, and how big one lesson can be.
-2. **Verify:** read the sources, list facts as confirmed or inferred, collect common misconceptions; a script runs every slice and every blank option and records the outputs.
-3. **Plan:** map the concepts, order chapters so each uses only what came before, and write the blueprint. A script checks it.
-4. **Build:** a script fills the page template from the blueprint, one chapter per page.
-5. **Check:** one command runs every check a script can; phone screenshots, light and dark, show the rest; try the grader with right, wrong and half-right answers; test with fresh personas until one gets it (4.24).
+2. **Verify:** read the sources, list facts as confirmed or inferred, collect common misconceptions; every slice and every blank option is run, and what each prints is recorded.
+3. **Plan:** map the concepts, order chapters so each uses only what came before, pick a component for each beat (the topic map), and write the blueprint. Every self-check must pass.
+4. **Build:** fill the page template from the blueprint, one chapter per page.
+5. **Check:** three fresh reviewers: one re-runs every result and works through every rule, one uses the page as a new learner and teaches the big idea back, one taps through every scene, light and dark (4.25). Try the grader with right, wrong and half-right answers.
 6. **Publish and improve:** learners' progress shows which blocks need work. A revise round edits the blueprint, rebuilds, and re-checks only the chapters that changed.
 
-Time budget: plan in 15 minutes, first build in 20, a revise round in 10. A step that runs over stops and logs why.
+Time budget: plan in 20 minutes, first build in 10, review in 20, a revise round in 15. A step that runs over stops and logs why.
 
 ## 6. What a chapter looks like
 
@@ -162,8 +167,8 @@ Time budget: plan in 15 minutes, first build in 20, a revise round in 10. A step
 - A bridge from the last chapter
 - **Predict**, with a confidence rating
 - **Idea**, in at most 2 sentences, folded until the guess is made
-- **Picture**, only when its purpose is written down, at the lowest step of the ladder that carries it
-- **Play** (when agreed): deal games and count them
+- **Picture**, only when its purpose is written down, designed from the idea: still, stepped, moving, driven or run by the learner
+- **Play or a scene with trials** (when agreed): make the evidence and count it
 - **Real material:** a code slice with line comments and its recorded output, or a real sentence, rule or formula
 - **Compare choices**, when the chapter has options to compare
 - **Fill the blanks** on the words that carry the idea, with Hint and Show solution

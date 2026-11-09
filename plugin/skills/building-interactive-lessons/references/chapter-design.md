@@ -54,7 +54,7 @@ Fill these fields for every chapter before choosing blocks.
 - Why: it forces the order to be right and tells the bridge what to recall.
 
 **`carries_forward`**: ideas this chapter hands on, each with an `id`, a one-line `idea`, `used_in` (later chapter ids, or `beyond` if it is used after the lesson), and `shown_by` (the blocks here that teach it). Everything the idea names must appear in those blocks (checked).
-- Why: it shows the learner why the idea matters later, and lets the checker catch ideas that lead nowhere.
+- Why: it shows the learner why the idea matters later, and lets the self-checks catch ideas that lead nowhere.
 
 **`misconceptions`**: ids from the misconception list that this chapter must repair.
 - Why: pitfall quizzes and grader hints are built from these, so they target real wrong ideas.
@@ -134,7 +134,7 @@ A chapter is a short sequence of blocks. Use only the blocks the chapter needs.
 - Put imports, fixtures and stubs in `setup`, not in the lines the learner reads. Label stubs as stubs.
 - Record for each slice: `source` (file and line range), `depends_on` (what earlier code it needs, in one line each), and `context_note` (a short summary of the code around it).
 - The tutor receives `depends_on` and `context_note`, so a learner can ask "what does the code before this look like?" and get a short, accurate answer.
-- Every output the page shows is recorded from a real run at build time (checked with `--run-tests`). Steps that need a database, an API key or a large model are recorded on a machine that has them, and carry `run_locally` with the command.
+- Every output the page shows is recorded from a real run at build time, and run again in review (checked). Steps that need a database, an API key or a large model are recorded on a machine that has them, and carry `run_locally` with the command.
 - Why: a small slice keeps the learner's attention on the idea. The context path means a small slice never leaves them lost.
 
 ## 6. Comparing choices

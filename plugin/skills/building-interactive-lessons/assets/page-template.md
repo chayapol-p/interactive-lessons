@@ -1,17 +1,140 @@
-<title>__LESSON_TITLE__</title>
+# Page template
+
+The lesson page, ready to fill. Never write a lesson page from scratch and never hand-edit a built one: build it from this template by following `references/building-the-page.md`, which copies the html block below and fills its two placeholders.
+
+**What the template already does** (`references/page-contract.md` has the full behaviour):
+- draws every block and figure kind from the blueprint data, phone first, light and dark;
+- works out the lesson's theme colours from `theme.accent` and checks their contrast (`references/theme.md`);
+- runs each scene from its own script, with the scene runtime (`references/visual-design.md` section 6);
+- wires the tutor, the grader and saved progress where the page runs in claude.ai (`references/ai-tutor-and-grader.md`).
+
+**The two placeholders**, each there exactly once:
+
+| Placeholder | Becomes |
+|---|---|
+| `/*__LESSON_DATA__*/null` | the blueprint as JSON |
+| `<!--__SCENE_SCRIPTS__-->` | the motion library tags and one script per scene, or nothing |
+
+Change the template only to fix it for every lesson, never for one lesson's content. A fix here is a fix in the scripted edition's `template.html` too.
+
+````html
+<title>Lesson</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?__FONT_QUERY__&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 /* Lesson page template for building-interactive-lessons.
-   scripts/build_page.py fills it from the blueprint. Never edit a built page by hand: edit the blueprint and rebuild.
+   Built by references/building-the-page.md: the blueprint goes in as data, each scene as one script. Never edit a built
+   page by hand: edit the blueprint and build again.
    Layout: one narrow reading column (phone first), a slim sticky bar, plain sections; only interactive panels get a surface. */
-/* Colour tokens: scripts/theme.py writes them from the blueprint's theme (one accent colour), light and dark.
+/* Colour tokens: the default theme (Ink blue) is below; a lesson's own theme (one accent colour) is worked out by the
+   page's script at load time (references/theme.md), light and dark.
    Brand layer (the theme may change it): bg, surface, surface-2, code-bg, ink, muted, line, line-strong, dim,
    accent, accent-soft, on-accent, ramp-0..5 with ramp-text-0..5. Meaning layer (fixed in every lesson):
    good and bad (right and wrong), mark (answer shown), each with a soft fill. */
-/*__THEME_TOKENS__*/
+:root {
+  --bg: #f3f7fc;
+  --surface: #fcfdff;
+  --surface-2: #e9edf2;
+  --code-bg: #edf0f6;
+  --ink: #171b20;
+  --muted: #585e66;
+  --line: #d7dbe0;
+  --line-strong: #81878d;
+  --dim: #9a9fa5;
+  --accent-soft: #ddebfe;
+  --accent: #1d5ca8;
+  --on-accent: #ffffff;
+  --ramp-0: #e7f1fe;
+  --ramp-text-0: #171b20;
+  --ramp-1: #c4ddfe;
+  --ramp-text-1: #171b20;
+  --ramp-2: #a4c7f5;
+  --ramp-text-2: #171b20;
+  --ramp-3: #82ade7;
+  --ramp-text-3: #171b20;
+  --ramp-4: #376aab;
+  --ramp-text-4: #fcfdff;
+  --ramp-5: #0f519c;
+  --ramp-text-5: #fcfdff;
+  --good: #1c7445;
+  --good-soft: #dcefe3;
+  --bad: #ad2a20;
+  --bad-soft: #f7e0dd;
+  --mark: #8a4a05;
+  --mark-soft: #f6e8d6;
+  --font-ui: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+  --bg: #0d1013;
+  --surface: #17181a;
+  --surface-2: #1f2225;
+  --code-bg: #080a0d;
+  --ink: #e3e8f0;
+  --muted: #a5abb4;
+  --line: #303337;
+  --line-strong: #646970;
+  --dim: #54585e;
+  --accent-soft: #1c2f47;
+  --accent: #71adfb;
+  --on-accent: #0a1018;
+  --ramp-0: #1b2737;
+  --ramp-text-0: #e3e8f0;
+  --ramp-1: #223651;
+  --ramp-text-1: #e3e8f0;
+  --ramp-2: #2b4970;
+  --ramp-text-2: #e3e8f0;
+  --ramp-3: #345c90;
+  --ramp-text-3: #e3e8f0;
+  --ramp-4: #78adf3;
+  --ramp-text-4: #17181a;
+  --ramp-5: #a9cdfe;
+  --ramp-text-5: #17181a;
+  --good: #66c690;
+  --good-soft: #173225;
+  --bad: #f08b80;
+  --bad-soft: #3d1e1b;
+  --mark: #e8a250;
+  --mark-soft: #3a2a17;
+  color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1013;
+  --surface: #17181a;
+  --surface-2: #1f2225;
+  --code-bg: #080a0d;
+  --ink: #e3e8f0;
+  --muted: #a5abb4;
+  --line: #303337;
+  --line-strong: #646970;
+  --dim: #54585e;
+  --accent-soft: #1c2f47;
+  --accent: #71adfb;
+  --on-accent: #0a1018;
+  --ramp-0: #1b2737;
+  --ramp-text-0: #e3e8f0;
+  --ramp-1: #223651;
+  --ramp-text-1: #e3e8f0;
+  --ramp-2: #2b4970;
+  --ramp-text-2: #e3e8f0;
+  --ramp-3: #345c90;
+  --ramp-text-3: #e3e8f0;
+  --ramp-4: #78adf3;
+  --ramp-text-4: #17181a;
+  --ramp-5: #a9cdfe;
+  --ramp-text-5: #17181a;
+  --good: #66c690;
+  --good-soft: #173225;
+  --bad: #f08b80;
+  --bad-soft: #3d1e1b;
+  --mark: #e8a250;
+  --mark-soft: #3a2a17;
+  color-scheme: dark;
+}
 :root {
   --shadow: 0 1px 2px rgb(15 20 30 / 0.10), 0 6px 18px rgb(15 20 30 / 0.10);
   --font-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -131,7 +254,7 @@ textarea.code { min-height: 8em; resize: vertical; }
 
 /* Compare */
 .switch { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 10px; overflow-x: auto; }
-.switch button { flex: 1; min-width: max-content; min-height: 40px; border: 0; background: transparent; padding: 8px 12px; border-radius: 7px; cursor: pointer; font-weight: 500; }
+.switch button { flex: 1; min-width: max-content; min-height: var(--tap); border: 0; background: transparent; padding: 8px 12px; border-radius: 7px; cursor: pointer; font-weight: 500; }
 .switch button[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow), inset 0 0 0 1.5px var(--line-strong); font-weight: 700; }
 .compare-input { font-size: 0.875rem; color: var(--muted); }
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; counter-reset: step; }
@@ -265,6 +388,21 @@ details.stretch summary { cursor: pointer; min-height: 48px; display: flex; alig
 /* kind: tiles. Doors, cups, cards, slots: a row of labelled boxes with a state */
 .svg-box.picked { fill: var(--surface); stroke: var(--accent); stroke-width: 2.5; }
 .svg-text.big { font-size: 15px; font-weight: 600; }
+.svg-text.hot { fill: var(--accent); font-weight: 600; }
+/* A label that a line or a dot may cross keeps a ring of page colour around its letters, so it stays readable */
+.svg-text.halo { paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+/* Scenes: a picture written for one idea (references/visual-design.md section 6) */
+.svg-dot { fill: var(--muted); }
+.svg-dot.hot { fill: var(--accent); }
+.svg-dot.dim { fill: var(--dim); }
+.scene-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: var(--tap); }
+.scene-nav .scene-where { flex: 1; text-align: center; font-size: 0.875rem; color: var(--muted); }
+.scene-nav .scene-where strong { color: var(--ink); }
+.scene-captions { display: grid; }
+.scene-captions .frame-caption { grid-area: 1 / 1; visibility: hidden; }
+.scene-captions .frame-caption.current { visibility: visible; }
+.scene-result { margin: 6px 0 0; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.scene-fallback { font-size: 0.9375rem; color: var(--muted); }
 /* Play: games dealt on the page from a computed case table */
 .play { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .deal-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
@@ -364,11 +502,239 @@ details.fold summary::-webkit-details-marker { display: none; }
 
 <div id="app"></div>
 
+<!--__SCENE_SCRIPTS__-->
 <script>
 "use strict";
-// The blueprint, embedded by scripts/build_page.py. The page reads it as it is; nothing here is lesson-specific.
+// The blueprint, put in as JSON when the page is built. The page reads it as it is; nothing here is lesson-specific.
 const LESSON = /*__LESSON_DATA__*/null;
 const CHAPTERS = LESSON.chapters;
+
+// ===== Theme: one accent colour -> the page's colour tokens, light and dark (references/theme.md) =====
+// The page ships the default theme (Ink blue) as CSS. A lesson with `theme` gets its tokens worked out here, in OKLCH
+// (lightness, chroma, hue), and every colour pair is contrast-checked. A theme that fails keeps the default and says why.
+
+const THEME_MEANING = {
+  light: { "good": "#1c7445", "good-soft": "#dcefe3", "bad": "#ad2a20", "bad-soft": "#f7e0dd", "mark": "#8a4a05", "mark-soft": "#f6e8d6" },
+  dark: { "good": "#66c690", "good-soft": "#173225", "bad": "#f08b80", "bad-soft": "#3d1e1b", "mark": "#e8a250", "mark-soft": "#3a2a17" },
+};
+const THEME_MEANING_HUES = { "good": 150, "bad": 27, "answer shown (amber)": 65 };
+const SMALLEST_HUE_GAP = 40;          // an accent this close to a meaning colour would blur right, wrong or answer shown
+const SMALLEST_ACCENT_CHROMA = 0.03;  // greyer than this cannot act as an accent
+const THEME_RAMP_STEPS = 6;
+const THEME_FONT_PAIRS = {
+  "schibsted-source": ["Schibsted Grotesk", "Source Serif 4",
+    "family=Schibsted+Grotesk:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600"],
+  "plex": ["IBM Plex Sans", "IBM Plex Serif", "family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600"],
+  "work-newsreader": ["Work Sans", "Newsreader", "family=Work+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,600"],
+  "noto-thai": ["Noto Sans Thai", "Noto Serif Thai", "family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@400;600"],
+};
+const THEME_KEYS = ["name", "accent", "fonts", "why"];
+
+// sRGB hex <-> OKLCH
+function hexToRgb(hexColour) {
+  const value = hexColour.replace("#", "");
+  return [0, 2, 4].map((start) => parseInt(value.slice(start, start + 2), 16) / 255);
+}
+function rgbToHex(rgb) {
+  return "#" + rgb.map((channel) => Math.round(Math.min(Math.max(channel, 0), 1) * 255).toString(16).padStart(2, "0")).join("");
+}
+function toLinear(channel) {
+  return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+}
+function fromLinear(channel) {
+  return channel <= 0.0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - 0.055;
+}
+function rgbToOklch(rgb) {
+  const [red, green, blue] = rgb.map(toLinear);
+  const longCone = Math.cbrt(0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue);
+  const mediumCone = Math.cbrt(0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue);
+  const shortCone = Math.cbrt(0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue);
+  const lightness = 0.2104542553 * longCone + 0.7936177850 * mediumCone - 0.0040720468 * shortCone;
+  const aAxis = 1.9779984951 * longCone - 2.4285922050 * mediumCone + 0.4505937099 * shortCone;
+  const bAxis = 0.0259040371 * longCone + 0.7827717662 * mediumCone - 0.8086757660 * shortCone;
+  const hue = ((Math.atan2(bAxis, aAxis) * 180) / Math.PI + 360) % 360;
+  return [lightness, Math.hypot(aAxis, bAxis), hue];
+}
+function oklchToRgb(lightness, chroma, hue) {
+  const aAxis = chroma * Math.cos((hue * Math.PI) / 180);
+  const bAxis = chroma * Math.sin((hue * Math.PI) / 180);
+  const longCone = (lightness + 0.3963377774 * aAxis + 0.2158037573 * bAxis) ** 3;
+  const mediumCone = (lightness - 0.1055613458 * aAxis - 0.0638541728 * bAxis) ** 3;
+  const shortCone = (lightness - 0.0894841775 * aAxis - 1.2914855480 * bAxis) ** 3;
+  return [
+    4.0767416621 * longCone - 3.3077115913 * mediumCone + 0.2309699292 * shortCone,
+    -1.2684380046 * longCone + 2.6097574011 * mediumCone - 0.3413193965 * shortCone,
+    -0.0041960863 * longCone - 0.7034186147 * mediumCone + 1.7076147010 * shortCone,
+  ].map(fromLinear);
+}
+function isInGamut(rgb) {
+  return rgb.every((channel) => channel >= -0.0005 && channel <= 1.0005);
+}
+
+// The colour as hex, with chroma lowered until it fits the screen's range
+function oklchHex(lightness, chroma, hue) {
+  let fittedChroma = chroma;
+  // A while loop: the chroma steps down an unknown number of times until the colour fits
+  while (fittedChroma > 0 && !isInGamut(oklchToRgb(lightness, fittedChroma, hue))) fittedChroma -= 0.002;
+  return rgbToHex(oklchToRgb(lightness, Math.max(fittedChroma, 0), hue));
+}
+
+// WCAG contrast ratio of two colours
+function contrastRatio(firstHex, secondHex) {
+  const luminance = (hexColour) => {
+    const [red, green, blue] = hexToRgb(hexColour).map(toLinear);
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
+  const [brighter, darker] = [luminance(firstHex), luminance(secondHex)].sort((a, b) => b - a);
+  return (brighter + 0.05) / (darker + 0.05);
+}
+function hueDistance(first, second) {
+  const gap = Math.abs(first - second) % 360;
+  return Math.min(gap, 360 - gap);
+}
+
+// Walk lightness from `start` by `step` until the colour reaches `ratio` on every background, or null
+function lightestPassingColour(hue, chroma, start, step, backgrounds, ratio, stop) {
+  const startsPastStop = step < 0 ? start < stop : start > stop;
+  if (startsPastStop) return null;
+  const stepCount = Math.floor(Math.abs(stop - start) / Math.abs(step) + 1e-9);
+  for (const stepNumber of Array.from({ length: stepCount + 1 }, (unused, i) => i)) {
+    const colour = oklchHex(start + step * stepNumber, chroma, hue);
+    if (backgrounds.every((background) => contrastRatio(colour, background) >= ratio)) return colour;
+  }
+  return null;
+}
+
+// The brand tokens for light and dark; throws an Error saying why the theme cannot work
+function deriveThemeTokens(theme) {
+  // Read the accent and refuse one that cannot act as an accent
+  const accent = String(theme.accent || "");
+  if (!/^#[0-9a-fA-F]{6}$/.test(accent)) throw new Error(`accent must be a colour like #1d5ca8, not '${accent}'`);
+  const [seedLightness, seedChroma, hue] = rgbToOklch(hexToRgb(accent));
+  if (seedChroma < SMALLEST_ACCENT_CHROMA) throw new Error(`accent ${accent} is too grey to act as an accent; pick a stronger colour`);
+  for (const [meaning, meaningHue] of Object.entries(THEME_MEANING_HUES)) {
+    if (hueDistance(hue, meaningHue) < SMALLEST_HUE_GAP) {
+      throw new Error(`accent ${accent} is too close in hue to the ${meaning} colour, so right, wrong or answer shown would blur; pick another colour, or use the default`);
+    }
+  }
+  const chroma = Math.min(seedChroma, 0.16);
+
+  // Work out each mode's tokens: greys tinted toward the accent, the accent itself, then the shade ramp
+  const tokens = {};
+  for (const mode of ["light", "dark"]) {
+    const isLight = mode === "light";
+    const neutral = (lightness, neutralChroma = 0.008) => oklchHex(lightness, neutralChroma, hue);
+    const modeTokens = {
+      "bg": neutral(isLight ? 0.975 : 0.17), "surface": neutral(isLight ? 0.995 : 0.21, 0.004),
+      "surface-2": neutral(isLight ? 0.945 : 0.25), "code-bg": neutral(isLight ? 0.955 : 0.145),
+      "ink": neutral(isLight ? 0.22 : 0.93, 0.012), "muted": neutral(isLight ? 0.48 : 0.74, 0.015),
+      "line": neutral(isLight ? 0.89 : 0.32), "line-strong": neutral(isLight ? 0.62 : 0.52, 0.012),
+      "dim": neutral(isLight ? 0.70 : 0.46, 0.01),
+    };
+    modeTokens["accent-soft"] = oklchHex(isLight ? 0.935 : 0.30, isLight ? 0.04 : 0.05, hue);
+    const backgrounds = [modeTokens["bg"], modeTokens["surface"], modeTokens["surface-2"], modeTokens["accent-soft"]];
+    const accentColour = isLight
+      ? lightestPassingColour(hue, chroma, Math.min(seedLightness, 0.58), -0.02, backgrounds, 4.5, 0.25)
+      : lightestPassingColour(hue, Math.min(chroma, 0.13), 0.74, 0.02, backgrounds, 4.5, 0.92);
+    if (accentColour === null) throw new Error(`no lightness of ${accent} reads well on the ${mode} background`);
+    modeTokens["accent"] = accentColour;
+    const darkTextOnAccent = isLight ? "#0d1117" : oklchHex(0.17, 0.02, hue);
+    const whiteContrast = contrastRatio("#ffffff", accentColour);
+    modeTokens["on-accent"] = whiteContrast >= contrastRatio(darkTextOnAccent, accentColour) ? "#ffffff" : darkTextOnAccent;
+
+    // The shade ramp skips the middle lightness band (about 0.56 to 0.68), where no text reaches 4.5:1 on the cell
+    const accentLightness = rgbToOklch(hexToRgb(accentColour))[0];
+    const rampLightness = isLight ? [0.955, 0.89, 0.82, 0.74, 0.52, Math.min(accentLightness, 0.44)] : [0.27, 0.33, 0.40, 0.47, 0.74, 0.84];
+    rampLightness.forEach((stepLightness, step) => {
+      const share = step / (THEME_RAMP_STEPS - 1);
+      const cell = oklchHex(stepLightness, chroma * (0.25 + 0.75 * share), hue);
+      modeTokens[`ramp-${step}`] = cell;
+      const inkContrast = contrastRatio(modeTokens["ink"], cell);
+      modeTokens[`ramp-text-${step}`] = inkContrast >= contrastRatio(modeTokens["surface"], cell) ? modeTokens["ink"] : modeTokens["surface"];
+    });
+    tokens[mode] = { ...modeTokens, ...THEME_MEANING[mode] };
+  }
+  return tokens;
+}
+
+// Every pair the page draws, with the ratio it needs: [text colour, background, ratio]
+function themeContrastPairs() {
+  const pairs = [];
+  for (const background of ["bg", "surface", "surface-2", "code-bg", "accent-soft", "mark-soft", "good-soft", "bad-soft"]) pairs.push(["ink", background, 4.5]);
+  for (const background of ["bg", "surface", "surface-2"]) pairs.push(["muted", background, 4.5]);
+  for (const colour of ["accent", "good", "bad"]) {
+    for (const background of ["bg", "surface"]) pairs.push([colour, background, 4.5]);
+  }
+  pairs.push(["mark", "mark-soft", 4.5], ["mark", "surface", 4.5], ["good", "good-soft", 4.5], ["bad", "bad-soft", 4.5],
+    ["on-accent", "accent", 4.5], ["accent", "accent-soft", 4.5]);
+  for (const background of ["bg", "surface", "code-bg"]) pairs.push(["line-strong", background, 3.0]);
+  pairs.push(["accent", "code-bg", 3.0]);
+  for (let step = 0; step < THEME_RAMP_STEPS; step += 1) pairs.push([`ramp-text-${step}`, `ramp-${step}`, 4.5]);
+  return pairs;
+}
+
+// Why a lesson's theme cannot be used, as readable lines; empty means it works
+function themeProblems(theme) {
+  if (theme === undefined || theme === null) return [];
+  if (typeof theme !== "object") return ["theme must be a mapping with accent (and optional name, fonts, why)"];
+  const problems = Object.keys(theme).filter((key) => !THEME_KEYS.includes(key)).map((key) => `theme has an unknown field '${key}'`);
+  if (!("accent" in theme)) problems.push("theme needs accent: one colour like #1d5ca8");
+  if (!(String(theme.fonts || "schibsted-source") in THEME_FONT_PAIRS)) problems.push(`theme fonts must be one of: ${Object.keys(THEME_FONT_PAIRS).join(", ")}`);
+  if (problems.length) return problems;
+  let tokens;
+  try {
+    tokens = deriveThemeTokens(theme);
+  } catch (reason) {
+    return [reason.message];
+  }
+
+  // Contrast-check every pair, and check the shade ramp gets stronger step by step
+  for (const [mode, modeTokens] of Object.entries(tokens)) {
+    for (const [text, background, ratio] of themeContrastPairs()) {
+      const measured = contrastRatio(modeTokens[text], modeTokens[background]);
+      if (measured < ratio) problems.push(`${mode}: ${text} on ${background} is ${measured.toFixed(2)}:1, needs ${ratio}:1`);
+    }
+    const ramp = Array.from({ length: THEME_RAMP_STEPS }, (unused, step) => rgbToOklch(hexToRgb(modeTokens[`ramp-${step}`]))[0]);
+    const isStrongerEachStep = ramp.slice(1).every((lightness, i) => (mode === "light" ? ramp[i] > lightness : ramp[i] < lightness));
+    if (!isStrongerEachStep) problems.push(`${mode}: the shade ramp does not get stronger step by step`);
+  }
+  return problems;
+}
+
+// Put the lesson's theme on the page: colour tokens for light and dark, and its font pair
+function applyLessonTheme(theme) {
+  if (theme === undefined || theme === null) return;
+  const problems = themeProblems(theme);
+  if (problems.length) {
+    console.warn(`[lesson] theme not used, the page keeps Ink blue: ${problems.join("; ")}`);
+    document.documentElement.dataset.themeProblem = problems.join("; ");
+    return;
+  }
+
+  // Write the colour tokens as CSS after the default theme, so they win
+  const tokens = deriveThemeTokens(theme);
+  const fonts = THEME_FONT_PAIRS[theme.fonts || "schibsted-source"];
+  const tokenLines = (mode) => Object.entries(tokens[mode]).map(([name, value]) => `  --${name}: ${value};`).join("\n");
+  const fontLines = `  --font-ui: "${fonts[0]}", "Helvetica Neue", Arial, sans-serif;\n  --font-read: "${fonts[1]}", Georgia, "Times New Roman", serif;`;
+  const darkLines = `${tokenLines("dark")}\n  color-scheme: dark;`;
+  const style = document.createElement("style");
+  style.textContent = `:root {\n${tokenLines("light")}\n${fontLines}\n}\n`
+    + `@media (prefers-color-scheme: dark) {\n  :root:not([data-theme="light"]) {\n${darkLines}\n  }\n}\n`
+    + `:root[data-theme="dark"] {\n${darkLines}\n}\n`;
+  document.head.appendChild(style);
+
+  // Load the font pair when it is not the default one
+  if (theme.fonts && theme.fonts !== "schibsted-source") {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?${fonts[2]}&display=swap`;
+    document.head.appendChild(link);
+  }
+}
+
+applyLessonTheme(LESSON.theme);
+document.title = LESSON.lesson.title;
+
 const MISCONCEPTIONS = Object.fromEntries((LESSON.misconceptions || []).map((m) => [m.id, m]));
 const KNOWN = Object.fromEntries((LESSON.known_ideas || []).map((k) => [k.id, k.idea]));
 const GLOSSARY = LESSON.glossary || [];
@@ -531,12 +897,12 @@ function describeBlock(block) {
     case "check":
       return `${block.type}: ${block.question}${block.options ? "\nOptions: " + block.options.map((o) => o.text).join(" | ") : ""}`;
     case "idea": return `idea: ${block.text}${block.more ? "\nMore: " + block.more : ""}`;
-    case "diagram": return `diagram: ${block.brief.understand}${block.extends ? "\nWhat this stage adds: " + block.extends.adds : ""}`;
+    case "diagram": return `diagram: ${block.brief.understand}${block.extends ? "\nWhat this stage adds: " + block.extends.adds : ""}${block.figure.kind === "scene" ? "\nIts steps: " + block.figure.steps.map((step, i) => `${i + 1}. ${step.label}: ${step.caption}`).join(" ") : ""}`;
     case "code": return `code slice with notice prompts: ${(block.notice || []).join(" ")}`;
     case "compare": return `compare on "${block.input}": ${block.options.map((o) => o.name + " = " + o.steps.join(" > ")).join("; ")}. They first differ at step ${block.differs_at}. ${block.explanation}`;
     case "fill_blanks": return `fill-the-blanks exercise (OPEN: never say which option is right; point to the Show solution button instead): ${block.instructions.join(" ")}\n${block.language === "text" ? "Passage" : "Code"} with blanks:\n${block.language === "text" ? block.text : block.code}\nOptions: ${block.blanks.map((b) => `${b.id}: ${b.options.map((o) => o.text).join(" | ")}`).join("; ")}`;
     case "explain": return `explain-in-your-words exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
-    case "play": return `play: the learner deals games from a case table and counts them. ${block.prompt} Cases: ${(block.cases || []).map((c) => `${c.label} (chance ${Number(c.weight).toFixed(3)}) counts as ${c.outcome}`).join("; ")}`;
+    case "play": return `play: the learner deals ${block.unit || "games"} from a case table and counts them. ${block.prompt} Cases: ${(block.cases || []).map((c) => `${c.label} (chance ${Number(c.weight).toFixed(3)}) counts as ${c.outcome}`).join("; ")}`;
     case "stretch": return `optional write-it-yourself exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
     case "pitfall": { const m = MISCONCEPTIONS[block.misconception]; return `pitfall: wrong idea "${m.wrong_idea}". True: ${m.what_is_true}`; }
     case "recap": return `recap: ${block.text}`;
@@ -1320,6 +1686,179 @@ function animateBetween(fromLayer, toLayer) {
   fromLayer.animate([{ opacity: 1 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" }).onfinish = () => fromLayer.classList.remove("leaving");
   toLayer.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" });
 }
+// ---------- Scenes: a picture written for one idea ----------
+// The scene's own script (put on the page when it is built, one <script> per scene) gets one object, `scene`, and sets
+// scene.show(step, from, settings), and scene.run(trials, settings) when it has a run control. Steps are learner-paced:
+// nothing plays by itself. Every number it shows comes from scene.data, which computed_by printed at build time.
+const SCENE_WIDTH = 340;
+const EASE_IN_OUT = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);   // slow in, slow out
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => { state = (state + 0x6d2b79f5) >>> 0; let t = state; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function sceneFigure(block) {
+  const figure = block.figure;
+  const height = figure.height || 240;
+  const steps = figure.steps || [];
+  const controls = figure.controls || [];
+  const root = svg("svg", { viewBox: `0 0 ${SCENE_WIDTH} ${height}`, role: "img", class: "scene" });
+  const spoken = h("p", { class: "visually-hidden", role: "status" });
+  const result = h("p", { class: "scene-result", role: "status" });
+  const holder = h("div", { class: "scene-host", "data-scene": block.id, "data-scene-busy": "0" });
+  const settings = Object.fromEntries(controls.filter((c) => c.kind !== "run").map((c) => [c.id, Number(c.start || 0)]));
+  let step = 0, busy = 0;
+  const still = () => reducedMotion() || holder.dataset.instant === "1";
+  // Motion: eases numeric attributes to new values. tx and ty move a group with translate(). Jumps when motion is reduced.
+  const tokens = new WeakMap();
+  function current(element, key) {
+    if (key === "tx" || key === "ty") return (element.__shift || { tx: 0, ty: 0 })[key];
+    const value = element.getAttribute(key);
+    return value === null ? (key === "opacity" ? 1 : 0) : Number(value);
+  }
+  function put(element, values) {
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === "tx" || key === "ty") {
+        element.__shift = Object.assign({ tx: 0, ty: 0 }, element.__shift, { [key]: value });
+        element.setAttribute("transform", `translate(${element.__shift.tx} ${element.__shift.ty})`);
+      } else element.setAttribute(key, String(value));
+    });
+  }
+  function settle(change) { busy += change; holder.dataset.sceneBusy = String(busy); }
+  const api = {
+    root, width: SCENE_WIDTH, height, data: figure.data || {}, readAlong,
+    random: readAlong ? seededRandom(7) : Math.random,
+    add(tag, attributes, text) {
+      const element = svg(tag, attributes || {}, text === undefined ? [] : String(text));
+      root.append(element);
+      return element;
+    },
+    set(element, values) { put(element, values); return element; },
+    write(element, text) { element.textContent = String(text); return element; },
+    say(text) { spoken.textContent = String(text); },
+    move(element, values, options) {
+      const timing = options || {};
+      const duration = timing.duration === undefined ? 700 : timing.duration, delay = timing.delay || 0;
+      const token = {};
+      tokens.set(element, token);
+      if (still() || (!duration && !delay)) { put(element, values); return Promise.resolve(); }
+      const start = Object.fromEntries(Object.keys(values).map((key) => [key, current(element, key)]));
+      settle(1);
+      return new Promise((resolve) => {
+        const began = performance.now() + delay;
+        const frame = (now) => {
+          if (tokens.get(element) !== token) { settle(-1); resolve(); return; }   // a newer move took over
+          const progress = Math.max(0, Math.min(1, (now - began) / duration));
+          const eased = EASE_IN_OUT(progress);
+          put(element, Object.fromEntries(Object.entries(values).map(([key, target]) => [key, start[key] + (Number(target) - start[key]) * eased])));
+          if (progress < 1) requestAnimationFrame(frame); else { put(element, values); settle(-1); resolve(); }
+        };
+        requestAnimationFrame(frame);
+      });
+    },
+  };
+  // A scene may name a motion library (figure.library: anime or gsap). the page loads it from jsDelivr only when
+  // some scene asks for it. scene.play(timeline) plays a timeline from either library learner-paced: it jumps to the end
+  // when motion is reduced (or on the first draw, or on Back), and the scene counts as busy until it finishes.
+  const active = new Set();
+  if (figure.library === "gsap" && window.gsap) {
+    const plugins = [window.MotionPathPlugin, window.DrawSVGPlugin].filter(Boolean);
+    if (plugins.length) window.gsap.registerPlugin(...plugins);
+  }
+  api.anime = figure.library === "anime" ? window.anime || null : null;
+  api.gsap = figure.library === "gsap" ? window.gsap || null : null;
+  const isGsap = (timeline) => typeof timeline.eventCallback === "function" && typeof timeline.progress === "function";
+  function finish(timeline) {
+    if (isGsap(timeline)) timeline.progress(1); else { timeline.seek(timeline.duration); timeline.pause(); }
+  }
+  api.play = (timeline) => {
+    if (still()) { finish(timeline); return Promise.resolve(); }
+    settle(1);
+    active.add(timeline);
+    return new Promise((resolve) => {
+      let ended = false;
+      const done = () => { if (ended) return; ended = true; active.delete(timeline); settle(-1); resolve(); };
+      timeline.__done = done;
+      if (isGsap(timeline)) { timeline.eventCallback("onComplete", done); timeline.play(0); }
+      else { timeline.then(done); timeline.play(); }
+    });
+  };
+  // A new step finishes any timeline still running, so a fast tap never leaves a half-drawn picture
+  function finishActive() { active.forEach((timeline) => { finish(timeline); timeline.__done(); }); }
+  // The scene's script runs once; a scene that fails shows its steps as words, so the lesson still teaches
+  let failed = null;
+  try {
+    if (figure.library && !api[figure.library]) throw new Error(`the motion library '${figure.library}' did not load`);
+    const make = (window.LESSON_SCENES || {})[block.id];
+    if (typeof make !== "function") throw new Error("the scene script is missing from the page");
+    make(api);
+    if (typeof api.show !== "function") throw new Error("the scene script must set scene.show");
+  } catch (error) { failed = error; }
+  function fail(error) {
+    failed = error;
+    holder.dataset.sceneError = String(error && error.message || error);
+    console.error(`scene ${block.id}: ${holder.dataset.sceneError}`);
+    setChildren(holder, h("div", { class: "scene-fallback" }, h("p", {}, "This picture could not be drawn. Its steps:"),
+      h("ol", {}, steps.map((s) => h("li", {}, h("strong", {}, s.label), ": ", s.caption)))));
+  }
+  if (failed) { setTimeout(() => fail(failed)); return holder; }
+  const captions = steps.map((s) => h("p", { class: "frame-caption" }, s.caption));
+  const back = h("button", { class: "btn", type: "button", onclick: () => go(step - 1) }, "Back");
+  const next = h("button", { class: "btn primary", type: "button", onclick: () => go(step + 1) }, "Next");
+  const where = h("p", { class: "scene-where" });
+  const replay = h("button", { class: "btn quiet", type: "button", onclick: () => replayLastMove() }, "Play again");
+  // Play again: jump back to the step before with no motion, then move into this step again
+  function replayLastMove() {
+    const target = step;
+    step = target - 1;
+    draw();
+    step = target;
+    draw(target - 1);
+  }
+  function draw(from) {
+    // The first draw jumps straight to step 1: nothing moves until the learner does something. Back jumps too:
+    // motion plays forwards, from the step before, the way the change happens
+    finishActive();
+    if (from === undefined || from > step) holder.dataset.instant = "1";
+    try { api.show(step, from, Object.assign({}, settings)); } catch (error) { fail(error); return; } finally { delete holder.dataset.instant; }
+    captions.forEach((caption, index) => caption.classList.toggle("current", index === step));
+    root.setAttribute("aria-label", steps[step].caption);
+    where.replaceChildren(h("strong", {}, `${step + 1} of ${steps.length}`), ` · ${steps[step].label}`);
+    back.disabled = step === 0; next.disabled = step === steps.length - 1;
+    const noReplay = step === 0 || reducedMotion();
+    replay.style.visibility = noReplay ? "hidden" : "visible"; replay.disabled = noReplay;
+    holder.dataset.step = String(step);
+    if (from !== undefined) api.say(`Step ${step + 1}: ${steps[step].caption}`);
+  }
+  function go(target) { if (target < 0 || target >= steps.length) return; const from = step; step = target; result.textContent = ""; draw(from); }
+  const controlRows = controls.map((control) => {
+    if (control.kind === "slider") {
+      const value = h("strong", {}, control.values[settings[control.id]]);
+      const slider = h("input", { type: "range", min: "0", max: String(control.values.length - 1), step: "1", value: String(settings[control.id]), "aria-label": control.label });
+      slider.addEventListener("input", () => { settings[control.id] = Number(slider.value); value.textContent = control.values[settings[control.id]]; result.textContent = ""; draw(step); });
+      return h("div", { class: "frame-control", "data-control": control.id }, h("label", {}, h("span", {}, control.label), " ", value), slider);
+    }
+    if (control.kind === "buttons") {
+      const buttons = control.values.map((label, index) => h("button", { type: "button", "aria-pressed": index === settings[control.id] ? "true" : "false",
+        onclick: () => { settings[control.id] = index; buttons.forEach((b, i) => b.setAttribute("aria-pressed", i === index ? "true" : "false")); result.textContent = ""; draw(step); } }, label));
+      return h("div", { class: "frame-control", "data-control": control.id }, h("p", { class: "token-row-label" }, control.label),
+        h("div", { class: "switch frames", role: "group", "aria-label": control.label }, buttons));
+    }
+    // kind: run. Trials drawn from scene.data by the script, fresh and random each time (seeded in read-along)
+    return h("div", { class: "btn-row", "data-control": control.id }, control.trials.map((trials, index) =>
+      h("button", { class: `btn${index === control.trials.length - 1 ? " primary" : ""}`, type: "button", onclick: () => {
+        try { const summary = typeof api.run === "function" ? api.run(trials, Object.assign({}, settings)) : ""; result.textContent = summary || ""; api.say(summary || ""); }
+        catch (error) { fail(error); }
+      } }, `${control.label} ${trials} ${control.unit || "times"}`)));
+  });
+  holder.append(...controlRows.filter((row) => !row.matches(".btn-row")), root,
+    h("div", { class: "scene-captions" }, captions),
+    steps.length > 1 ? h("div", { class: "scene-nav" }, back, where, next) : null,
+    steps.length > 1 ? h("div", { class: "btn-row" }, replay) : null,
+    ...controlRows.filter((row) => row.matches(".btn-row")), result, spoken);
+  // Draw once the scene is on the page, so the script can measure text if it needs to
+  requestAnimationFrame(() => draw());
+  return holder;
+}
 function drawFigure(figure, block) {
   switch (figure.kind) {
     case "tiles": return tilesFigure(figure);
@@ -1329,6 +1868,7 @@ function drawFigure(figure, block) {
     case "scatter": return scatterFigure(figure);
     case "grid": return gridFigure(figure);
     case "frames": return framesFigure(figure);
+    case "scene": return sceneFigure(block);
     default: return authoredFigure({ figure });
   }
 }
@@ -1749,7 +2289,7 @@ function renderPlay(chapter, block) {
     setChildren(table, h("table", { class: "tally-table" }, h("tbody", {}, block.outcomes.map((outcome) => h("tr", {},
       h("td", {}, h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), outcome.label),
       h("td", {}, `you: ${counts[outcome.id]} of ${games}`, h("span", { class: "expected" }, `expected about ${Math.round(expected[outcome.id] * games)}${games >= 100 ? ` (usually ${spread(expected[outcome.id], games)})` : ""}`)))))),
-      totalGames > games ? h("p", { class: "why" }, `All your deals together, ${totalGames} games: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} (expected about ${Math.round(expected[o.id] * totalGames)})`).join(" · ") + ".") : null,
+      totalGames > games ? h("p", { class: "why" }, `All your deals together, ${totalGames} ${block.unit || "games"}: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} (expected about ${Math.round(expected[o.id] * totalGames)})`).join(" · ") + ".") : null,
       readAlong && !totalGames ? h("p", { class: "why" }, "A sample deal, the same every time. Deal again for your own.") : null);
   }
   wrapper.append(
@@ -1757,7 +2297,7 @@ function renderPlay(chapter, block) {
     h("div", { class: "play" },
       h("p", { class: "question" }, withTerms(block.prompt)),
       h("p", { class: "deal-key" }, block.outcomes.map((outcome, index) => [index ? " · " : "", h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), " ", outcome.label.toLowerCase()])),
-      h("div", { class: "btn-row" }, block.deals.map((games, index) => h("button", { class: `btn${index === block.deals.length - 1 ? " primary" : ""}`, type: "button", onclick: () => deal(games) }, `Deal ${games} games`))),
+      h("div", { class: "btn-row" }, block.deals.map((games, index) => h("button", { class: `btn${index === block.deals.length - 1 ? " primary" : ""}`, type: "button", onclick: () => deal(games) }, `Deal ${games} ${block.unit || "games"}`))),
       grid, table));
   draw(false);
   return wrapper;
@@ -2016,3 +2556,4 @@ render();
 connectToClaude();
 connectProgressStore();
 </script>
+````

@@ -1,7 +1,8 @@
 # Small example with no code: the Monty Hall problem, in 5 chapters (about 25 minutes), told as one story.
 # The game (the puzzle and your gut answer) · Feel it (100 doors, deal 100 games, every case) · Why (the chance slides
 # onto one door) · When it fails (a host who guesses) · Use it (a quiz with no doors, then back to the first question).
-# Every chance is worked out by code; the two case tables are drawn by assets/example-monty-cases.py.
+# Every chance is worked out by code (shared_modules: monty). The two case tables (cases-table, guesses-table) are svg
+# figures whose rows were written by code that lists every case; write them the same way if the game changes.
 
 lesson:
   title: Stay or Switch?
@@ -189,9 +190,9 @@ chapters:
         tests: rules-idea
         question: "A friend plays a version where the host opens a random door you did not pick, even if it hides the car. Which rule has changed?"
         options:
-          - {text: "He no longer knows where the car is", correct: true, why_right: "A random door means he is not using what he knows, so he may show the car."}
           - {text: "He no longer offers you the switch", correct: false, why_wrong: "He still offers it; what changed is how he picks his door."}
           - {text: "You no longer get to pick first", correct: false, why_wrong: "You still pick first; the change is in the host's move."}
+          - {text: "He no longer knows where the car is", correct: true, why_right: "A random door means he is not using what he knows, so he may show the car."}
       - id: game-recap
         type: recap
         text: The host knows where the car is, opens a goat door you did not pick, and offers the switch.
@@ -245,6 +246,12 @@ chapters:
           understand: "The same game with 10 doors: watch the host open the other group, one door at a time, until one is left."
           how_it_helps: "Ten doors as tiles in two groups, yours and the other 9; the host's goats open one after another, leaving one door shut."
           clearer_than_text: Seeing 8 doors open in the other group while yours never moves shows that the left door carries the whole group's chance.
+        motion:
+          changes: The host's goat doors in the other group open, one after another.
+          stays: Your door, its group and the one door left in the other group never move.
+          why_not_still: The order matters here, because each door opens inside the other group only, so the eye sees that group shrink to one door.
+          learner_does: step
+          breaks: two-doors-even
         figure:
           kind: frames
           control: buttons
@@ -457,9 +464,9 @@ chapters:
         tests: two-doors-even
         question: "A friend says: \"Once a goat is shown, two doors are left, so it's 1 in 2 each.\" Using the case table, what is the flaw?"
         options:
-          - {text: "There are 3 equally likely cases, and the other door wins 2 of them", correct: true, why_right: "Counting doors left is not counting cases."}
           - {text: "Nothing: once a door opens, the two left share the chance like a coin", correct: false, why_wrong: "Opening a door is not a new coin toss; the table shows switching winning 2 of 3 cases."}
           - {text: "Your door gains the opened door's share, so staying is now better", correct: false, why_wrong: "The host never touches your door; the opened door's share goes to the other closed door."}
+          - {text: "There are 3 equally likely cases, and the other door wins 2 of them", correct: true, why_right: "Counting doors left is not counting cases."}
       - id: even-pitfall
         type: pitfall
         misconception: two-doors-even
@@ -522,6 +529,12 @@ chapters:
           understand: "Tap through the steps and watch the bars: the reveal moves door 3's share onto door 2, never onto your door."
           how_it_helps: "Bars out of 100 games: each door (33, 33, 33), the two groups (33 against 67), and after the reveal (33, 67, 0)."
           clearer_than_text: Watching door 2's bar double while yours stays put shows where the 2 in 3 comes from.
+        motion:
+          changes: Door 3's share of the games moves onto door 2 when the host opens door 3.
+          stays: Your door's bar, at 33 games in 100, through every step.
+          why_not_still: Where the share goes is the idea, and only the move shows it landing on door 2 and never on yours.
+          learner_does: step
+          breaks: host-resets-odds
         figure:
           kind: frames
           control: buttons
@@ -594,9 +607,9 @@ chapters:
         tests: groups-idea
         question: "Four doors, one car. You pick door 1; the host, who knows, opens 2 goat doors and leaves door 4 shut. How often does switching to door 4 win?"
         options:
-          - {text: "3 times in 4", correct: true, why_right: "Your door keeps 1 in 4; the other group's 3 in 4 all lands on door 4."}
           - {text: "1 time in 2", correct: false, why_wrong: "Two doors are left, but the host chose which one to keep shut."}
           - {text: "1 time in 4", correct: false, why_wrong: "That is your own door's chance."}
+          - {text: "3 times in 4", correct: true, why_right: "Your door keeps 1 in 4; the other group's 3 in 4 all lands on door 4."}
       - id: after-chance
         type: fill_blanks
         instructions:
@@ -675,8 +688,8 @@ chapters:
         question: "This time the host does not know where the car is. He opens door 3 at random, and it happens to be a goat. Should you switch?"
         options:
           - {text: "Yes, switching still wins 2 in 3", correct: false, why_wrong: "The 2 in 3 needed a host who knew."}
-          - {text: "It no longer matters: both are even", correct: true, why_right: "A goat he found by luck gives the other closed door no extra chance."}
           - {text: "No, staying now wins more often", correct: false, why_wrong: "Neither door is favoured; the guess carries no information."}
+          - {text: "It no longer matters: both are even", correct: true, why_right: "A goat he found by luck gives the other closed door no extra chance."}
       - id: host-idea
         type: idea
         key: true
@@ -769,8 +782,8 @@ chapters:
         tests: host-idea
         question: "Two shows run tonight. In Show A the host knows where the car is; in Show B he picks a door at random. Both hosts open a door and show a goat. Where does switching help?"
         options:
-          - {text: "Only in Show A", correct: true, why_right: "Only a host who knows moves chance onto the door he leaves shut."}
           - {text: "In both shows", correct: false, why_wrong: "Show B's goat was luck; its table splits 2 and 2."}
+          - {text: "Only in Show A", correct: true, why_right: "Only a host who knows moves chance onto the door he leaves shut."}
           - {text: "In neither show", correct: false, why_wrong: "Show A's host had to leave the car shut whenever your pick was wrong."}
       - id: guess-count
         type: fill_blanks
@@ -784,12 +797,6 @@ chapters:
         blanks:
           - id: count
             options:
-              - text: "2"
-                correct: true
-                why_right: Switching wins when the car is behind door 2 and he opens 3, or behind door 3 and he opens 2; staying wins the other 2.
-                output: "Switching wins 2 of 4 and staying wins 2 of 4: they are even. The guessing host's deal shows the same: staying and switching come out about level."
-                output_from: worked
-                output_source: the case table above
               - text: "3, still 2 in 3 or so"
                 correct: false
                 why_wrong: The 2 in 3 came from a host who knows; a guess carries no information.
@@ -802,6 +809,12 @@ chapters:
                 why_wrong: Count the switching ticks again; there are 2.
                 misconception: host-resets-odds
                 output: "Switching wins 2 of the 4 goat moves: car behind 2 with door 3 opened, and car behind 3 with door 2 opened."
+                output_from: worked
+                output_source: the case table above
+              - text: "2"
+                correct: true
+                why_right: Switching wins when the car is behind door 2 and he opens 3, or behind door 3 and he opens 2; staying wins the other 2.
+                output: "Switching wins 2 of 4 and staying wins 2 of 4: they are even. The guessing host's deal shows the same: staying and switching come out about level."
                 output_from: worked
                 output_source: the case table above
         hints:
@@ -885,12 +898,6 @@ chapters:
         blanks:
           - id: count
             options:
-              - text: "3"
-                correct: true
-                why_right: Switching wins whenever A was wrong, which is 3 of the 4 cases.
-                output: "A right: staying wins. B, C or D right: she leaves that answer, and switching wins. That is 3 of 4."
-                output_from: worked
-                output_source: listing the 4 cases
               - text: "2, one for each answer left"
                 correct: false
                 why_wrong: Two answers are left, but there are 4 equally likely cases, not 2.
@@ -905,6 +912,12 @@ chapters:
                 output: "Staying wins 1 case, A right. Switching wins the other 3."
                 output_from: worked
                 output_source: listing the 4 cases
+              - text: "3"
+                correct: true
+                why_right: Switching wins whenever A was wrong, which is 3 of the 4 cases.
+                output: "A right: staying wins. B, C or D right: she leaves that answer, and switching wins. That is 3 of 4."
+                output_from: worked
+                output_source: listing the 4 cases
         hints:
           - In how many of the 4 cases is A wrong?
       - id: quiz-key-check
@@ -913,8 +926,8 @@ chapters:
         tests: quiz-idea
         question: "Same quiz, but this friend has not seen the sheet. She crosses out 2 of the other answers at random, and by luck neither is the right answer. Stay or switch?"
         options:
-          - {text: "Either: the two left are even", correct: true, why_right: "Her luck carries no knowledge, so neither answer gains."}
           - {text: "Switch: it still wins 3 in 4", correct: false, why_wrong: "The 3 in 4 needed a friend who knows; a guess carries nothing."}
+          - {text: "Either: the two left are even", correct: true, why_right: "Her luck carries no knowledge, so neither answer gains."}
           - {text: "Stay: yours was not crossed out", correct: false, why_wrong: "Not being crossed out by luck gives yours no more chance than the other."}
       - id: payoff-explain
         type: explain

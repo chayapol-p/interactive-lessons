@@ -20,6 +20,7 @@ lesson:
       text: After this, you can predict how temperature changes which next token a model picks.
     - id: explain-limits
       text: After this, you can explain why a model can hallucinate, and why it cannot see text outside its context window.
+  agreed_extras: [scene]
   source: "Vaswani et al. 2017; Mikolov et al. 2013; Ouyang et al. 2022; OpenAI 2025; Hugging Face text-generation guide; Claude context-window docs; a real tokenizer run"
 
 theme:
@@ -329,12 +330,6 @@ chapters:
         blanks:
           - id: unit
             options:
-              - text: 8 token numbers
-                correct: true
-                why_right: Seven words and the full stop are 8 tokens, each sent as its number.
-                output: "8 numbers: 773, 5657, 546, 279, 10674, 504, 45098, 18. Nothing else reaches the model."
-                output_from: source
-                output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence
               - text: 34 letters
                 correct: false
                 why_wrong: The letters never reach the model; it gets the token numbers only.
@@ -349,6 +344,12 @@ chapters:
                 output: "8 tokens, not 7 words: the full stop is its own token. A rare word such as strawberry would add 3."
                 output_from: source
                 output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence and on strawberry
+              - text: 8 token numbers
+                correct: true
+                why_right: Seven words and the full stop are 8 tokens, each sent as its number.
+                output: "8 numbers: 773, 5657, 546, 279, 10674, 504, 45098, 18. Nothing else reaches the model."
+                output_from: source
+                output_source: the tokenizer bundled with anthropic 0.25.0, run on this sentence
         hints:
           - Count the chips in the river row of the picture.
       - id: token-key-check
@@ -369,9 +370,9 @@ chapters:
         tests: same-cost-every-language
         question: "The same tokenizer needs 2 tokens for \"Bangkok\" and 14 for the city's Thai name. A Thai support bot and an English one answer the same questions. What do you expect?"
         options:
-          - {text: "The Thai bot uses many more tokens, so it costs more and fills its window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
           - {text: "Both cost the same, because the meaning is the same", correct: false, why_wrong: "Cost counts tokens, not meaning."}
           - {text: "The Thai bot is cheaper, because Thai words are shorter", correct: false, why_wrong: "Fewer characters can still mean far more tokens."}
+          - {text: "The Thai bot uses many more tokens, so it costs more and fills its window sooner", correct: true, why_right: "Text the tokenizer saw less splits into more pieces, and every piece counts."}
       - id: cost-pitfall
         type: pitfall
         misconception: same-cost-every-language
@@ -500,12 +501,6 @@ chapters:
         blanks:
           - id: place
             options:
-              - text: next to money and interest
-                correct: true
-                why_right: Loan is used in the same kind of sentences as money and interest, so training puts it beside them.
-                output: "In the toy map, loan is at (0.1, 0.9), right beside money at (0.15, 1.0) and interest at (0.0, 1.0)."
-                output_from: worked
-                output_source: read from the toy map's numbers
               - text: next to loam, which is spelled almost the same
                 correct: false
                 why_wrong: Positions come from how words are used, not from how they are spelled.
@@ -520,6 +515,12 @@ chapters:
                 output: "The next number is just the next row of the table, usually an unrelated piece of text. Meaning is in the embedding, not the number."
                 output_from: worked
                 output_source: follows from how an embedding table is looked up
+              - text: next to money and interest
+                correct: true
+                why_right: Loan is used in the same kind of sentences as money and interest, so training puts it beside them.
+                output: "In the toy map, loan is at (0.1, 0.9), right beside money at (0.15, 1.0) and interest at (0.0, 1.0)."
+                output_from: worked
+                output_source: read from the toy map's numbers
         hints:
           - Is the position about spelling, about the number, or about how the word is used?
       - id: spelling-pitfall
@@ -894,17 +895,17 @@ chapters:
         blanks:
           - id: word
             options:
-              - text: river
-                correct: true
-                why_right: River gets the biggest share after bank itself, because their meanings overlap most.
-                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
-                output_from: worked
-                output_source: worked out with the toy model behind this chapter's pictures
               - text: the, right before it
                 correct: false
                 why_wrong: Attention goes by relevance, not distance; the gets almost nothing.
                 misconception: nearest-word-matters-most
                 output: "The word before bank gets only 0.02 of its attention. Distance does not matter; overlap of meaning does."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: river
+                correct: true
+                why_right: River gets the biggest share after bank itself, because their meanings overlap most.
+                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
                 output_from: worked
                 output_source: worked out with the toy model behind this chapter's pictures
               - text: was
@@ -916,12 +917,6 @@ chapters:
                 output_source: worked out with the toy model behind this chapter's pictures
           - id: side
             options:
-              - text: water
-                correct: true
-                why_right: River and flooded are about water, so blending them in moves bank toward water.
-                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
-                output_from: worked
-                output_source: worked out with the toy model behind this chapter's pictures
               - text: money
                 correct: false
                 why_wrong: That is bank in the money sentence; here its neighbours are about water.
@@ -934,6 +929,12 @@ chapters:
                 why_wrong: The embedding is only the start; attention moves it.
                 misconception: one-fixed-meaning
                 output: "Bank starts at water 0.50, money 0.50, and leaves attention at water 0.75, money 0.14. It moved."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
+              - text: water
+                correct: true
+                why_right: River and flooded are about water, so blending them in moves bank toward water.
+                output: "Bank gives river 0.43 and flooded 0.20 of its attention, so its point moves to water 0.75, money 0.14."
                 output_from: worked
                 output_source: worked out with the toy model behind this chapter's pictures
         hints:
@@ -956,9 +957,9 @@ chapters:
         tests: nearest-word-matters-most
         question: "A teammate says: an LLM understands a word mostly from the word right before it. What is wrong with that?"
         options:
-          - {text: "Each token can weigh every token in the window, near or far", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
           - {text: "Nothing; the previous word decides the meaning", correct: false, why_wrong: "In the river sentence, the word before bank gets 0.02 of its attention."}
           - {text: "It is the word right after that matters most", correct: false, why_wrong: "Neither side wins by position; relevance wins."}
+          - {text: "Each token can weigh every token in the window, near or far", correct: true, why_right: "That is the point of attention: distance does not decide the share."}
       - id: nearest-pitfall
         type: pitfall
         misconception: nearest-word-matters-most
@@ -1002,8 +1003,8 @@ chapters:
         type: predict
         question: "\"The trophy didn't fit in the suitcase because it was too big.\" What is too big, and could one quick look at the words settle it?"
         options:
-          - {text: "The trophy, and it takes combining several clues", correct: true, why_right: "You need fit, too big and which thing goes inside the other, together."}
           - {text: "The suitcase, since it is the nearest noun to it", correct: false, why_wrong: "A suitcase that is too big would hold the trophy fine."}
+          - {text: "The trophy, and it takes combining several clues", correct: true, why_right: "You need fit, too big and which thing goes inside the other, together."}
       - id: layers-idea
         type: idea
         key: true
@@ -1047,9 +1048,9 @@ chapters:
         tests: layers-idea
         question: A smaller model with fewer layers misreads which person a pronoun points to in long sentences. What does that suggest?
         options:
-          - {text: "It has fewer rounds to combine the clues that settle the pronoun", correct: true, why_right: "Depth is what lets clues be combined step by step."}
           - {text: "Its tokenizer split the pronoun wrongly", correct: false, why_wrong: "Pronouns are short, common tokens; the problem is combining clues."}
           - {text: "Its layers were programmed without a pronoun rule", correct: false, why_wrong: "Nobody programs such rules; layers learn what they do."}
+          - {text: "It has fewer rounds to combine the clues that settle the pronoun", correct: true, why_right: "Depth is what lets clues be combined step by step."}
       - id: layers-recap
         type: recap
         text: A layer is attention plus a per-token refinement; stacking many layers builds meaning from combined clues.
@@ -1095,8 +1096,8 @@ chapters:
         type: predict
         question: You send the same prompt twice and get two different replies. Is something broken?
         options:
-          - {text: "Yes, a model should always give the same answer", correct: false, why_wrong: "Variety is built in: each token is picked from odds."}
           - {text: "No, each token is picked from odds, so picks can differ", correct: true, why_right: "Two runs can take different paths from the same odds."}
+          - {text: "Yes, a model should always give the same answer", correct: false, why_wrong: "Variety is built in: each token is picked from odds."}
       - id: odds-idea
         type: idea
         key: true
@@ -1104,88 +1105,137 @@ chapters:
         more: "The last layer's embedding for the final position becomes a score for every token, and the scores become odds that add up to 1. As temperature gets close to 0, the model always takes the top token. The odds below come from the toy model's made-up scores for the word after \"The bank by the river was\"."
       - id: odds-bars
         type: diagram
-        shape: quantity
+        shape: change-over-time
         brief:
-          understand: Temperature changes how the same odds are shared out, from one clear winner to a spread.
-          how_it_helps: "Bars for 5 candidate next words, with a temperature slider from 0.2 to 1.5."
-          clearer_than_text: Dragging the slider shows flooded's bar shrink and the others grow, with no new word appearing.
+          understand: The odds are one strip shared out between words; a draw lands somewhere on it, and temperature only reshapes the slices.
+          how_it_helps: "A strip split into one slice per word, a dot that drops onto it, and bins that fill as you draw 10 or 100 words."
+          clearer_than_text: Seeing draws pile up in proportion to slice width, while the slider reshapes the slices and no new word appears.
+        motion:
+          changes: The width of each word's slice as the temperature moves, and where each draw lands.
+          stays: The five words, their order, and the strip's full width, which always stands for all the odds.
+          why_not_still: A still picture shows the odds, but not that a reply is a draw that can land in any slice, nor how draws pile up in proportion to width.
+          learner_does: run
+          breaks: looks-up-answer
         figure:
-          kind: frames
+          kind: scene
           toy: true
-          control: slider
-          control_label: Temperature
+          height: 250
+          steps:
+            - label: The strip
+              caption: All the odds form one strip. Each word owns a slice as wide as its chance.
+            - label: One draw
+              caption: A random point lands on the strip, and the word whose slice it hits becomes the next token.
+            - label: Many draws
+              caption: Press Draw 100. Each draw lands in a slice, and the bars fill toward the marks that show each word's share.
+          controls:
+            - {id: temperature, kind: slider, label: Temperature, values: ["0.2", "0.7", "1.0", "1.5"], start: 2}
+            - {id: draw, kind: run, label: Draw, trials: [10, 100], unit: words}
           computed_by:
             language: python
             code: |
-              import json
+              import json, random
               from toy_llm import NEXT_SCORES, softmax
-              frames = []
-              for temperature in [0.2, 0.7, 1.0, 1.5]:
-                  odds = softmax(list(NEXT_SCORES.values()), temperature)
-                  frames.append({"label": str(temperature), "figure": {"kind": "bars", "max": 1,
-                                 "bars": [{"label": word, "value": round(share, 3)} for word, share in zip(NEXT_SCORES, odds)]}})
-              print(json.dumps({"frames": frames}))
-          frames:
-            - label: '0.2'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.997
-                  - label: closed
-                    value: 0.002
-                  - label: muddy
-                    value: 0.0
-                  - label: open
-                    value: 0.0
-                  - label: robbed
-                    value: 0.0
-            - label: '0.7'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.744
-                  - label: closed
-                    value: 0.134
-                  - label: muddy
-                    value: 0.076
-                  - label: open
-                    value: 0.032
-                  - label: robbed
-                    value: 0.014
-            - label: '1.0'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.597
-                  - label: closed
-                    value: 0.18
-                  - label: muddy
-                    value: 0.121
-                  - label: open
-                    value: 0.066
-                  - label: robbed
-                    value: 0.036
-            - label: '1.5'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.459
-                  - label: closed
-                    value: 0.206
-                  - label: muddy
-                    value: 0.158
-                  - label: open
-                    value: 0.106
-                  - label: robbed
-                    value: 0.071
+              temperatures = ["0.2", "0.7", "1.0", "1.5"]
+              # 6 decimals, so a tiny chance is never stored as 0
+              odds = {t: [round(share, 6) for share in softmax(list(NEXT_SCORES.values()), float(t))] for t in temperatures}
+              # One example draw, low enough on the strip to land in the top word's slice at every temperature
+              example_draw = round(random.Random(7).random() * 0.4, 3)
+              print(json.dumps({"data": {"words": list(NEXT_SCORES), "temperatures": temperatures, "odds": odds, "example_draw": example_draw}}))
+          data:
+            words:
+              - flooded
+              - closed
+              - muddy
+              - open
+              - robbed
+            temperatures:
+              - '0.2'
+              - '0.7'
+              - '1.0'
+              - '1.5'
+            odds:
+              '0.2':
+                - 0.997176
+                - 0.002472
+                - 0.000335
+                - 0.000017
+                - 0.000001
+              '0.7':
+                - 0.744453
+                - 0.13407
+                - 0.075712
+                - 0.03213
+                - 0.013635
+              '1.0':
+                - 0.59712
+                - 0.179849
+                - 0.120557
+                - 0.066163
+                - 0.036311
+              '1.5':
+                - 0.458965
+                - 0.206226
+                - 0.157955
+                - 0.10588
+                - 0.070974
+            example_draw: 0.13
+          script: |
+            // Layout: the strip on top, then one row per word with its share and a bin that fills with draws
+            const words = scene.data.words, temperatures = scene.data.temperatures;
+            const left = 20, right = 320, stripTop = 46, stripHeight = 34;
+            const rowsTop = 136, rowGap = 22, binLeft = 150, binWidth = 165;
+            const oddsAt = (settings) => scene.data.odds[temperatures[settings.temperature]];
+            // Which slice a point from 0 to 1 lands in
+            const sliceAt = (point, shares) => { let edge = 0; for (let i = 0; i < shares.length; i += 1) { edge += shares[i]; if (point < edge) return i; } return shares.length - 1; };
+
+            // A share as a percentage: a word that can still be drawn never shows 0%, and one that can still lose never shows 100%
+            function percentText(share) {
+              if (share > 0 && share < 0.005) return "<1%";
+              if (share < 1 && share > 0.995) return ">99%";
+              return `${Math.round(share * 100)}%`;
+            }
+
+            // The strip: one slice per word; a label only where the slice is wide enough to hold it
+            scene.add("text", { x: left, y: stripTop - 10, class: "svg-text small" }, "All the odds, as one strip");
+            const slices = words.map((word, i) => scene.add("rect", { x: left, y: stripTop, width: 0, height: stripHeight, class: i === 0 ? "svg-box hot" : "svg-box" }));
+            const sliceLabels = words.map((word) => scene.add("text", { x: left, y: stripTop + 21, "text-anchor": "middle", class: "svg-text small", opacity: 0 }, word));
+            // The draw: a dot that drops onto the strip
+            const dot = scene.add("circle", { cx: left + (right - left) * scene.data.example_draw, cy: 14, r: 6, class: "svg-dot hot", opacity: 0 });
+
+            // One row per word: its name, its share, a bin for draws, and a mark where its share says draws should reach
+            const names = words.map((word, i) => scene.add("text", { x: left, y: rowsTop + i * rowGap, class: "svg-text" }, word));
+            const shareTexts = words.map((word, i) => scene.add("text", { x: 130, y: rowsTop + i * rowGap, "text-anchor": "end", class: "svg-text small" }, ""));
+            const bins = words.map((word, i) => scene.add("rect", { x: binLeft, y: rowsTop + i * rowGap - 11, width: 0, height: 12, class: "svg-bar" }));
+            const marks = words.map((word, i) => scene.add("line", { x1: binLeft, x2: binLeft, y1: rowsTop + i * rowGap - 14, y2: rowsTop + i * rowGap + 4, class: "svg-line hot", opacity: 0 }));
+
+            scene.show = (step, from, settings) => {
+              const shares = oddsAt(settings);
+              // The slices take their widths at this temperature; no word appears or disappears
+              let x = left;
+              shares.forEach((share, i) => {
+                const width = (right - left) * share;
+                scene.move(slices[i], { x, width });
+                scene.move(sliceLabels[i], { x: x + width / 2, opacity: width >= 48 ? 1 : 0 });
+                scene.write(shareTexts[i], percentText(share));
+                x += width;
+              });
+              // Step 2: one draw lands in a slice, and that word lights up
+              const hit = sliceAt(scene.data.example_draw, shares);
+              scene.move(dot, { cy: step >= 1 ? stripTop + stripHeight / 2 : 14, opacity: step >= 1 ? 1 : 0 });
+              names.forEach((name, i) => name.setAttribute("class", step >= 1 && i === hit ? "svg-text hot" : "svg-text"));
+              // Step 3: the marks show where many draws should pile up; the bins empty for a fresh run
+              marks.forEach((mark, i) => { const at = binLeft + binWidth * shares[i]; scene.move(mark, { x1: at, x2: at, opacity: step >= 2 ? 1 : 0 }); });
+              bins.forEach((bin) => scene.move(bin, { width: 0 }, { duration: 300 }));
+            };
+
+            // Draw words: each draw is a random point on the strip; the bins fill with the share each word got
+            scene.run = (trials, settings) => {
+              const shares = oddsAt(settings);
+              const counts = words.map(() => 0);
+              for (let t = 0; t < trials; t += 1) counts[sliceAt(scene.random(), shares)] += 1;
+              counts.forEach((count, i) => scene.move(bins[i], { width: binWidth * count / trials }, { delay: i * 120 }));
+              return words.map((word, i) => `${word} ${counts[i]}`).join(" · ") + ` (of ${trials} draws)`;
+            };
       - id: pipeline-next
         type: diagram
         shape: flow
@@ -1205,10 +1255,103 @@ chapters:
         extends:
           diagram: pipeline-layers
           adds: "odds for every token and the pick. The picked token goes back in, and the whole pipeline runs again."
+      - id: run-by-run
+        type: diagram
+        shape: change-over-time
+        brief:
+          understand: Each run reads every token so far, then one new token travels back and joins the end of the text.
+          how_it_helps: "Tokens in a row above the model; each run sends every token along its own curve into the model, and the new one rides a curve back."
+          clearer_than_text: Watching all the tokens travel again on the second run shows that nothing is written ahead; each run starts from the whole text.
+        motion:
+          changes: The tokens that travel into the model on each run, and the new token that travels back to the end of the row.
+          stays: The model in the middle, and every token already in the row, which never moves.
+          why_not_still: A still picture of the loop shows an arrow back, but not that every token is read again on every run, in order, before one new token joins.
+          learner_does: step
+          breaks: looks-up-answer
+        figure:
+          kind: scene
+          library: anime
+          height: 230
+          steps:
+            - label: Text so far
+              caption: Six tokens wait in a row above the model. The model reads only these.
+            - label: Run 1
+              caption: Every token travels into the model, and one new token, flooded, travels back to the end of the row.
+            - label: Run 2
+              caption: The next run reads all seven tokens again, flooded included, and adds one more.
+          computed_by:
+            language: python
+            code: |
+              import json
+              from toy_llm import RIVER
+              # The prompt the lesson follows, and the two tokens the next runs add
+              print(json.dumps({"data": {"prompt": RIVER[:6], "next": [RIVER[6], "."]}}))
+          data:
+            prompt:
+              - The
+              - bank
+              - by
+              - the
+              - river
+              - was
+            next:
+              - flooded
+              - .
+          script: |
+            // Layout: the text so far in a row at the top, the model below; each run reads every token and adds one
+            const { createTimeline, svg } = scene.anime;
+            const prompt = scene.data.prompt, next = scene.data.next;
+            const rowY = 32, model = { x: 120, y: 160, w: 100, h: 40 };
+            const chipWidth = (word) => Math.max(26, word.length * 6.6 + 12);
+            const centres = (words) => { const out = []; let x = 8; for (const w of words) { out.push(x + chipWidth(w) / 2); x += chipWidth(w) + 4; } return out; };
+            // A chip is drawn around (0, 0) inside a group, so it can travel by translate
+            function chip(word, isNew) {
+              const group = scene.add("g", {});
+              const width = chipWidth(word);
+              group.append(scene.add("rect", { x: -width / 2, y: -11, width, height: 22, rx: 5, class: isNew ? "svg-box hot" : "svg-box" }));
+              group.append(scene.add("text", { x: 0, y: 4, "text-anchor": "middle", class: "svg-text small" }, word));
+              return group;
+            }
+
+            scene.show = (step) => {
+              // The state after this step: the row holds the prompt plus one token per run so far
+              scene.root.replaceChildren();
+              scene.add("text", { x: 8, y: 12, class: "svg-text small" }, "Text so far");
+              scene.add("rect", { x: model.x, y: model.y, width: model.w, height: model.h, rx: 8, class: "svg-box" });
+              scene.add("text", { x: model.x + model.w / 2, y: model.y + 25, "text-anchor": "middle", class: "svg-text" }, "Model");
+              const words = prompt.concat(next.slice(0, step));
+              const read = words.slice(0, words.length - (step ? 1 : 0));
+              const xs = centres(words);
+              const target = { x: model.x + model.w / 2, y: model.y };
+              const routes = step ? read.map((word, i) => scene.add("path", { d: `M ${xs[i]} ${rowY + 11} C ${xs[i]} ${rowY + 80}, ${target.x} ${target.y - 70}, ${target.x} ${target.y}`, class: "svg-line dim" })) : [];
+              const chips = words.map((word, i) => scene.set(chip(word, step > 0 && i === words.length - 1), { transform: `translate(${xs[i]} ${rowY})` }));
+              if (!step) return;
+              // The last run, hidden until it plays: each token read travels its own curve in, then the new token rides back
+              const end = { x: xs[xs.length - 1], y: rowY };
+              const back = scene.add("path", { d: `M ${model.x + model.w} ${model.y + model.h / 2} C 330 ${model.y + model.h / 2}, ${end.x + 30} ${end.y + 70}, ${end.x} ${end.y}`, class: "svg-line hot", opacity: 0 });
+              const dots = read.map(() => scene.add("circle", { cx: 0, cy: 0, r: 4, class: "svg-dot hot", opacity: 0 }));
+              const newChip = scene.set(chips[chips.length - 1], { opacity: 0 });
+              scene.root.append(newChip);
+              // --- motion (anime.js) ---
+              const timeline = createTimeline({ autoplay: false, defaults: { ease: "inOutQuad" } });
+              dots.forEach((dot, i) => {
+                const { translateX, translateY } = svg.createMotionPath(routes[i]);
+                timeline.set(dot, { opacity: 1 }, i * 70);
+                timeline.add(dot, { translateX, translateY, duration: 700 }, i * 70);
+                timeline.add(dot, { opacity: 0, duration: 100 }, i * 70 + 600);
+              });
+              const way = svg.createMotionPath(back);
+              timeline.set(back, { opacity: 1 }, "+=200");
+              timeline.add(svg.createDrawable(back), { draw: ["0 0", "0 1"], duration: 900 }, "<<");
+              timeline.set(newChip, { opacity: 1 }, "<<");
+              timeline.add(newChip, { translateX: way.translateX, translateY: way.translateY, duration: 900 }, "<<");
+              scene.play(timeline);
+              // --- end motion ---
+            };
       - id: temperature-blank
         type: fill_blanks
         instructions:
-          - Fill the blank using the temperature slider.
+          - Fill the blank using the temperature slider and the strip.
         language: text
         source: the toy next-token odds
         context_note: The odds for the word after "The bank by the river was".
@@ -1216,12 +1359,6 @@ chapters:
         blanks:
           - id: effect
             options:
-              - text: almost certain to be picked
-                correct: true
-                why_right: Low temperature sharpens the odds, so the top token takes nearly all of them.
-                output: "Flooded's chance goes from 0.60 at temperature 1.0 to 1.00 at 0.2 (rounded)."
-                output_from: worked
-                output_source: worked out with the toy model behind this chapter's pictures
               - text: less likely, because the model is less confident
                 correct: false
                 why_wrong: Low temperature makes the top token more likely, not less.
@@ -1236,16 +1373,22 @@ chapters:
                 output: "The same 5 words keep the same order at every temperature; only their shares change."
                 output_from: worked
                 output_source: worked out with the toy model behind this chapter's pictures
+              - text: almost certain to be picked
+                correct: true
+                why_right: Low temperature sharpens the odds, so the top token takes nearly all of them.
+                output: "Flooded's chance goes from 0.60 at temperature 1.0 to 1.00 at 0.2 (rounded)."
+                output_from: worked
+                output_source: worked out with the toy model behind this chapter's pictures
         hints:
-          - Slide to 0.2 and read flooded's bar.
+          - Slide to 0.2 and read flooded's share.
       - id: sampling-key-check
         type: check
         purpose: key
         tests: odds-idea
         question: You want a classifier prompt to give the same label every time it sees the same text. What setting helps most?
         options:
-          - {text: "A temperature near 0, so the top token is nearly always picked", correct: true, why_right: "Sharp odds mean the same pick on every run."}
           - {text: "A high temperature, so the model thinks harder", correct: false, why_wrong: "High temperature spreads the odds and adds variety, not thought."}
+          - {text: "A temperature near 0, so the top token is nearly always picked", correct: true, why_right: "Sharp odds mean the same pick on every run."}
           - {text: "A longer reply, so the label is checked twice", correct: false, why_wrong: "Each extra token is another pick from odds; length adds no consistency."}
       - id: temperature-pitfall
         type: pitfall
@@ -1256,9 +1399,9 @@ chapters:
         tests: looks-up-answer
         question: "A teammate says: the model found the answer in its memory, so asking again should give the same words. What is wrong with that?"
         options:
-          - {text: "Replies are built token by token from odds, so a new run can differ", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
           - {text: "Nothing; the same question should give the same words", correct: false, why_wrong: "Only a temperature near 0 makes repeat runs nearly identical."}
           - {text: "The model forgets everything after each word", correct: false, why_wrong: "It sees all earlier tokens in the window; the variety comes from the pick."}
+          - {text: "Replies are built token by token from odds, so a new run can differ", correct: true, why_right: "There is no stored answer; each pick is a draw from odds."}
       - id: lookup-pitfall
         type: pitfall
         misconception: looks-up-answer
@@ -1306,8 +1449,8 @@ chapters:
         type: predict
         question: You ask a model for the birthday of a little-known local author. It has no reliable source in its training. What does it most likely do?
         options:
-          - {text: "Says politely that it does not know", correct: false, why_wrong: "Training to predict likely text, and tests that reward right answers, both push it to guess."}
           - {text: "Gives a plausible, confident date", correct: true, why_right: "A likely-looking date is exactly what next-token prediction produces."}
+          - {text: "Says politely that it does not know", correct: false, why_wrong: "Training to predict likely text, and tests that reward right answers, both push it to guess."}
       - id: training-idea
         type: idea
         key: true
@@ -1349,12 +1492,6 @@ chapters:
         blanks:
           - id: act
             options:
-              - text: writes a plausible, confident date
-                correct: true
-                why_right: A rare fact has no pattern to predict from, so the model writes a likely-looking guess.
-                output: "Rare facts like a birthday cannot be predicted from patterns alone, so the model produces a fluent guess."
-                output_from: source
-                output_source: "OpenAI (2025), Why language models hallucinate"
               - text: looks it up in its database and finds an error
                 correct: false
                 why_wrong: There is no database; the reply is predicted token by token.
@@ -1369,6 +1506,12 @@ chapters:
                 output: "Last week's chat is outside the context window, so the model cannot see it unless an app puts it back in."
                 output_from: source
                 output_source: "Claude docs, Context windows"
+              - text: writes a plausible, confident date
+                correct: true
+                why_right: A rare fact has no pattern to predict from, so the model writes a likely-looking guess.
+                output: "Rare facts like a birthday cannot be predicted from patterns alone, so the model produces a fluent guess."
+                output_from: source
+                output_source: "OpenAI (2025), Why language models hallucinate"
         hints:
           - Is there any pattern in text that would predict this one author's birthday?
       - id: database-pitfall
@@ -1395,8 +1538,8 @@ chapters:
         tests: training-idea
         question: A model gives a fluent but wrong answer about a niche product launched after its training data was collected. Which fix goes after the cause?
         options:
-          - {text: "Put the product's real docs in its context, as RAG does", correct: true, why_right: "The fact was never in pretraining, so it has to come in through the window."}
           - {text: "Tell it in the prompt to try much harder", correct: false, why_wrong: "Effort cannot predict a fact the model never saw."}
+          - {text: "Put the product's real docs in its context, as RAG does", correct: true, why_right: "The fact was never in pretraining, so it has to come in through the window."}
           - {text: "Raise the temperature so it explores more", correct: false, why_wrong: "Temperature reshapes the same odds; it adds no knowledge."}
       - id: limits-recap
         type: recap

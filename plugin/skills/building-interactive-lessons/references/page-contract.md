@@ -1,6 +1,6 @@
 # Page contract
 
-How the lesson page looks and behaves. `assets/template.html` implements all of it, and `scripts/build_page.py` fills the template from the blueprint. Change the template only to fix behaviour for every lesson; a lesson's content lives in its blueprint.
+How the lesson page looks and behaves. The template in `assets/page-template.md` implements all of it, and `building-the-page.md` fills it from the blueprint. Change the template only to fix behaviour for every lesson; a lesson's content lives in its blueprint.
 
 ## Contents
 
@@ -35,12 +35,12 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 ## 1a. Look: colour, type, labels
 
-**Two colour layers** (`scripts/theme.py` builds both; never write a colour by hand)
-- **Brand layer, per learner:** one accent from `theme.accent`. It sets buttons, links, the hot box in a picture, the shade ramp of grids and bars, and neutrals tinted towards it. The accent is adjusted per theme so text on it stays readable; the build prints the original and the adjusted colour.
+**Two colour layers** (the page works out both from `theme.accent` when it loads, `theme.md`; never write a colour by hand)
+- **Brand layer, per learner:** one accent from `theme.accent`. It sets buttons, links, the hot box in a picture, the shade ramp of grids and bars, and neutrals tinted towards it. The accent is adjusted per theme so text on it stays readable.
 - **Meaning layer, fixed for everyone:** right (green), wrong (red), answer shown (amber). A theme never changes these, so "right" looks the same in every lesson. An accent within 40° of one of them is refused.
 - **No colours of your own** and no see-through colours. Each soft fill is its own token, checked for contrast in both themes.
 
-**Choosing the theme** (SKILL.md step 1): draft it from what you know: a colour the learner named, their organisation's colour (marked "check me"), the topic's world, or the default. Show the learner the name, the original and the adjusted colour, and the reason. Never put an organisation's name or logo on the page without a yes.
+**Choosing the theme** (SKILL.md step 1): draft it from what you know: a colour the learner named, their organisation's colour (marked "check me"), the topic's world, or the default. Show the learner the name, the colour, and the reason. Never put an organisation's name or logo on the page without a yes.
 
 **Right and wrong never by colour alone:** a ✓ or ✗ mark and the words "Right" or "Not quite" go with every colour. Screen readers hear the result.
 
@@ -64,6 +64,8 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 **Idea**: at most 2 sentences and about 45 words. Every `glossary` term in the text is tappable and opens its definition card at the bottom of the screen. A "More" panel holds optional depth.
 
 **Diagram**: drawn from its `figure` (see `diagrams.md`). A stepped picture (`frames`) draws every step once and keeps the tallest step's height, so tapping through steps never moves the page. With `animate: true`, a tap moves from the last step to the new one in 0.7 s and a "Play again" button (always in place, so nothing jumps) replays it; reduced motion turns the movement off. A `toy` figure starts its caption with "Toy numbers." A caption under it states the brief's `understand` sentence.
+
+**Scene** (`figure.kind: scene`): the controls above the picture (a slider or buttons), the picture, the caption of the current step, then Back, "2 of 3 · label" and Next, a "Play again" that replays the last move, and the run buttons ("Draw 100 words") with a one-line summary of the last run. Nothing plays by itself. Every caption sits in the same grid cell, so stepping never moves the page. Each scene's script is its own `<script>` element: a scene that throws shows its steps as a numbered list of words instead, and the rest of the page works. Reduced motion jumps to each step's end picture. In read-along, `scene.random()` is seeded, so screenshots repeat. Next and Play again move; Back jumps. A scene that names a motion library loads it from jsDelivr (anime.js or GSAP, pinned versions); if it cannot load, that scene shows its steps as words.
 - A stage with `extends` redraws the earlier stages muted, in the same positions, and highlights what it adds, under a line saying what was added to which chapter's picture. A first stage with `grows_in` notes under it which chapters add to it.
 
 **Code**
@@ -74,7 +76,7 @@ How the lesson page looks and behaves. `assets/template.html` implements all of 
 
 **Compare**: a switch between options. Below it, each option's steps, with step `differs_at` marked and the explanation shown.
 
-**Play** (label "Play it"): the prompt, a key of the marks ("St staying wins · Sw switching wins"), one button per deal size, then the dealt games as a grid of small cells (each with its outcome's short mark; the hot outcome filled with the accent), and a table: each outcome's count beside the expected share and how far a fair deal usually wanders ("you: 64 of 100 · expected about 67, most deals 57 to 76", two spreads either side). Why: a low run without that range made a numbers-minded tester distrust the whole lesson. Each deal is fresh and random; after two or more deals, a line adds up all of them. Read-along shows the seeded sample deal instead, laid out in an order fixed by its seed, so screenshots repeat and it still looks like a real deal.
+**Play** (label "Play it"): the prompt (dealing `unit`, default games), a key of the marks ("St staying wins · Sw switching wins"), one button per deal size, then the dealt games as a grid of small cells (each with its outcome's short mark; the hot outcome filled with the accent), and a table: each outcome's count beside the expected share and how far a fair deal usually wanders ("you: 64 of 100 · expected about 67, most deals 57 to 76", two spreads either side). Why: a low run without that range made a numbers-minded tester distrust the whole lesson. Each deal is fresh and random; after two or more deals, a line adds up all of them. Read-along shows the seeded sample deal instead, laid out in an order fixed by its seed, so screenshots repeat and it still looks like a real deal.
 
 **Fill the blanks, explain, stretch**: see section 3.
 
@@ -148,7 +150,7 @@ capabilities: { sample: {}, db: {}, user: {} }
 ## 7. Publishing
 
 - The page is one HTML file; the blueprint, with its recorded outputs, lives in it as data.
-- `build_page.py` writes `lesson-blueprint.txt` beside the page. Publish it with the page (`.yaml` is not a served type), and keep the `.yaml` with your build files.
+- Building the page writes `lesson-blueprint.txt` beside it. Publish it with the page (`.yaml` is not a served type), and keep the `.yaml` with your build files.
 - Republish to the same page path so the link stays.
 
 ## 8. Fallbacks
@@ -161,7 +163,8 @@ The page must teach fully with any of these missing:
 
 ## 9. Before publishing
 
-- `check_blueprint.py lesson-blueprint.yaml --run-tests --page lesson.html` passes: every script check, and the page carries this blueprint.
-- `screenshot_chapters.py lesson.html` reports no sideways scroll and no page errors for the changed chapters (all chapters on a first build).
-- The screenshots read well at phone width in both themes, diagrams included.
-- On a first build, click through one chapter: Check on a wrong blank shows its own output and its reason, Show solution and Use this fill the blanks, a common-mistake card opens after its question, and Read-along opens every solution. `tests/check_page_clicks.py` in the skill's repo runs these clicks on the examples.
+- Every item in `self-checks.md` holds, and every recorded result matches a fresh run.
+- The page was built from this blueprint by `building-the-page.md`, after its last change.
+- The scene and layout reviewer found no script error, no sideways scroll and nothing unreadable at phone width in both themes, for the changed chapters (all chapters on a first build).
+- On a first build, one chapter was clicked through: Check on a wrong blank shows its own output and its reason, Show solution and Use this fill the blanks, a common-mistake card opens after its question, and Read-along opens every solution.
+- The review says who checked it: fresh agents, or a self-check (`lesson-review.md`).

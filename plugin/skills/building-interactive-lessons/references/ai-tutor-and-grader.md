@@ -2,7 +2,7 @@
 
 How the page asks Claude for help: the tutor answers questions, the grader checks open answers. Both use the artifact's `sample` capability in claude.ai.
 
-`assets/template.html` already implements everything here (functions `contextPacket`, `TUTOR_RULES`, `graderPrompt`, `openTutor`). Read this file to understand the design, to review the template, or to fix it for every lesson. If the environment offers an `artifact-capabilities` skill, load it before changing that code. Its type definitions win over the snippets here.
+The page template (`assets/page-template.md`) already implements everything here (functions `contextPacket`, `TUTOR_RULES`, `graderPrompt`, `openTutor`). Read this file to understand the design, to review the template, or to fix it for every lesson. If the environment offers an `artifact-capabilities` skill, load it before changing that code. Its type definitions win over the snippets here.
 
 ## Contents
 
