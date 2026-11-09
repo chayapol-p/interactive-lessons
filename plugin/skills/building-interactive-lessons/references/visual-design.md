@@ -129,7 +129,7 @@ What `scene` gives the script:
 - `scene.show(step, from, settings)` (you set it): draw the step; `from` is the step before (undefined on first draw); `settings` maps each control id to its chosen index
 - `scene.run(trials, settings)` (you set it, only with a `run` control): run trials and return one line that sums them up
 
-Classes for colour (both themes work): `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-bar`, `svg-group`. Never set a colour by hand.
+Classes for colour (both themes work): `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-bar`, `svg-group`. Never set a colour by hand. A class also sets a stroke width, which beats a `stroke-width` attribute; to make a width carry data (a line as thick as a share), set `element.style.strokeWidth`.
 
 `scripts/check_scenes.py` opens each scene, steps through every step and every control value, light and dark, with and without motion. It fails a scene that throws, draws outside its box, shows a number its data does not hold, has two steps that look the same, or ends a step in a different picture with motion than without. It also saves one image per step, so you can read the scene like a comic strip.
 
