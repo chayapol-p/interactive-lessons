@@ -265,6 +265,19 @@ details.stretch summary { cursor: pointer; min-height: 48px; display: flex; alig
 /* kind: tiles. Doors, cups, cards, slots: a row of labelled boxes with a state */
 .svg-box.picked { fill: var(--surface); stroke: var(--accent); stroke-width: 2.5; }
 .svg-text.big { font-size: 15px; font-weight: 600; }
+.svg-text.hot { fill: var(--accent); font-weight: 600; }
+/* Scenes: a picture written for one idea (references/visual-design.md section 6) */
+.svg-dot { fill: var(--muted); }
+.svg-dot.hot { fill: var(--accent); }
+.svg-dot.dim { fill: var(--dim); }
+.scene-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: var(--tap); }
+.scene-nav .scene-where { flex: 1; text-align: center; font-size: 0.875rem; color: var(--muted); }
+.scene-nav .scene-where strong { color: var(--ink); }
+.scene-captions { display: grid; }
+.scene-captions .frame-caption { grid-area: 1 / 1; visibility: hidden; }
+.scene-captions .frame-caption.current { visibility: visible; }
+.scene-result { margin: 6px 0 0; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.scene-fallback { font-size: 0.9375rem; color: var(--muted); }
 /* Play: games dealt on the page from a computed case table */
 .play { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .deal-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
@@ -364,6 +377,7 @@ details.fold summary::-webkit-details-marker { display: none; }
 
 <div id="app"></div>
 
+<!--__SCENE_SCRIPTS__-->
 <script>
 "use strict";
 // The blueprint, embedded by scripts/build_page.py. The page reads it as it is; nothing here is lesson-specific.
@@ -531,12 +545,12 @@ function describeBlock(block) {
     case "check":
       return `${block.type}: ${block.question}${block.options ? "\nOptions: " + block.options.map((o) => o.text).join(" | ") : ""}`;
     case "idea": return `idea: ${block.text}${block.more ? "\nMore: " + block.more : ""}`;
-    case "diagram": return `diagram: ${block.brief.understand}${block.extends ? "\nWhat this stage adds: " + block.extends.adds : ""}`;
+    case "diagram": return `diagram: ${block.brief.understand}${block.extends ? "\nWhat this stage adds: " + block.extends.adds : ""}${block.figure.kind === "scene" ? "\nIts steps: " + block.figure.steps.map((step, i) => `${i + 1}. ${step.label}: ${step.caption}`).join(" ") : ""}`;
     case "code": return `code slice with notice prompts: ${(block.notice || []).join(" ")}`;
     case "compare": return `compare on "${block.input}": ${block.options.map((o) => o.name + " = " + o.steps.join(" > ")).join("; ")}. They first differ at step ${block.differs_at}. ${block.explanation}`;
     case "fill_blanks": return `fill-the-blanks exercise (OPEN: never say which option is right; point to the Show solution button instead): ${block.instructions.join(" ")}\n${block.language === "text" ? "Passage" : "Code"} with blanks:\n${block.language === "text" ? block.text : block.code}\nOptions: ${block.blanks.map((b) => `${b.id}: ${b.options.map((o) => o.text).join(" | ")}`).join("; ")}`;
     case "explain": return `explain-in-your-words exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
-    case "play": return `play: the learner deals games from a case table and counts them. ${block.prompt} Cases: ${(block.cases || []).map((c) => `${c.label} (chance ${Number(c.weight).toFixed(3)}) counts as ${c.outcome}`).join("; ")}`;
+    case "play": return `play: the learner deals ${block.unit || "games"} from a case table and counts them. ${block.prompt} Cases: ${(block.cases || []).map((c) => `${c.label} (chance ${Number(c.weight).toFixed(3)}) counts as ${c.outcome}`).join("; ")}`;
     case "stretch": return `optional write-it-yourself exercise (OPEN: never give its solution; point to the Show solution button instead): ${block.instructions.join(" ")}`;
     case "pitfall": { const m = MISCONCEPTIONS[block.misconception]; return `pitfall: wrong idea "${m.wrong_idea}". True: ${m.what_is_true}`; }
     case "recap": return `recap: ${block.text}`;
@@ -1320,6 +1334,140 @@ function animateBetween(fromLayer, toLayer) {
   fromLayer.animate([{ opacity: 1 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" }).onfinish = () => fromLayer.classList.remove("leaving");
   toLayer.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" });
 }
+// ---------- Scenes: a picture written for one idea ----------
+// The scene's own script (put on the page by build_page.py, one <script> per scene) gets one object, `scene`, and sets
+// scene.show(step, from, settings), and scene.run(trials, settings) when it has a run control. Steps are learner-paced:
+// nothing plays by itself. Every number it shows comes from scene.data, which computed_by printed at build time.
+const SCENE_WIDTH = 340;
+const EASE_IN_OUT = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);   // slow in, slow out
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => { state = (state + 0x6d2b79f5) >>> 0; let t = state; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function sceneFigure(block) {
+  const figure = block.figure;
+  const height = figure.height || 240;
+  const steps = figure.steps || [];
+  const controls = figure.controls || [];
+  const root = svg("svg", { viewBox: `0 0 ${SCENE_WIDTH} ${height}`, role: "img", class: "scene" });
+  const spoken = h("p", { class: "visually-hidden", role: "status" });
+  const result = h("p", { class: "scene-result", role: "status" });
+  const holder = h("div", { class: "scene-host", "data-scene": block.id, "data-scene-busy": "0" });
+  const settings = Object.fromEntries(controls.filter((c) => c.kind !== "run").map((c) => [c.id, Number(c.start || 0)]));
+  let step = 0, busy = 0;
+  const still = () => reducedMotion() || holder.dataset.instant === "1";
+  // Motion: eases numeric attributes to new values. tx and ty move a group with translate(). Jumps when motion is reduced.
+  const tokens = new WeakMap();
+  function current(element, key) {
+    if (key === "tx" || key === "ty") return (element.__shift || { tx: 0, ty: 0 })[key];
+    const value = element.getAttribute(key);
+    return value === null ? (key === "opacity" ? 1 : 0) : Number(value);
+  }
+  function put(element, values) {
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === "tx" || key === "ty") {
+        element.__shift = Object.assign({ tx: 0, ty: 0 }, element.__shift, { [key]: value });
+        element.setAttribute("transform", `translate(${element.__shift.tx} ${element.__shift.ty})`);
+      } else element.setAttribute(key, String(value));
+    });
+  }
+  function settle(change) { busy += change; holder.dataset.sceneBusy = String(busy); }
+  const api = {
+    root, width: SCENE_WIDTH, height, data: figure.data || {}, readAlong,
+    random: readAlong ? seededRandom(7) : Math.random,
+    add(tag, attributes, text) {
+      const element = svg(tag, attributes || {}, text === undefined ? [] : String(text));
+      root.append(element);
+      return element;
+    },
+    set(element, values) { put(element, values); return element; },
+    write(element, text) { element.textContent = String(text); return element; },
+    say(text) { spoken.textContent = String(text); },
+    move(element, values, options) {
+      const timing = options || {};
+      const duration = timing.duration === undefined ? 700 : timing.duration, delay = timing.delay || 0;
+      const token = {};
+      tokens.set(element, token);
+      if (still() || (!duration && !delay)) { put(element, values); return Promise.resolve(); }
+      const start = Object.fromEntries(Object.keys(values).map((key) => [key, current(element, key)]));
+      settle(1);
+      return new Promise((resolve) => {
+        const began = performance.now() + delay;
+        const frame = (now) => {
+          if (tokens.get(element) !== token) { settle(-1); resolve(); return; }   // a newer move took over
+          const progress = Math.max(0, Math.min(1, (now - began) / duration));
+          const eased = EASE_IN_OUT(progress);
+          put(element, Object.fromEntries(Object.entries(values).map(([key, target]) => [key, start[key] + (Number(target) - start[key]) * eased])));
+          if (progress < 1) requestAnimationFrame(frame); else { put(element, values); settle(-1); resolve(); }
+        };
+        requestAnimationFrame(frame);
+      });
+    },
+  };
+  // The scene's script runs once; a scene that fails shows its steps as words, so the lesson still teaches
+  let failed = null;
+  try {
+    const make = (window.LESSON_SCENES || {})[block.id];
+    if (typeof make !== "function") throw new Error("the scene script is missing from the page");
+    make(api);
+    if (typeof api.show !== "function") throw new Error("the scene script must set scene.show");
+  } catch (error) { failed = error; }
+  function fail(error) {
+    failed = error;
+    holder.dataset.sceneError = String(error && error.message || error);
+    console.error(`scene ${block.id}: ${holder.dataset.sceneError}`);
+    setChildren(holder, h("div", { class: "scene-fallback" }, h("p", {}, "This picture could not be drawn. Its steps:"),
+      h("ol", {}, steps.map((s) => h("li", {}, h("strong", {}, s.label), ": ", s.caption)))));
+  }
+  if (failed) { setTimeout(() => fail(failed)); return holder; }
+  const captions = steps.map((s) => h("p", { class: "frame-caption" }, s.caption));
+  const back = h("button", { class: "btn", type: "button", onclick: () => go(step - 1) }, "Back");
+  const next = h("button", { class: "btn primary", type: "button", onclick: () => go(step + 1) }, "Next");
+  const where = h("p", { class: "scene-where" });
+  const replay = h("button", { class: "btn quiet", type: "button", onclick: () => draw(step - 1) }, "Play again");
+  function draw(from) {
+    // The first draw jumps straight to step 1: nothing moves until the learner does something
+    if (from === undefined) holder.dataset.instant = "1";
+    try { api.show(step, from, Object.assign({}, settings)); } catch (error) { fail(error); return; } finally { delete holder.dataset.instant; }
+    captions.forEach((caption, index) => caption.classList.toggle("current", index === step));
+    root.setAttribute("aria-label", steps[step].caption);
+    where.replaceChildren(h("strong", {}, `${step + 1} of ${steps.length}`), ` · ${steps[step].label}`);
+    back.disabled = step === 0; next.disabled = step === steps.length - 1;
+    const noReplay = step === 0 || reducedMotion();
+    replay.style.visibility = noReplay ? "hidden" : "visible"; replay.disabled = noReplay;
+    holder.dataset.step = String(step);
+    if (from !== undefined) api.say(`Step ${step + 1}: ${steps[step].caption}`);
+  }
+  function go(target) { if (target < 0 || target >= steps.length) return; const from = step; step = target; result.textContent = ""; draw(from); }
+  const controlRows = controls.map((control) => {
+    if (control.kind === "slider") {
+      const value = h("strong", {}, control.values[settings[control.id]]);
+      const slider = h("input", { type: "range", min: "0", max: String(control.values.length - 1), step: "1", value: String(settings[control.id]), "aria-label": control.label });
+      slider.addEventListener("input", () => { settings[control.id] = Number(slider.value); value.textContent = control.values[settings[control.id]]; result.textContent = ""; draw(step); });
+      return h("div", { class: "frame-control", "data-control": control.id }, h("label", {}, h("span", {}, control.label), " ", value), slider);
+    }
+    if (control.kind === "buttons") {
+      const buttons = control.values.map((label, index) => h("button", { type: "button", "aria-pressed": index === settings[control.id] ? "true" : "false",
+        onclick: () => { settings[control.id] = index; buttons.forEach((b, i) => b.setAttribute("aria-pressed", i === index ? "true" : "false")); result.textContent = ""; draw(step); } }, label));
+      return h("div", { class: "frame-control", "data-control": control.id }, h("p", { class: "token-row-label" }, control.label),
+        h("div", { class: "switch frames", role: "group", "aria-label": control.label }, buttons));
+    }
+    // kind: run. Trials drawn from scene.data by the script, fresh and random each time (seeded in read-along)
+    return h("div", { class: "btn-row", "data-control": control.id }, control.trials.map((trials, index) =>
+      h("button", { class: `btn${index === control.trials.length - 1 ? " primary" : ""}`, type: "button", onclick: () => {
+        try { const summary = typeof api.run === "function" ? api.run(trials, Object.assign({}, settings)) : ""; result.textContent = summary || ""; api.say(summary || ""); }
+        catch (error) { fail(error); }
+      } }, `${control.label} ${trials} ${control.unit || "times"}`)));
+  });
+  holder.append(...controlRows.filter((row) => !row.matches(".btn-row")), root,
+    h("div", { class: "scene-captions" }, captions),
+    steps.length > 1 ? h("div", { class: "scene-nav" }, back, where, next) : null,
+    steps.length > 1 ? h("div", { class: "btn-row" }, replay) : null,
+    ...controlRows.filter((row) => row.matches(".btn-row")), result, spoken);
+  // Draw once the scene is on the page, so the script can measure text if it needs to
+  requestAnimationFrame(() => draw());
+  return holder;
+}
 function drawFigure(figure, block) {
   switch (figure.kind) {
     case "tiles": return tilesFigure(figure);
@@ -1329,6 +1477,7 @@ function drawFigure(figure, block) {
     case "scatter": return scatterFigure(figure);
     case "grid": return gridFigure(figure);
     case "frames": return framesFigure(figure);
+    case "scene": return sceneFigure(block);
     default: return authoredFigure({ figure });
   }
 }
@@ -1749,7 +1898,7 @@ function renderPlay(chapter, block) {
     setChildren(table, h("table", { class: "tally-table" }, h("tbody", {}, block.outcomes.map((outcome) => h("tr", {},
       h("td", {}, h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), outcome.label),
       h("td", {}, `you: ${counts[outcome.id]} of ${games}`, h("span", { class: "expected" }, `expected about ${Math.round(expected[outcome.id] * games)}${games >= 100 ? ` (usually ${spread(expected[outcome.id], games)})` : ""}`)))))),
-      totalGames > games ? h("p", { class: "why" }, `All your deals together, ${totalGames} games: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} (expected about ${Math.round(expected[o.id] * totalGames)})`).join(" · ") + ".") : null,
+      totalGames > games ? h("p", { class: "why" }, `All your deals together, ${totalGames} ${block.unit || "games"}: ` + block.outcomes.map((o) => `${o.label.toLowerCase()} ${totals[o.id]} (expected about ${Math.round(expected[o.id] * totalGames)})`).join(" · ") + ".") : null,
       readAlong && !totalGames ? h("p", { class: "why" }, "A sample deal, the same every time. Deal again for your own.") : null);
   }
   wrapper.append(
@@ -1757,7 +1906,7 @@ function renderPlay(chapter, block) {
     h("div", { class: "play" },
       h("p", { class: "question" }, withTerms(block.prompt)),
       h("p", { class: "deal-key" }, block.outcomes.map((outcome, index) => [index ? " · " : "", h("span", { class: `key${outcome.hot ? " hot" : ""}` }, outcome.short), " ", outcome.label.toLowerCase()])),
-      h("div", { class: "btn-row" }, block.deals.map((games, index) => h("button", { class: `btn${index === block.deals.length - 1 ? " primary" : ""}`, type: "button", onclick: () => deal(games) }, `Deal ${games} games`))),
+      h("div", { class: "btn-row" }, block.deals.map((games, index) => h("button", { class: `btn${index === block.deals.length - 1 ? " primary" : ""}`, type: "button", onclick: () => deal(games) }, `Deal ${games} ${block.unit || "games"}`))),
       grid, table));
   draw(false);
   return wrapper;

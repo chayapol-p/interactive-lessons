@@ -1,11 +1,11 @@
 ---
 name: building-interactive-lessons
-description: Builds an interactive, AI-powered lesson as one web page on any subject (a concept, rules, a policy, a formula) or from docs or a code repo. Plans first (discover the learner, verify the material, plan chapters that build on each other), then fills a ready page template from the plan, told as one story from a hook to a payoff, with predictions, pictures that step, move or let the learner play, real code or text with recorded results, fill-in-the-blank exercises built on real mistakes, AI-graded explanations, an ask-the-tutor box, quizzes on key ideas and pitfalls, and diagrams only where they have a stated purpose. Also revises a lesson it built from feedback. Use for "teach me this", "make a lesson", "turn this repo into a tutorial", "learning artifact", "interactive tutorial", "course for this lab", "fix this chapter of the lesson". Not for reference docs, slide decks, or a quick explanation in chat.
+description: Builds an interactive, AI-powered lesson as one web page on any subject (a concept, rules, a policy, a formula) or from docs or a code repo. Plans first (discover the learner, verify the material, plan chapters that build on each other), then fills a ready page template from the plan, told as one story from a hook to a payoff, with predictions, pictures designed for each idea (stepped, moving, or driven by the learner; ready-made or written for the idea), real code or text with recorded results, fill-in-the-blank exercises built on real mistakes, AI-graded explanations, an ask-the-tutor box, quizzes on key ideas and pitfalls, and diagrams only where they have a stated purpose. Also revises a lesson it built from feedback. Use for "teach me this", "make a lesson", "turn this repo into a tutorial", "learning artifact", "interactive tutorial", "course for this lab", "fix this chapter of the lesson". Not for reference docs, slide decks, or a quick explanation in chat.
 license: MIT
 compatibility: Needs Python 3 with PyYAML (checker and build) and ruamel.yaml (recording outputs), node for JavaScript slices, and Playwright with Chromium or Chrome for phone screenshots. Best in claude.ai, where a published artifact can ask Claude (tutor and grader) and keep progress. Elsewhere it produces one HTML file with the AI features hidden.
 metadata:
   author: chayapol.par
-  version: 0.4.1
+  version: 0.5.0
 ---
 
 # Building interactive lessons
@@ -26,7 +26,7 @@ Turns a topic, docs or a repo into a lesson the learner works through: predict, 
 10. **Test the idea, not the example.** Explain an example (a lab, a codebase, a rule book) before using it, and never ask the learner to recall its details, such as a clause number. A quiz must be answerable by someone who learned the idea but has never seen the example.
 11. **The page comes from the template.** `scripts/build_page.py` fills `assets/template.html` with the blueprint. Never hand-write or hand-edit the page; change the blueprint and rebuild.
 12. **One story, and nothing gives the answer early.** A big idea, chapters in beats from hook to payoff, each ending on an open question the next one answers. No answer shows before its guess, a "Spot the mistake" question comes before its card, and words stay inside the text budget (`references/chapter-design.md` sections 0 and 8).
-13. **The lowest picture that carries the idea.** Stepped by default for a change; animation or play only for a named moment, after a yes in Discover (`references/diagrams.md` section 0).
+13. **Design each picture from the idea, not from a menu.** For every key idea, answer five questions: what is hidden, what changes and what stays, why a still picture would fail, which wrong belief it breaks, and what the learner does. Then match the picture's structure to the idea's, and move it only where the manner of change is what must be learned (`references/visual-design.md`). Ready-made figures are cheap parts; when none carries the storyboard, write a scene for the idea. Moving pictures cost tokens, so propose each with its reason and cost, and build it only once agreed.
 
 ## When to run or offer it (mode: suggest first)
 
@@ -65,7 +65,7 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
 3. **Ask, in one round, at most 4 questions,** with the environment's multiple-choice question tool when there is one:
    - **Confirm the profile:** show what you assumed they know, each item with where it came from, and let them tick or correct it.
    - **Scope questions** whose answers change the chapters: how deep (intuition only, light maths, full mechanics), which topics are in or out, how long, and the style (for example, picture-heavy or code-heavy).
-   - **Offer the higher picture steps, only where a named moment needs them** (`references/diagrams.md` section 0): an animation when the motion is the idea, a play block when the learner needs to believe a number. Name the moment and the extra build time, for example "Chapter 2: let you deal 100 games and count the wins yourself (about 10 more minutes to build)?". Build them only on a yes, and record it in `lesson.agreed_extras`.
+   - **Ask how much motion, with a suggestion and its cost** (`references/visual-design.md` section 7). Moving pictures burn more tokens, so the author decides. Put your recommendation first, for example: "Moving pictures where they teach something a still can't (recommended: I'll propose each one in the plan, about 10–25k extra tokens per scene)", "Stepped pictures only (cheapest)", "Rich: scenes and trials wherever they fit". The plan then names each proposed moving picture; record what is agreed in `lesson.agreed_extras`.
    - **Confirm the theme:** draft one accent and its name from a colour they named, their organisation's colour (say "check me"), the topic's world, or the default Ink blue. Run `python scripts/theme.py '#hex'` and show the original and adjusted colour. No organisation name or logo goes on the page without a yes. This can share a question with the profile.
    - Put your recommended answer first. Never ask what you can find out yourself.
 4. **Record the answers** in the blueprint and set `assumed: false`. If nobody answers (an unattended run), go on with `assumed: true` and an `assumption_note` naming who should confirm it.
@@ -98,14 +98,19 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
 - Fill one **chapter card** per chapter. See `references/chapter-design.md` for every field and the reason it exists.
 - Choose blocks: predict, idea, then the exercise after the teaching. See `references/chapter-design.md`.
 - Write exercises and quizzes by the rules in `references/checks-and-quizzes.md`, inside the text budget (`chapter-design.md` section 8): ideas of 2 sentences, one-sentence feedback, short captions, no answer before its guess.
-- Pick each picture's step on the ladder (words, still, stepped, animated, play; `references/diagrams.md` section 0). Stepped is the default for a change; animated and play only with a yes from Discover.
-- Write a brief for every diagram first, cut it to the fewest boxes, pick its pattern (growing pipeline, paired traces or sequence), then write its `figure` (flow, bars, tiles, frames or svg). See `references/diagrams.md`. Borrow from the diagram-design skill here if it is installed, never during a build.
+- **Design the pictures** (`references/visual-design.md`). For each key idea:
+  1. Answer the five questions (what is hidden; what changes and what stays; why a still would fail; which wrong belief it breaks; what the learner does).
+  2. Match the picture's structure to the idea's (order, amount, share, similarity, flow, feedback, choice, many cases).
+  3. Apply the change test: before-and-after only → a still; the manner of change → steps that move; a setting and its outcome → let the learner drive; a number to believe → let them run trials.
+  4. Storyboard it in words, one change per step, with a caption that says where to look.
+  5. Build it from a ready-made figure if one carries the storyboard (`references/diagrams.md`); otherwise write a scene (`visual-design.md` section 6). Write the `motion` answer on every moving picture.
+- Write a brief for every diagram first, cut it to the fewest boxes, pick its pattern (growing pipeline, paired traces or sequence), then write its `figure`. Borrow from the diagram-design skill here if it is installed, never during a build.
 - Save the blueprint in the format in `references/blueprint-format.md`. `assets/example-blueprint.yaml` is a complete example.
 - Run the checker and fix every error:
   ```bash
   python scripts/check_blueprint.py lesson-blueprint.yaml --run-tests
   ```
-- If the author is present, show the chapter map on one screen (chapter titles, minutes, what each must get right, what carries forward) and wait for a go. If they said to just build, build.
+- If the author is present, show the chapter map on one screen (chapter titles, minutes, what each must get right, what carries forward) and wait for a go. List each proposed moving picture under its chapter: the moment, why a still would fail, what the learner does, and its cost. The author keeps or drops each one; add what they keep to `lesson.agreed_extras`. If they said to just build, build only what Discover agreed, and list the rest as proposals.
 
 ### 4. Build
 - Fill the template from the blueprint:
@@ -126,7 +131,12 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
   python scripts/screenshot_chapters.py lesson.html --out shots
   ```
   It shoots each chapter in `changed.json` at 390 px wide, light and dark, with every solution open, and reports sideways scroll and page errors. Use `--all` on a first build.
-- **Look at the screenshots** for what a script cannot judge: a diagram that reads well, contrast, crowded text.
+- **Scenes, step by step:**
+  ```bash
+  python scripts/check_scenes.py lesson.html --out shots
+  ```
+  It taps through every step and control of every scene, light and dark, with and without motion. It fails a scene that throws, draws outside its box, shows a number its data does not hold, has a step that changes nothing, or lands in a different picture with motion than without. It saves one image per step.
+- **Look at the screenshots** for what a script cannot judge: a diagram that reads well, contrast, crowded text. Read each scene's step images in order, like a comic strip: one change per step, and a caption that says where to look.
 - **Judgement calls:** read the list in `references/checks-and-quizzes.md` against the blueprint.
 - **Grader:** try each explain exercise with a right, a wrong and a half-right answer; the verdicts must match. If the build environment cannot reach the AI, publish first, run this test on the live page, and report it.
 - **Test with real users** before a first release: run the `testing-with-real-users` skill if it is installed (fresh persona agents, one new person per round, a fixed report, fix, stop on a correct teach-back with "I get it"). Their access path is `scripts/phone_driver.py`: phone-sized screenshots and taps on the built page, never its files and never Read-along. Without that skill, follow the same loop by hand.
@@ -171,7 +181,11 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 | "figure link … is not a part of this figure" | A later stage links to a part no stage defines → add the part, or fix the id |
 | "page … is stale" | The blueprint changed after the build → rebuild with `build_page.py` |
 | "changed.json belongs to another build" | The last build failed → fix the blueprint and rebuild |
-| "built only after a yes in Discover" | An animation or play block was added without asking → ask the author, then add `animation` or `play` to `lesson.agreed_extras`, or use a stepped picture |
+| "built only after a yes in Discover" or "only after the author agrees" | A moving picture was added without asking → propose it with its reason and cost, then add `animation`, `play` or `scene` to `lesson.agreed_extras`, or use a still or stepped picture |
+| "a moving picture needs motion" or "why_not_still needs at least 8 words" | The picture moves without a reason → answer the five questions (`visual-design.md` section 1); if nothing about the change would be lost in a still, use a still |
+| check_scenes: "shows N, which is not in its data" | A number was typed into the scene script → print it from `computed_by` and read it from `scene.data` |
+| check_scenes: "looks the same as step" | A step changes nothing → merge it with the step before, or make it show its one change |
+| check_scenes: "different picture with motion than without" | The script changes something outside `scene.move`, or only when animating → set every end value through `scene.move` or `scene.set` |
 | "the case weights add up to …, not 1" | A game can land in no case or two → fix the cases in `computed_by` and re-record |
 | "already shows in …, before the guess" | A title, objective, milestone or caption gives the answer away → reword it without the answer, or move the picture after the guess |
 | "written word for word in … just above" | The blank tests copying → reword the block above, or move the blank further from it |
@@ -191,7 +205,8 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 - `references/blueprint-format.md`: every blueprint field, required and optional, figures, and how outputs are recorded
 - `references/chapter-design.md`: chapter cards, blocks, scope, and the reason for each part
 - `references/checks-and-quizzes.md`: fair tests, blanks, quizzes, hints and solutions, and the judgement calls
-- `references/diagrams.md`: when a diagram helps, how to brief it, and how to write its figure
+- `references/visual-design.md`: how to design a picture from the idea: the five questions, congruence, the change test, the learner's role, storyboards, scenes, cost, and the research behind them
+- `references/diagrams.md`: the ready-made figures: how to brief, cut and draw them
 - `references/ai-tutor-and-grader.md`: tutor and grader prompts and wiring
 - `references/page-contract.md`: how the page behaves; the template implements it
 - `scripts/record_outputs.py`: runs every slice and blank option, and writes the real outputs into the blueprint
@@ -199,11 +214,12 @@ For feedback on a lesson this skill built. Skip Discover and Verify; the bluepri
 - `scripts/build_page.py`: fills the template from the blueprint, and lists the changed chapters
 - `scripts/theme.py`: builds both themes' colours from one accent, checks contrast, and refuses a clash with right, wrong or answer colours
 - `scripts/screenshot_chapters.py`: phone screenshots of the changed chapters, light and dark
+- `scripts/check_scenes.py`: taps through every scene, checks what a script can judge, and saves one image per step
 - `scripts/phone_driver.py`: the user-test access path: one open phone page per tester, actions by visible words, a screenshot per call
 - `assets/template.html`: the page template
 - `assets/example-blueprint.yaml`: a complete small code example (text chunking)
 - `assets/example-monty-blueprint.yaml`: a 5-chapter example with no code, told as one story from hook to payoff (Stay or Switch?: doors as tiles, animated steps, Deal 100 games, case tables, a quiz with no doors; every chance worked out by code)
-- `assets/example-concepts-blueprint.yaml`: a complete example with no code (How LLMs Work: text blanks, token chips, a word map, an attention grid, a temperature slider)
+- `assets/example-concepts-blueprint.yaml`: a complete example with no code (How LLMs Work: text blanks, token chips, a word map, an attention grid, and a scene where the learner sets the temperature and draws next words from a strip of odds)
 
 ## Next
 

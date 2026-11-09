@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 · 9 Nov 2026
+- Pictures are designed from the idea, not picked from a menu. New `references/visual-design.md`: five questions for every key idea (what is hidden, what changes and what stays, why a still would fail, which wrong belief it breaks, what the learner does), congruence between the picture and the idea, the change test (motion only where the manner of change must be learned), six learner roles (step, bet, drive, run, puzzle, explore), storyboards, and the research behind each rule (Tversky; Höffler and Leutner; Berney and Bétrancourt; Ploetzner; Mayer; Heer and Robertson; Bret Victor; Nicky Case; 3Blue1Brown; Kurzgesagt; Transformer Explainer).
+- New figure kind `scene`: a picture written for one idea, with learner-paced steps, up to 2 controls (slider, buttons, or run for trials), every number in `data` printed by `computed_by`, and a script that sets `scene.show` (and `scene.run`). `scene.move` eases attributes, slow in and slow out, and jumps when motion is reduced. Each scene is its own `<script>`, and a scene that throws shows its steps as words.
+- New `motion` field, required on every moving picture: what changes, what stays, why a still would fail (at least 8 words), what the learner does, and the misconception it breaks. The checker matches the role to the controls.
+- New `scripts/check_scenes.py`: taps through every step and control of every scene, light and dark, with and without motion; fails a scene that throws, draws outside its box, shows a number its data does not hold, repeats a step, or lands somewhere else with motion than without; saves one image per step. `tests/check_scene_breaks.py` proves it catches each break.
+- Asking about motion now comes with a suggestion and its token cost: Discover asks how much motion, and the chapter map lists each proposed moving picture with its reason and cost. `lesson.agreed_extras` gains `scene`.
+- `play` gains `unit` ("Deal 100 replies").
+- The LLM example's temperature picture is now a scene: a strip of odds, one draw, then the learner sets the temperature and draws 10 or 100 words.
+- The Monty Hall example's two animated pictures carry their motion answers.
+
 ## 0.4.1 · 8 Nov 2026
 - The plugin now lives in its own folder, `plugin/`. The marketplace file at the repo root points there, so the install command is unchanged, and the README's picture tools in `docs/` are no longer part of the plugin.
 - The plugin has an icon: a filled-in blank, ticked in red pen.

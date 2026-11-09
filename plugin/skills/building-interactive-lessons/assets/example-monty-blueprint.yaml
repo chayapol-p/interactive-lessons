@@ -245,6 +245,12 @@ chapters:
           understand: "The same game with 10 doors: watch the host open the other group, one door at a time, until one is left."
           how_it_helps: "Ten doors as tiles in two groups, yours and the other 9; the host's goats open one after another, leaving one door shut."
           clearer_than_text: Seeing 8 doors open in the other group while yours never moves shows that the left door carries the whole group's chance.
+        motion:
+          changes: The host's goat doors in the other group open, one after another.
+          stays: Your door, its group and the one door left in the other group never move.
+          why_not_still: The order matters here, because each door opens inside the other group only, so the eye sees that group shrink to one door.
+          learner_does: step
+          breaks: two-doors-even
         figure:
           kind: frames
           control: buttons
@@ -522,6 +528,12 @@ chapters:
           understand: "Tap through the steps and watch the bars: the reveal moves door 3's share onto door 2, never onto your door."
           how_it_helps: "Bars out of 100 games: each door (33, 33, 33), the two groups (33 against 67), and after the reveal (33, 67, 0)."
           clearer_than_text: Watching door 2's bar double while yours stays put shows where the 2 in 3 comes from.
+        motion:
+          changes: Door 3's share of the games moves onto door 2 when the host opens door 3.
+          stays: Your door's bar, at 33 games in 100, through every step.
+          why_not_still: Where the share goes is the idea, and only the move shows it landing on door 2 and never on yours.
+          learner_does: step
+          breaks: host-resets-odds
         figure:
           kind: frames
           control: buttons

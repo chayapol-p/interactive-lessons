@@ -34,7 +34,7 @@ Any field not listed here is an **error**. That catches typos, and it catches YA
   - `assumption_note` (R when `assumed: true`): who should confirm it, and when
 - `objectives` R: 3 to 5 items of `{id, text}`. Text starts "After this, you can…" and never uses "understand".
 - `source` o: where the material comes from.
-- `agreed_extras` o: the picture-ladder steps the author said yes to in Discover: `animation`, `play`. An animated figure or a play block without its yes is an error (`diagrams.md` section 0).
+- `agreed_extras` o: the moving pictures the author agreed to, after you proposed them with a reason and a cost: `animation`, `play`, `scene`. An animated figure, a play block or a scene without its agreement is an error (`visual-design.md` section 7).
 
 **`known_ideas`**: `{id, idea}`. Ids start with `known-`. These are the specific ideas the first chapters bring in. `learner.knows` is the short profile line; `known_ideas` are the pieces a chapter can name in `brings_in`.
 
@@ -104,9 +104,17 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
 **idea**: `text` R (at most 2 sentences and about 45 words), `key` o (`true` when a later chapter or the field guide depends on it), `more` o.
 
 **diagram**: `shape` R (`flow`, `structure`, `change-over-time`, `space`, `comparison`, `quantity`), `brief` R with `understand`, `how_it_helps`, `clearer_than_text`, and `figure` R: what the template draws.
-- `figure.kind` R: `tiles` (`tiles` of `{label, state, inside, note, group}`, `state` one of closed, open, picked, hot), `flow` (`parts` of `{id, label, row, note}`, `links` of `{from, to, label}`, `highlight` o), `bars` (`bars` of `{label, value, note}`, `max` o, `mark_below` o), `tokens` (`rows` of `{label, tokens: [{text, id, hot}]}`), `scatter` (`points` of `{label, x, y}`, `highlight`, `x_label`, `y_label`), `grid` (`rows`, `columns`, `values` from 0 to 1, `highlight_row`), `frames` (`frames` of `{label, figure, caption}`, where `caption` o is one line shown under that step, `control: slider | buttons`, `control_label`, `animate` o: `true` moves between steps on a tap, needs `animation` in `lesson.agreed_extras`; a frame may hold bars, tokens, scatter, grid or tiles) or `svg` (`svg`: full markup). See `diagrams.md` section 7.
+- `motion` (R on a picture that moves: a `scene`, or `frames` with `animate: true`; an error anywhere else): the answers to the five questions in `visual-design.md` section 1. `changes` R (what moves or changes), `stays` R (the landmarks that never move), `why_not_still` R (at least 8 words: what about the change, its order, path, timing or amount, a still picture would hide), `learner_does` R (`step`, `bet`, `drive`, `run`, `puzzle` or `explore`; `drive` needs a slider or buttons, `run` a run control, `step` at least 2 steps), `breaks` o (the misconception the motion breaks).
+- `figure.kind` R: `tiles` (`tiles` of `{label, state, inside, note, group}`, `state` one of closed, open, picked, hot), `flow` (`parts` of `{id, label, row, note}`, `links` of `{from, to, label}`, `highlight` o), `bars` (`bars` of `{label, value, note}`, `max` o, `mark_below` o), `tokens` (`rows` of `{label, tokens: [{text, id, hot}]}`), `scatter` (`points` of `{label, x, y}`, `highlight`, `x_label`, `y_label`), `grid` (`rows`, `columns`, `values` from 0 to 1, `highlight_row`), `frames` (`frames` of `{label, figure, caption}`, where `caption` o is one line shown under that step, `control: slider | buttons`, `control_label`, `animate` o: `true` moves between steps on a tap, needs `animation` in `lesson.agreed_extras`; a frame may hold bars, tokens, scatter, grid or tiles) `svg` (`svg`: full markup), or `scene` (a picture written for one idea; below). See `diagrams.md` section 7 and `visual-design.md` section 6.
+- **`figure.kind: scene`** fields:
+  - `steps` R: 1 to 8 items of `{label, caption}`, the storyboard. A label is at most 24 characters; a caption is about 25 words and says where to look.
+  - `script` R: JavaScript that sets `scene.show(step, from, settings)`, and `scene.run(trials, settings)` when there is a run control. See `visual-design.md` section 6 for the `scene` object. It cannot contain `</script`.
+  - `data` o: every number the scene shows, printed by `computed_by` as `{"data": {...}}`. Write `data: {}` before recording.
+  - `controls` o: at most 2 items of `{id, kind, label, …}`. `kind: slider` (an ordered setting) or `buttons` (at most 3 separate cases, each at most 12 characters) need `values` (2 to 8 labels) and `start` o (an index, default 0); `kind: run` needs `trials` (whole numbers from 1 to 1000, one button each) and `unit` o ("words", "games"), shown as "Draw 100 words".
+  - `height` o: a whole number from 120 to 480 (default 240); the scene is 340 wide.
+  - A scene cannot grow across chapters; it needs `scene` in `lesson.agreed_extras` and a `motion` answer.
 - `figure.toy` o (`true`): the numbers are made up to show the idea. The page puts "Toy numbers." before the caption. Use it on every figure whose data is a sketch, not a measurement.
-- `figure.computed_by` (R for scatter, grid and frames; o for bars, tokens and tiles): `{language: python, code, run_locally}`. The code prints the figure's data as one JSON object; `record_outputs.py` writes it in, and `--run-tests` proves it. `run_locally` skips a run that needs a file or service the lesson does not ship.
+- `figure.computed_by` (R for scatter, grid, frames, and a scene with `data`; o for bars, tokens and tiles): `{language: python, code, run_locally}`. The code prints the figure's data as one JSON object; `record_outputs.py` writes it in, and `--run-tests` proves it. `run_locally` skips a run that needs a file or service the lesson does not ship.
 - A diagram that grows across chapters is written as stages, never as a promise in prose:
   - `grows_in` o (first stage only): the later chapters that add to it. Each named chapter must have a stage that extends it.
   - `extends` o (later stages only): `{diagram, adds}`. `diagram` names the earlier stage (in an earlier chapter); `adds` says what this stage draws on top. Its `figure` lists only the parts and links it adds, and keeps the first stage's kind.
@@ -196,7 +204,8 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
 
 **recap**: `text` R, `sums_up` R (the teaching blocks of this chapter it summarises).
 
-**play**: the learner deals games and counts them (picture-ladder step 4; needs `play` in `lesson.agreed_extras`).
+**play**: the learner deals trials and counts them (a ready-made "run trials" picture; needs `play` in `lesson.agreed_extras`). When a single trial has a shape worth seeing, write a scene with a run control instead.
+- `unit` o: what one deal makes, plural and lower case (default `games`; for example `replies`, `draws`). The buttons read "Deal 100 replies".
 - `prompt` R: what to deal and count, in one or two sentences.
 - `deals` R: the deal sizes offered as buttons, `[10]`, `[100]` or `[10, 100]`.
 - `outcomes` R: 2 to 4 items of `{id, label, short, hot}`. `short` R is 1 or 2 characters drawn in each dealt game, so a game never reads by colour alone; at most one outcome is `hot` (the one the lesson is about).
