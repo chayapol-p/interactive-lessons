@@ -30,7 +30,7 @@ Animated pictures, play blocks and scenes cost tokens and time, so they are prop
 
 ## 1. Write the brief first
 
-Every `diagram` block starts with three answers. Write them in the blueprint before any drawing. The checker requires all three, a `shape` from section 2 and a `figure` (section 7). It also checks growing diagrams and the budgets in section 4. The other drawing rules are judgement calls for step 5.
+Every `diagram` block starts with three answers. Write them in the blueprint before any drawing. All three, a `shape` from section 2 and a `figure` (section 7) are required, and so are the growing-diagram rules and the budgets in section 4 (`self-checks.md` sections 11 to 13). The other drawing rules are judgement calls for the review.
 
 - **`understand`**: what the learner should understand after looking. One sentence.
   - Example: "Each chunk starts one stride after the previous one, so the shared part is the overlap."
@@ -197,7 +197,7 @@ figure:
                   {"label": w, "value": round(p, 2)} for w, p in zip(NEXT_SCORES, softmax(list(NEXT_SCORES.values()), t))]}}
                 for t in [0.2, 0.7, 1.0, 1.5]]
       print(json.dumps({"frames": frames}))
-  frames: []   # record_outputs.py fills this in
+  frames: []   # filled from a real run (building-the-page.md section 2)
 ```
 
 **`kind: tiles`** (structure, a list of cases; also a step inside `frames`): a row of labelled boxes, each in a state, for doors, cups, cards or slots.
@@ -219,7 +219,7 @@ figure:
 - Use the template's classes so both themes work: `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-arrowhead`, `svg-bar`, `svg-grid`, `svg-overlap`, `svg-group` (a dashed frame, for a sequence's loop). For a dashed reply or lifeline, add `stroke-dasharray="5 4"` to the line.
 - Give the `<svg>` a `role="img"` and an `aria-label` that says what it shows. Keep the `viewBox` about 340 wide. An svg figure cannot grow; use a flow figure for a diagram that grows.
 
-Check every figure in the phone screenshots, light and dark (SKILL.md step 5).
+The layout reviewer checks every figure at phone width, light and dark (`lesson-review.md` section 5).
 
 ## 8. Where these rules come from
 

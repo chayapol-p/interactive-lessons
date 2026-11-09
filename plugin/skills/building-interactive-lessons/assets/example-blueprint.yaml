@@ -1,5 +1,5 @@
 # A complete small blueprint: a 3-chapter lesson on splitting text into chunks for search.
-# It passes scripts/check_blueprint.py --run-tests and shows every block type at least once.
+# It passes every item in references/self-checks.md, and shows every block type at least once.
 
 lesson:
   title: Splitting text into chunks for search

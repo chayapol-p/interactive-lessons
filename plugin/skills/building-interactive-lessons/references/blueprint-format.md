@@ -1,6 +1,6 @@
 # Blueprint format
 
-The blueprint is the lesson as data. The page is built from it, the checker reads it, and later edits start from it. Write it in YAML (or JSON with the same fields). `assets/example-blueprint.yaml` is a complete example that passes every check.
+The blueprint is the lesson as data. The page is built from it, the reviewers check it, and later edits start from it. Write it in YAML (or JSON with the same fields). `assets/example-blueprint.yaml` is a complete example that passes every self-check.
 
 Any field not listed here is an **error**. That catches typos, and it catches YAML lines that an unquoted comma split into junk fields. Quote any value that contains a comma or a colon.
 
@@ -20,7 +20,7 @@ Any field not listed here is an **error**. That catches typos, and it catches YA
 **Top level**
 - `lesson` R · `known_ideas` R · `facts` R · `misconceptions` R · `chapters` R
 - `glossary` o: list of `{term, definition}`. The page turns each term into a tappable definition card. Every term must appear somewhere in the chapters.
-- `theme` o: `{name, accent, fonts, why}`. The learner's colour and type. `accent` R is one hex colour; `fonts` o is `schibsted-source` (default), `plex`, `work-newsreader` or `noto-thai`; `why` o is one line on where the colour came from. `scripts/theme.py` builds every other colour from the accent and refuses one too close to the right, wrong or answer colours (green, red, amber) or too grey. Without `theme`, the page uses Ink blue `#1d5ca8`. See `page-contract.md` section 1a.
+- `theme` o: `{name, accent, fonts, why}`. The learner's colour and type. `accent` R is one hex colour; `fonts` o is `schibsted-source` (default), `plex`, `work-newsreader` or `noto-thai`; `why` o is one line on where the colour came from. The page works out every other colour from the accent when it loads, and refuses one too close to the right, wrong or answer colours (green, red, amber) or too grey, keeping Ink blue instead. Without `theme`, the page uses Ink blue `#1d5ca8`. See `theme.md`.
 - `shared_modules` o: `{module_name: python source}`. Helper modules (a toy corpus, a stub library) that every Python run can `import` when outputs are recorded.
 
 **`lesson`**
@@ -63,7 +63,7 @@ Any field not listed here is an **error**. That catches typos, and it catches YA
 - a `bridge_out` appears in the blocks of its `points_to` chapter;
 - a `recap` appears in its `sums_up` blocks.
 
-Ids and link fields do not count as showing anything. Put every key concept in the `glossary`, so the checker can follow it.
+Ids and link fields do not count as showing anything. Put every key concept in the `glossary`, so the self-checks can follow it.
 - `blocks` R
 
 ## 2. Recorded outputs
@@ -75,16 +75,16 @@ The lesson page runs no code. Every Run button shows an output that was recorded
 - A fill-in-the-blanks exercise, once per option: `setup`, then `code` with that option in its blank and every other blank set to its right option.
 
 **What is recorded**
-- Everything the program prints. If it fails, add the last error line (for example `NameError: name 'stride' is not defined`), as the checker does.
+- Everything the program prints. If it fails, add the last error line (for example `NameError: name 'stride' is not defined`).
 - The text itself, never a file path.
 
 **How it is recorded**
-- Write `""` for every `recorded_output` and option `output`, then run `python scripts/record_outputs.py lesson-blueprint.yaml`. It runs every program above with the real interpreter (`python`, or `node` for JavaScript) and writes what each prints into the blueprint, keeping its comments and layout.
-- After changing a block's code, re-record only that block: `--only <block-id>`.
+- Write `""` for every `recorded_output` and option `output`, then run every program above with the real interpreter (`python`, or `node` for JavaScript) in your code tool, and write what each prints into the blueprint, keeping its comments and layout. `building-the-page.md` section 2 says exactly how.
+- After changing a block's code, record only that block again.
 
 **How it is checked**
-- `python scripts/check_blueprint.py lesson-blueprint.yaml --run-tests` runs every program again and compares the output with the recorded one. On a mismatch it prints the real output.
-- A slice or exercise that needs a database, a network service or a key gets `run_locally: {command, why}`. Record its outputs on a machine that has the service; the checker skips running it. The page shows the command so a learner can run it too.
+- The content reviewer runs every program again and compares the output with the recorded one (`lesson-review.md` section 3).
+- A slice or exercise that needs a database, a network service or a key gets `run_locally: {command, why}`. Record its outputs on a machine that has the service; reviewers do not run it again. The page shows the command so a learner can run it too.
 - Helper code the slice needs goes in `setup` or `shared_modules`, never in the lines the learner reads.
 
 ## 3. Block fields, by type
@@ -115,7 +115,7 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
   - `library` o: `anime` or `gsap`, a motion library loaded from jsDelivr for this page; the script must use `scene.anime` or `scene.gsap`. See `visual-design.md` section 6.
   - A scene cannot grow across chapters; it needs `scene` in `lesson.agreed_extras` and a `motion` answer.
 - `figure.toy` o (`true`): the numbers are made up to show the idea. The page puts "Toy numbers." before the caption. Use it on every figure whose data is a sketch, not a measurement.
-- `figure.computed_by` (R for scatter, grid, frames, and a scene with `data`; o for bars, tokens and tiles): `{language: python, code, run_locally}`. The code prints the figure's data as one JSON object; `record_outputs.py` writes it in, and `--run-tests` proves it. `run_locally` skips a run that needs a file or service the lesson does not ship.
+- `figure.computed_by` (R for scatter, grid, frames, and a scene with `data`; o for bars, tokens and tiles): `{language: python, code, run_locally}`. The code prints the figure's data as one JSON object; you write it in from a real run, and the content reviewer runs it again. `run_locally` skips a run that needs a file or service the lesson does not ship.
 - A diagram that grows across chapters is written as stages, never as a promise in prose:
   - `grows_in` o (first stage only): the later chapters that add to it. Each named chapter must have a stage that extends it.
   - `extends` o (later stages only): `{diagram, adds}`. `diagram` names the earlier stage (in an earlier chapter); `adds` says what this stage draws on top. Its `figure` lists only the parts and links it adds, and keeps the first stage's kind.
@@ -210,7 +210,7 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
 - `prompt` R: what to deal and count, in one or two sentences.
 - `deals` R: the deal sizes offered as buttons, `[10]`, `[100]` or `[10, 100]`.
 - `outcomes` R: 2 to 4 items of `{id, label, short, hot}`. `short` R is 1 or 2 characters drawn in each dealt game, so a game never reads by colour alone; at most one outcome is `hot` (the one the lesson is about).
-- `computed_by` R: python that prints one JSON object with `cases` and `sample`. `record_outputs.py` writes both in, and `--run-tests` proves them. Write `cases: []` and `sample: {games: 100, seed: 7, counts: {}}` before recording.
+- `computed_by` R: python that prints one JSON object with `cases` and `sample`. You write both in from a real run, and the content reviewer runs it again. Write `cases: []` and `sample: {games: 100, seed: 7, counts: {}}` before recording.
 - `cases` (recorded): 2 to 12 items of `{label, weight, outcome}`: each way a game can go, its chance, and what it counts as. The weights add up to 1 (checked).
 - `sample` (recorded): `{games, seed, counts}`, one deal made with a fixed seed. Read-along, screenshots and tests show it; a learner's own deals are fresh and random.
 ```yaml

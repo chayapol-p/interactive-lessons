@@ -35,7 +35,7 @@
 
 ## How it works
 
-You ask your agent for a lesson on a topic, some docs or a repo. The skill guesses what you already know, asks you to confirm it, and plans the chapters as data. Scripts then record every result, check the plan, and fill a ready page template. Nobody writes the page by hand.
+You ask your agent for a lesson on a topic, some docs or a repo. The skill guesses what you already know, asks you to confirm it, and plans the chapters as data. Your agent then runs every example for real, fills a ready page template, and has fresh reviewers check the lesson. Nobody writes the page by hand.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/how-it-works-dark.png">
@@ -44,10 +44,10 @@ You ask your agent for a lesson on a topic, some docs or a repo. The skill guess
 <p><em>Lesson 2 · The six steps of the <code>building-interactive-lessons</code> skill.</em></p>
 
 1. **Discover.** Drafts the learner profile, the scope and a colour from what it knows, then asks you to confirm, in at most 4 questions.
-2. **Verify.** Marks each fact confirmed or inferred, collects real misconceptions, and runs `record_outputs.py` on every slice and every blank option.
-3. **Plan.** Writes chapters that build on each other as a blueprint. `check_blueprint.py --run-tests` checks it.
-4. **Build.** `build_page.py` fills the page template from the blueprint.
-5. **Check.** One command runs every script check, then `screenshot_chapters.py` shoots each chapter at phone width, light and dark.
+2. **Verify.** Marks each fact confirmed or inferred, collects real misconceptions, and runs every code slice and every blank option to record what each really prints.
+3. **Plan.** Picks a component for each beat of the story from a catalogue, writes the chapters as a blueprint, and works through a checklist of every rule.
+4. **Build.** Fills the page template from the blueprint.
+5. **Check.** Three fresh reviewers check it: one re-runs every result and every rule, one uses the lesson as a new learner would, and one taps through every moving picture at phone width, light and dark.
 6. **Publish and revise.** Publish as a claude.ai artifact. A feedback round edits the blueprint and re-checks only what changed.
 
 **Each chapter** opens with a guess, teaches one idea at a time, and asks you to fill 1 to 3 blanks in real material: a code slice, a sentence, a rule or a formula. Every wrong option is a real mistake and shows where it really leads. An AI tutor sits beside every block. It gives hints and keeps the solution back. **Hint** and **Show solution** are buttons you press yourself.
@@ -78,20 +78,18 @@ You ask your agent for a lesson on a topic, some docs or a repo. The skill guess
 
 ## Install
 
-> **This branch is the scripted edition.** Scripts record, build and check each lesson. The edition on `main`, listed in Anthropic's plugin directory, makes the same lessons and has them checked by agents instead. Install one edition only.
+The skill comes in two editions that make the same lessons. Install one only.
 
-**Claude Code:** type these in your agent's chat.
+**From Anthropic's plugin directory** (the directory edition): Markdown only. Your agent runs the examples, builds the page and has fresh reviewers check it, following the skill.
+
+**From GitHub** (the scripted edition, on the [`full`](https://github.com/chayapol-p/interactive-lessons/tree/full) branch): scripts record, build and check each lesson. Type these in Claude Code's chat:
 
 ```text
 /plugin marketplace add chayapol-p/interactive-lessons
 /plugin install interactive-lessons@interactive-lessons
 ```
 
-**Needs:** Python 3 with PyYAML and ruamel.yaml, and Playwright with Chromium for the phone screenshots.
-
-```bash
-pip install pyyaml ruamel.yaml playwright
-```
+**Needs:** a code tool that runs Python 3 with PyYAML (both editions). The scripted edition also needs ruamel.yaml, and Playwright with Chromium for its screenshots.
 
 The lesson page works best in claude.ai, where it can ask Claude (the tutor and the grader) and save each learner's progress. Anywhere else it is one HTML file with the AI features hidden.
 
@@ -106,19 +104,11 @@ Make a 15-minute lesson on why the house always wins at roulette, with pictures.
 **What should happen**
 - The `building-interactive-lessons` skill offers to run.
 - It shows what it assumed you know and asks up to 4 questions: depth, topics, length and colour.
-- Where a moment needs it, it may offer a moving picture or a game you can play, and builds one only if you say yes.
+- Where a moment needs it, it offers a moving picture or a game you can play, with its token cost, and builds one only if you say yes.
 - It shows a one-screen chapter map and waits for your go.
-- It builds `lesson.html`, and the check ends with `0 errors, 0 warnings`.
+- It builds `lesson.html`, and ends by saying who checked it: fresh reviewers, or itself when it cannot start them.
 
-**Without an agent,** build the Monty Hall example from the repo root:
-
-```bash
-cd plugin/skills/building-interactive-lessons
-python3 scripts/check_blueprint.py assets/example-monty-blueprint.yaml --run-tests
-python3 scripts/build_page.py assets/example-monty-blueprint.yaml --out /tmp/lesson/lesson.html
-```
-
-It worked if the check prints `0 errors, 0 warnings`. Open `/tmp/lesson/lesson.html` in a browser: everything but the tutor and the grader works offline.
+**Without an agent,** open [Stay or Switch?](https://claude.ai/artifact/FRiZUdRWFHotBmPBw1juau), the bundled Monty Hall example, live in claude.ai.
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/strip-dark.png"><img src="docs/images/strip.png" width="100%" alt=""></picture>
 
@@ -126,22 +116,23 @@ It worked if the check prints `0 errors, 0 warnings`. Open `/tmp/lesson/lesson.h
 
 | Part | What it does |
 | --- | --- |
-| `SKILL.md` | The skill: 13 rules, 6 steps, the Revise path and a time budget |
-| `scripts/record_outputs.py` | Runs every code slice, blank option and picture's code, and writes the real results into the blueprint |
-| `scripts/check_blueprint.py` | Every script check in one command: shape, tests after teaching, blanks, bridges, pictures, results, a stale page |
-| `scripts/build_page.py` | Fills the template from the blueprint and lists the chapters that changed |
-| `scripts/theme.py` | Builds both themes' colours from one accent and checks their contrast |
-| `scripts/screenshot_chapters.py` | Phone screenshots of the changed chapters, light and dark |
-| `scripts/phone_driver.py` | Lets a test learner use a lesson like a person on a phone: tap, scroll and type, with one screenshot after each step |
-| `assets/template.html` | The lesson page: blanks, hints, solutions, read-along, pictures, tutor, grader, progress |
-| `assets/` examples | 3 blueprints that pass every check: Stay or Switch? (5 chapters, no code, told as one story), text chunking (code) and How LLMs Work (6 chapters) |
-| `references/` | 6 guides: blueprint format, chapter design, quizzes, diagrams, tutor and grader, page behaviour |
+| `SKILL.md` | The skill: 14 rules, 6 steps, the Revise path and a time budget |
+| `references/topic-map.md` | For 11 kinds of topic, the component that carries each beat of the story |
+| `references/components/` | The catalogue: each component's purpose, its beat, the learner's role, a recipe and its rules, with 5 ready scenes (strip and draws, travel along a path in anime.js or GSAP, pull, pour) |
+| `references/self-checks.md` | Every rule a lesson must keep, as a checklist |
+| `references/lesson-review.md` | The three reviewers, their briefs and their report |
+| `references/building-the-page.md` | How the agent records every result and fills the template |
+| `assets/page-template.md` | The lesson page: blanks, hints, solutions, read-along, pictures, scenes, tutor, grader, progress, themes |
+| `assets/` examples | 3 blueprints: Stay or Switch? (5 chapters, no code), text chunking (code) and How LLMs Work (6 chapters, with scenes) |
+| `references/` | Also: principles, picture design, diagrams, chapter design, quizzes, blueprint format, theme, page behaviour, tutor and grader |
 
-## What the checks catch
+## How a lesson is checked
 
-- **26 deliberate breaks, 26 caught.** `tests/check_catches_breaks.py` breaks the 3 example blueprints one way at a time: a wrong result, two right options, a wrong option that prints the same as the right one, an unknown field, a promise no chapter keeps, a slice too long, a colour that clashes with "wrong", and more. The checker names each one.
-- **Where the rules came from:** most rules come from problems found in real lessons, such as a RAG workshop lesson with 7 chapters and a How LLMs Work lesson with 6 chapters.
-- **Limits:** the 21 trigger prompts and 23 behaviour cases in `evals/evals.json` are written but not yet run as a suite, so this README makes no pass-rate claim. The AI grader is tested by hand on the live page. No script tests it yet.
+- **Three reviewers who did not write it.** A content reviewer works through every rule and runs every example again. A learner reviewer uses the page at phone width as a new learner and ends by teaching the big idea back. A scene reviewer taps through every step of every moving picture, light and dark, with motion on and off.
+- **No agents, no pretending.** In a plain claude.ai chat the agent runs the same checklists itself and tells you the lesson was self-checked, not reviewed.
+- **The scripted edition** on `full` runs the same rules as scripts, with 26 deliberate breaks that its tests catch.
+- **Where the rules came from:** most come from problems found in real lessons, such as a RAG workshop lesson with 7 chapters and a How LLMs Work lesson with 6 chapters.
+- **Limits:** the trigger prompts and behaviour cases in `evals/evals.json` are written but not yet run as a suite, so this README makes no pass-rate claim.
 
 ## Why it works this way
 
@@ -151,7 +142,7 @@ It worked if the check prints `0 errors, 0 warnings`. Open `/tmp/lesson/lesson.h
 - **Quizzes test the idea.** A quiz never asks you to recall a detail of the example, such as a rule number.
 - **Assume, then confirm.** It starts from what it knows about you and checks it with you before it builds.
 
-The full list of 24 principles, with the source of each, is in [VISION.md](VISION.md).
+The full list of 25 principles, with the source of each, is in [VISION.md](VISION.md).
 
 ## Privacy
 

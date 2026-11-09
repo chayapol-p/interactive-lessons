@@ -8,30 +8,65 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pyyaml ruamel.yaml
-      - name: Example blueprints pass every check
+      - run: pip install pyyaml
+
+      - name: The plugin folder holds only file types the directory accepts
         run: |
-          python3 plugin/skills/building-interactive-lessons/scripts/check_blueprint.py plugin/skills/building-interactive-lessons/assets/example-blueprint.yaml --run-tests
-          python3 plugin/skills/building-interactive-lessons/scripts/check_blueprint.py plugin/skills/building-interactive-lessons/assets/example-concepts-blueprint.yaml --run-tests
-          python3 plugin/skills/building-interactive-lessons/scripts/check_blueprint.py plugin/skills/building-interactive-lessons/assets/example-monty-blueprint.yaml --run-tests
-      - name: The checker catches every deliberate break
-        run: python3 tests/check_catches_breaks.py
-      - name: Install a browser for the click checks
-        timeout-minutes: 25
+          python3 - <<'PY'
+          # Anthropic's plugin directory accepts Markdown, plain text, JSON, YAML and images from publishers that are not
+          # Verified, and nothing that starts with "#!". The scripted edition lives on the full branch.
+          import sys
+          from pathlib import Path
+          ALLOWED_SUFFIXES = {".md", ".txt", ".json", ".yaml", ".yml", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico"}
+          ALLOWED_PLAIN_NAMES = {"LICENSE"}
+          problems = []
+          for path in sorted(Path("plugin").rglob("*")):
+              if path.is_dir():
+                  continue
+              if path.suffix.lower() not in ALLOWED_SUFFIXES and path.name not in ALLOWED_PLAIN_NAMES:
+                  problems.append(f"{path}: file type not accepted")
+              if path.read_bytes()[:2] == b"#!":
+                  problems.append(f"{path}: starts with #!")
+          if problems:
+              sys.exit("\n".join(problems))
+          print("plugin folder: only accepted file types")
+          PY
+
+      - name: Every YAML and JSON file parses
         run: |
-          pip install playwright
-          python -m playwright install --with-deps --only-shell chromium
-      - name: The example pages behave when clicked
-        timeout-minutes: 5
-        run: python3 tests/check_page_clicks.py
-      - name: The example scene passes every scene check
-        timeout-minutes: 5
+          python3 - <<'PY'
+          import json, yaml
+          from pathlib import Path
+          for path in list(Path(".").rglob("*.yaml")) + list(Path(".").rglob("*.yml")):
+              yaml.safe_load(path.read_text())
+          for path in Path(".").rglob("*.json"):
+              json.loads(path.read_text())
+          print("YAML and JSON parse")
+          PY
+
+      - name: The page template and the build steps in building-the-page.md still work
         run: |
-          python3 plugin/skills/building-interactive-lessons/scripts/build_page.py plugin/skills/building-interactive-lessons/assets/example-concepts-blueprint.yaml --out /tmp/concepts/lesson.html
-          python3 plugin/skills/building-interactive-lessons/scripts/check_scenes.py /tmp/concepts/lesson.html --out /tmp/concepts/shots
-      - name: The scene checks catch every deliberate break
-        timeout-minutes: 15
-        run: python3 tests/check_scene_breaks.py
+          python3 - <<'PY'
+          # Run the build code exactly as references/building-the-page.md gives it, on every example blueprint
+          from pathlib import Path
+          skill = Path("plugin/skills/building-interactive-lessons")
+          guide = (skill / "assets" / "page-template.md").read_text()
+          template = guide.split("````html\n", 1)[1].split("\n````", 1)[0]
+          for placeholder in ["/*__LESSON_DATA__*/null", "<!--__SCENE_SCRIPTS__-->"]:
+              assert template.count(placeholder) == 1, f"the template must hold {placeholder} exactly once"
+          steps = (skill / "references" / "building-the-page.md").read_text()
+          build_code = steps.split("A short way to do all of it:\n\n```python\n", 1)[1].split("\n```", 1)[0]
+          namespace = {}
+          exec(build_code, namespace)
+          for blueprint_path in sorted((skill / "assets").glob("example-*.yaml")):
+              page_path = Path("/tmp") / blueprint_path.stem / "lesson.html"
+              page_path.parent.mkdir(parents=True, exist_ok=True)
+              namespace["build_page"](skill, blueprint_path, page_path)
+              page = page_path.read_text()
+              assert "__LESSON_DATA__" not in page and "__SCENE_SCRIPTS__" not in page, f"{blueprint_path.name}: a placeholder is left"
+              print("built", blueprint_path.name, len(page) // 1024, "KB")
+          PY
+
       - name: Skill and plugin versions match
         run: |
           python3 - <<'PY'

@@ -1,7 +1,8 @@
 # Small example with no code: the Monty Hall problem, in 5 chapters (about 25 minutes), told as one story.
 # The game (the puzzle and your gut answer) · Feel it (100 doors, deal 100 games, every case) · Why (the chance slides
 # onto one door) · When it fails (a host who guesses) · Use it (a quiz with no doors, then back to the first question).
-# Every chance is worked out by code; the two case tables are drawn by assets/example-monty-cases.py.
+# Every chance is worked out by code (shared_modules: monty). The two case tables (cases-table, guesses-table) are svg
+# figures whose rows were written by code that lists every case; write them the same way if the game changes.
 
 lesson:
   title: Stay or Switch?

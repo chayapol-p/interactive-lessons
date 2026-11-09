@@ -151,7 +151,7 @@ Motion patterns that carry ideas well:
 
 Classes for colour (both themes work): `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-bar`, `svg-group`. Never set a colour by hand. A class also sets a stroke width, which beats a `stroke-width` attribute; to make a width carry data (a line as thick as a share), set `element.style.strokeWidth`.
 
-`scripts/check_scenes.py` opens each scene, steps through every step and every control value, light and dark, with and without motion. It fails a scene that throws, draws outside its box, shows a number its data does not hold, has two steps that look the same, or ends a step in a different picture with motion than without. It also saves one image per step, so you can read the scene like a comic strip.
+Ready-to-copy scenes for each motion pattern, checked on a real page, are in `components/scenes.md`. The scene reviewer (`lesson-review.md` section 5) opens each scene and steps through every step and every control value, light and dark, with and without motion. It fails a scene that throws, draws outside its box, shows a number its data does not hold, has two steps that look the same, or ends a step in a different picture with motion than without, and reads one image per step like a comic strip.
 
 ## 7. Cost, and asking the author
 
@@ -167,18 +167,18 @@ Moving pictures cost the author tokens and time. Rough guide (an estimate; it va
 **Ask with a suggestion, never silently.**
 - **Discover** asks one question about motion, with your recommended answer first. For example: "Moving pictures where they teach something a still picture can't (recommended; I'll suggest them in the plan, about 10–25k extra tokens each)", "Stepped pictures only (cheapest)", or "Rich: scenes and trials wherever they fit".
 - **Plan** lists each proposed moving picture in the chapter map: the moment, the change test answer (why a still picture fails), the learner's role, and its cost. The author keeps or drops each one.
-- Record what was agreed in `lesson.agreed_extras` (`animation`, `play`, `scene`). The checker refuses a moving picture that was not agreed.
+- Record what was agreed in `lesson.agreed_extras` (`animation`, `play`, `scene`). A moving picture that was not agreed fails the self-checks.
 - **Unattended run:** build stepped pictures only, and list the proposed scenes with their reasons in the work log.
 
 ## 8. Rules every moving picture keeps
 
-Checked by `check_blueprint.py` or `check_scenes.py` where marked.
+Marked **(checked)** where `self-checks.md` holds the rule, and **(scene review)** where the scene reviewer checks it on the page.
 - It has a `motion` answer: what changes, what stays, why a still picture fails, and what the learner does **(checked)**.
 - It was agreed in Discover or Plan **(checked)**.
-- Every number it shows comes from its data **(checked by check_scenes.py)**.
-- Steps are learner-paced and nothing plays by itself; reduced motion jumps to the same end picture **(checked by check_scenes.py)**.
-- It fits 340 by its height, readable at phone width, in both themes **(checked by check_scenes.py)**.
-- Each step changes something visible **(checked by check_scenes.py)**.
+- Every number it shows comes from its data **(scene review)**.
+- Steps are learner-paced and nothing plays by itself; reduced motion jumps to the same end picture **(scene review)**.
+- It fits 340 by its height, readable at phone width, in both themes **(scene review)**.
+- Each step changes something visible **(scene review)**.
 - Its caption names where to look, within the text budget **(checked)**.
 
 ## 9. Signs a picture is not working

@@ -35,7 +35,7 @@
    "prompt": "Make an interactive lesson on how BM25 keyword search scores documents, for someone who knows basic Python.",
    "exact_checks": [
     "A blueprint file exists before any HTML file is written.",
-    "scripts/check_blueprint.py --run-tests reports 0 errors on the final blueprint.",
+    "The content reviewer's report (or the self-check) passes every item in references/self-checks.md on the final blueprint.",
     "Every must_get_right item lists a check, fill_blanks or explain block placed after the chapter's first idea."
    ],
    "judge_checks": [
@@ -69,7 +69,7 @@
    "exact_checks": [
     "Every chapter that shows code has a fill_blanks block with 1 to 3 blanks.",
     "Every blank has 3 or 4 options, exactly one right, each with an output.",
-    "check_blueprint.py --run-tests reports every recorded output as matching."
+    "Every recorded output matches a fresh run of its code, and the transcript shows each run."
    ],
    "judge_checks": [
     "Each wrong option is a mistake a beginner really makes, and its output shows the consequence."
@@ -152,10 +152,10 @@
    "id": "page-from-the-template",
    "prompt": "Make a 2-chapter lesson on Python list slicing for a beginner, and give me the page.",
    "exact_checks": [
-    "The page was written by scripts/build_page.py: lesson.html contains /*LESSON_DATA_START*/.",
-    "check_blueprint.py lesson-blueprint.yaml --run-tests --page lesson.html reports 0 errors.",
-    "Every recorded_output and option output was written by record_outputs.py (its run log is in the transcript), not typed.",
-    "screenshot_chapters.py ran and produced a light and a dark image per chapter at 390 px wide."
+    "The page was filled from assets/page-template.md: neither placeholder is left, and the blueprint sits in it as JSON.",
+    "The content reviewer re-ran every result and passed every self-check.",
+    "Every recorded_output and option output comes from a run shown in the transcript, not typed.",
+    "The scene and layout reviewer checked every chapter at 390 px wide, light and dark, and its report is in the transcript."
    ],
    "judge_checks": [
     "No HTML for the page was written by hand in the transcript."
@@ -167,9 +167,9 @@
    "setup": "Start with the example blueprint built into lesson.html.",
    "exact_checks": [
     "No Discover or Verify work was redone: the facts and misconceptions lists are unchanged unless the feedback needed it.",
-    "record_outputs.py ran with --only for the changed exercise.",
-    "build_page.py printed the changed chapters, and they are exactly the chapters the feedback named.",
-    "screenshot_chapters.py shot only those chapters, light and dark.",
+    "Only the changed exercise's results were recorded again.",
+    "The list of changed chapters is exactly the chapters the feedback named.",
+    "The review covered only those chapters, with a fresh learner persona.",
     "The artifact was republished to the same link."
    ],
    "judge_checks": [
@@ -209,8 +209,8 @@
    "prompt": "Make a 30-minute lesson on how compound interest works, for someone with no maths background.",
    "exact_checks": [
     "Every fill_blanks block uses language: text, and every option has output_from (source or worked) with output_source.",
-    "Every scatter, grid or frames figure has computed_by, and --run-tests reports its data matches.",
-    "The checker passes with 0 errors."
+    "Every scatter, grid or frames figure has computed_by, and its data matches a fresh run.",
+    "Every self-check passes."
    ],
    "judge_checks": [
     "No quiz asks the learner to recall a detail of the example rather than apply the idea."
@@ -220,8 +220,8 @@
    "id": "theme-per-learner",
    "prompt": "Make a short lesson on SQL joins for me. Use green, it's my favourite colour.",
    "exact_checks": [
-    "The blueprint has a theme whose accent passes scripts/theme.py (a pure green is refused, so a different hue is offered or the default is kept).",
-    "The Discover question shows the original and the adjusted colour before building.",
+    "The blueprint has a theme whose accent passes references/theme.md (a pure green is refused, so a different hue is offered or the default is kept), and the built page sets no themeProblem.",
+    "The Discover question shows the proposed colour and why before building.",
     "Right, wrong and answer-shown colours in the built page are the fixed meaning colours, not the accent."
    ],
    "judge_checks": [
@@ -235,7 +235,7 @@
     "Discover asks how much motion the author wants, with a recommended answer first and the extra token cost of a scene named in it.",
     "The chapter map lists each proposed moving picture under its chapter with the moment, why a still would fail, what the learner does, and its cost.",
     "If the author declines, the blueprint has no figure with animate: true, no play block and no scene, and lesson.agreed_extras is absent or empty.",
-    "If the author agrees, lesson.agreed_extras lists each kind used, every moving picture has a motion answer, and check_blueprint.py --run-tests reports 0 errors."
+    "If the author agrees, lesson.agreed_extras lists each kind used, every moving picture has a motion answer, and every self-check passes."
    ],
    "judge_checks": [
     "Each proposed moving picture names the moment it is for and the change a still picture would hide, not 'animations' in general.",
@@ -248,7 +248,7 @@
    "exact_checks": [
     "The blueprint has lesson.big_idea, and every chapter has beat, milestone and (all but the last) open_question.",
     "The first chapter's beat includes hook and the last chapter's includes payoff; beats never go back.",
-    "check_blueprint.py --run-tests reports 0 errors."
+    "Every self-check passes."
    ],
    "judge_checks": [
     "Each open_question is answered by the next chapter's blocks.",
@@ -282,9 +282,9 @@
    "id": "learners-make-the-evidence",
    "prompt": "Add a 'deal 100 games' block to the Monty Hall lesson's proof chapter.",
    "exact_checks": [
-    "The play block's cases and sample come from computed_by, and --run-tests reports 'data matches' for it.",
+    "The play block's cases and sample come from computed_by and match a fresh run.",
     "The case weights add up to 1, and every outcome has a 1 or 2 character short mark.",
-    "tests/check_page_clicks.py shows fresh deals differ and read-along shows the seeded sample."
+    "In the layout review, two fresh deals differ and read-along shows the seeded sample."
    ],
    "judge_checks": [
     "The page shows the learner's count beside the expected share for each outcome."
@@ -294,7 +294,7 @@
    "id": "test-with-real-users",
    "prompt": "Test the rebuilt Monty Hall lesson on fresh learners and fix what they hit.",
    "exact_checks": [
-    "Each round uses a fresh agent with a persona that differs from earlier ones, using only scripts/phone_driver.py screenshots.",
+    "Each round uses a fresh agent with a persona that differs from earlier ones, seeing only the page at phone width (never its files or read-along).",
     "Each report has moments, lost spots, teach-back, verdict, top 3 fixes and bugs.",
     "The run stops on a correct teach-back with 'I get it', or after 2 rounds with nothing new, and says which."
    ],
@@ -307,12 +307,47 @@
    "prompt": "Teach how a ball's speed changes as it rolls down a curved ramp, for a curious 15-year-old. Moving pictures where they help are fine.",
    "exact_checks": [
     "At least one key idea gets a picture whose motion answer names what changes, what stays, and why a still would fail.",
-    "Any scene passes scripts/check_scenes.py with 0 problems, and every number it shows comes from its data.",
-    "check_blueprint.py --run-tests reports 0 errors."
+    "Any scene passes the scene review (lesson-review.md section 5) with no failure, and every number it shows comes from its data.",
+    "Every self-check passes."
    ],
    "judge_checks": [
     "The picture for the speed idea shows the manner of change (speed growing as the slope steepens), not only a start and an end.",
     "The learner does something with the picture that answers a question (drives the slope, bets where the ball is fastest, or steps through), not a sandbox with no question."
+   ]
+  },
+  {
+   "id": "reviewed-by-fresh-agents",
+   "prompt": "Make a 20-minute lesson on how a hash table finds a key, for someone who knows basic Python. Use Claude Code.",
+   "exact_checks": [
+    "Three reviewers ran as separate agents (content, learner, scenes and layout), each with its brief from references/lesson-review.md.",
+    "Each reviewer returned the fixed report shape: REVIEWER, PROMISE, PASSED, FAILED, NOT CHECKED, VERDICT.",
+    "Every FAILED line was fixed in the blueprint and the page built again before publishing."
+   ],
+   "judge_checks": [
+    "The final message says the lesson was reviewed by fresh agents and names anything not checked."
+   ]
+  },
+  {
+   "id": "self-check-without-agents",
+   "prompt": "Make a short lesson on what a p-value means, for a curious beginner.",
+   "setup": "A plain claude.ai chat with a code tool and no way to start agents.",
+   "exact_checks": [
+    "Every result shown on the page was produced by a run in the code tool.",
+    "The final message says the lesson was self-checked, not reviewed by fresh agents."
+   ],
+   "judge_checks": [
+    "The self-check went through the same three passes as the review, in order, and says what it could not check."
+   ]
+  },
+  {
+   "id": "components-from-the-topic-map",
+   "prompt": "Make a lesson on how a thermostat keeps a room at the set temperature, for a curious 12-year-old. Moving pictures where they help are fine.",
+   "exact_checks": [
+    "The plan names the kind of topic from references/topic-map.md and the wrong belief it breaks.",
+    "Each chapter's main component matches its beat in the topic map, or the plan says why it differs."
+   ],
+   "judge_checks": [
+    "The pictures follow the idea's structure (a loop that returns, a setting and its outcome), not one picture type reused for every chapter."
    ]
   }
  ]

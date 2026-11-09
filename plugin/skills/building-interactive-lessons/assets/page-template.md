@@ -1,17 +1,140 @@
-<title>__LESSON_TITLE__</title>
+# Page template
+
+The lesson page, ready to fill. Never write a lesson page from scratch and never hand-edit a built one: build it from this template by following `references/building-the-page.md`, which copies the html block below and fills its two placeholders.
+
+**What the template already does** (`references/page-contract.md` has the full behaviour):
+- draws every block and figure kind from the blueprint data, phone first, light and dark;
+- works out the lesson's theme colours from `theme.accent` and checks their contrast (`references/theme.md`);
+- runs each scene from its own script, with the scene runtime (`references/visual-design.md` section 6);
+- wires the tutor, the grader and saved progress where the page runs in claude.ai (`references/ai-tutor-and-grader.md`).
+
+**The two placeholders**, each there exactly once:
+
+| Placeholder | Becomes |
+|---|---|
+| `/*__LESSON_DATA__*/null` | the blueprint as JSON |
+| `<!--__SCENE_SCRIPTS__-->` | the motion library tags and one script per scene, or nothing |
+
+Change the template only to fix it for every lesson, never for one lesson's content. A fix here is a fix in the scripted edition's `template.html` too.
+
+````html
+<title>Lesson</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?__FONT_QUERY__&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 /* Lesson page template for building-interactive-lessons.
-   scripts/build_page.py fills it from the blueprint. Never edit a built page by hand: edit the blueprint and rebuild.
+   Built by references/building-the-page.md: the blueprint goes in as data, each scene as one script. Never edit a built
+   page by hand: edit the blueprint and build again.
    Layout: one narrow reading column (phone first), a slim sticky bar, plain sections; only interactive panels get a surface. */
-/* Colour tokens: scripts/theme.py writes them from the blueprint's theme (one accent colour), light and dark.
+/* Colour tokens: the default theme (Ink blue) is below; a lesson's own theme (one accent colour) is worked out by the
+   page's script at load time (references/theme.md), light and dark.
    Brand layer (the theme may change it): bg, surface, surface-2, code-bg, ink, muted, line, line-strong, dim,
    accent, accent-soft, on-accent, ramp-0..5 with ramp-text-0..5. Meaning layer (fixed in every lesson):
    good and bad (right and wrong), mark (answer shown), each with a soft fill. */
-/*__THEME_TOKENS__*/
+:root {
+  --bg: #f3f7fc;
+  --surface: #fcfdff;
+  --surface-2: #e9edf2;
+  --code-bg: #edf0f6;
+  --ink: #171b20;
+  --muted: #585e66;
+  --line: #d7dbe0;
+  --line-strong: #81878d;
+  --dim: #9a9fa5;
+  --accent-soft: #ddebfe;
+  --accent: #1d5ca8;
+  --on-accent: #ffffff;
+  --ramp-0: #e7f1fe;
+  --ramp-text-0: #171b20;
+  --ramp-1: #c4ddfe;
+  --ramp-text-1: #171b20;
+  --ramp-2: #a4c7f5;
+  --ramp-text-2: #171b20;
+  --ramp-3: #82ade7;
+  --ramp-text-3: #171b20;
+  --ramp-4: #376aab;
+  --ramp-text-4: #fcfdff;
+  --ramp-5: #0f519c;
+  --ramp-text-5: #fcfdff;
+  --good: #1c7445;
+  --good-soft: #dcefe3;
+  --bad: #ad2a20;
+  --bad-soft: #f7e0dd;
+  --mark: #8a4a05;
+  --mark-soft: #f6e8d6;
+  --font-ui: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+  --bg: #0d1013;
+  --surface: #17181a;
+  --surface-2: #1f2225;
+  --code-bg: #080a0d;
+  --ink: #e3e8f0;
+  --muted: #a5abb4;
+  --line: #303337;
+  --line-strong: #646970;
+  --dim: #54585e;
+  --accent-soft: #1c2f47;
+  --accent: #71adfb;
+  --on-accent: #0a1018;
+  --ramp-0: #1b2737;
+  --ramp-text-0: #e3e8f0;
+  --ramp-1: #223651;
+  --ramp-text-1: #e3e8f0;
+  --ramp-2: #2b4970;
+  --ramp-text-2: #e3e8f0;
+  --ramp-3: #345c90;
+  --ramp-text-3: #e3e8f0;
+  --ramp-4: #78adf3;
+  --ramp-text-4: #17181a;
+  --ramp-5: #a9cdfe;
+  --ramp-text-5: #17181a;
+  --good: #66c690;
+  --good-soft: #173225;
+  --bad: #f08b80;
+  --bad-soft: #3d1e1b;
+  --mark: #e8a250;
+  --mark-soft: #3a2a17;
+  color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1013;
+  --surface: #17181a;
+  --surface-2: #1f2225;
+  --code-bg: #080a0d;
+  --ink: #e3e8f0;
+  --muted: #a5abb4;
+  --line: #303337;
+  --line-strong: #646970;
+  --dim: #54585e;
+  --accent-soft: #1c2f47;
+  --accent: #71adfb;
+  --on-accent: #0a1018;
+  --ramp-0: #1b2737;
+  --ramp-text-0: #e3e8f0;
+  --ramp-1: #223651;
+  --ramp-text-1: #e3e8f0;
+  --ramp-2: #2b4970;
+  --ramp-text-2: #e3e8f0;
+  --ramp-3: #345c90;
+  --ramp-text-3: #e3e8f0;
+  --ramp-4: #78adf3;
+  --ramp-text-4: #17181a;
+  --ramp-5: #a9cdfe;
+  --ramp-text-5: #17181a;
+  --good: #66c690;
+  --good-soft: #173225;
+  --bad: #f08b80;
+  --bad-soft: #3d1e1b;
+  --mark: #e8a250;
+  --mark-soft: #3a2a17;
+  color-scheme: dark;
+}
 :root {
   --shadow: 0 1px 2px rgb(15 20 30 / 0.10), 0 6px 18px rgb(15 20 30 / 0.10);
   --font-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -380,9 +503,236 @@ details.fold summary::-webkit-details-marker { display: none; }
 <!--__SCENE_SCRIPTS__-->
 <script>
 "use strict";
-// The blueprint, embedded by scripts/build_page.py. The page reads it as it is; nothing here is lesson-specific.
+// The blueprint, put in as JSON when the page is built. The page reads it as it is; nothing here is lesson-specific.
 const LESSON = /*__LESSON_DATA__*/null;
 const CHAPTERS = LESSON.chapters;
+
+// ===== Theme: one accent colour -> the page's colour tokens, light and dark (references/theme.md) =====
+// The page ships the default theme (Ink blue) as CSS. A lesson with `theme` gets its tokens worked out here, in OKLCH
+// (lightness, chroma, hue), and every colour pair is contrast-checked. A theme that fails keeps the default and says why.
+
+const THEME_MEANING = {
+  light: { "good": "#1c7445", "good-soft": "#dcefe3", "bad": "#ad2a20", "bad-soft": "#f7e0dd", "mark": "#8a4a05", "mark-soft": "#f6e8d6" },
+  dark: { "good": "#66c690", "good-soft": "#173225", "bad": "#f08b80", "bad-soft": "#3d1e1b", "mark": "#e8a250", "mark-soft": "#3a2a17" },
+};
+const THEME_MEANING_HUES = { "good": 150, "bad": 27, "answer shown (amber)": 65 };
+const SMALLEST_HUE_GAP = 40;          // an accent this close to a meaning colour would blur right, wrong or answer shown
+const SMALLEST_ACCENT_CHROMA = 0.03;  // greyer than this cannot act as an accent
+const THEME_RAMP_STEPS = 6;
+const THEME_FONT_PAIRS = {
+  "schibsted-source": ["Schibsted Grotesk", "Source Serif 4",
+    "family=Schibsted+Grotesk:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600"],
+  "plex": ["IBM Plex Sans", "IBM Plex Serif", "family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600"],
+  "work-newsreader": ["Work Sans", "Newsreader", "family=Work+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,600"],
+  "noto-thai": ["Noto Sans Thai", "Noto Serif Thai", "family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@400;600"],
+};
+const THEME_KEYS = ["name", "accent", "fonts", "why"];
+
+// sRGB hex <-> OKLCH
+function hexToRgb(hexColour) {
+  const value = hexColour.replace("#", "");
+  return [0, 2, 4].map((start) => parseInt(value.slice(start, start + 2), 16) / 255);
+}
+function rgbToHex(rgb) {
+  return "#" + rgb.map((channel) => Math.round(Math.min(Math.max(channel, 0), 1) * 255).toString(16).padStart(2, "0")).join("");
+}
+function toLinear(channel) {
+  return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+}
+function fromLinear(channel) {
+  return channel <= 0.0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - 0.055;
+}
+function rgbToOklch(rgb) {
+  const [red, green, blue] = rgb.map(toLinear);
+  const longCone = Math.cbrt(0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue);
+  const mediumCone = Math.cbrt(0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue);
+  const shortCone = Math.cbrt(0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue);
+  const lightness = 0.2104542553 * longCone + 0.7936177850 * mediumCone - 0.0040720468 * shortCone;
+  const aAxis = 1.9779984951 * longCone - 2.4285922050 * mediumCone + 0.4505937099 * shortCone;
+  const bAxis = 0.0259040371 * longCone + 0.7827717662 * mediumCone - 0.8086757660 * shortCone;
+  const hue = ((Math.atan2(bAxis, aAxis) * 180) / Math.PI + 360) % 360;
+  return [lightness, Math.hypot(aAxis, bAxis), hue];
+}
+function oklchToRgb(lightness, chroma, hue) {
+  const aAxis = chroma * Math.cos((hue * Math.PI) / 180);
+  const bAxis = chroma * Math.sin((hue * Math.PI) / 180);
+  const longCone = (lightness + 0.3963377774 * aAxis + 0.2158037573 * bAxis) ** 3;
+  const mediumCone = (lightness - 0.1055613458 * aAxis - 0.0638541728 * bAxis) ** 3;
+  const shortCone = (lightness - 0.0894841775 * aAxis - 1.2914855480 * bAxis) ** 3;
+  return [
+    4.0767416621 * longCone - 3.3077115913 * mediumCone + 0.2309699292 * shortCone,
+    -1.2684380046 * longCone + 2.6097574011 * mediumCone - 0.3413193965 * shortCone,
+    -0.0041960863 * longCone - 0.7034186147 * mediumCone + 1.7076147010 * shortCone,
+  ].map(fromLinear);
+}
+function isInGamut(rgb) {
+  return rgb.every((channel) => channel >= -0.0005 && channel <= 1.0005);
+}
+
+// The colour as hex, with chroma lowered until it fits the screen's range
+function oklchHex(lightness, chroma, hue) {
+  let fittedChroma = chroma;
+  // A while loop: the chroma steps down an unknown number of times until the colour fits
+  while (fittedChroma > 0 && !isInGamut(oklchToRgb(lightness, fittedChroma, hue))) fittedChroma -= 0.002;
+  return rgbToHex(oklchToRgb(lightness, Math.max(fittedChroma, 0), hue));
+}
+
+// WCAG contrast ratio of two colours
+function contrastRatio(firstHex, secondHex) {
+  const luminance = (hexColour) => {
+    const [red, green, blue] = hexToRgb(hexColour).map(toLinear);
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
+  const [brighter, darker] = [luminance(firstHex), luminance(secondHex)].sort((a, b) => b - a);
+  return (brighter + 0.05) / (darker + 0.05);
+}
+function hueDistance(first, second) {
+  const gap = Math.abs(first - second) % 360;
+  return Math.min(gap, 360 - gap);
+}
+
+// Walk lightness from `start` by `step` until the colour reaches `ratio` on every background, or null
+function lightestPassingColour(hue, chroma, start, step, backgrounds, ratio, stop) {
+  const startsPastStop = step < 0 ? start < stop : start > stop;
+  if (startsPastStop) return null;
+  const stepCount = Math.floor(Math.abs(stop - start) / Math.abs(step) + 1e-9);
+  for (const stepNumber of Array.from({ length: stepCount + 1 }, (unused, i) => i)) {
+    const colour = oklchHex(start + step * stepNumber, chroma, hue);
+    if (backgrounds.every((background) => contrastRatio(colour, background) >= ratio)) return colour;
+  }
+  return null;
+}
+
+// The brand tokens for light and dark; throws an Error saying why the theme cannot work
+function deriveThemeTokens(theme) {
+  // Read the accent and refuse one that cannot act as an accent
+  const accent = String(theme.accent || "");
+  if (!/^#[0-9a-fA-F]{6}$/.test(accent)) throw new Error(`accent must be a colour like #1d5ca8, not '${accent}'`);
+  const [seedLightness, seedChroma, hue] = rgbToOklch(hexToRgb(accent));
+  if (seedChroma < SMALLEST_ACCENT_CHROMA) throw new Error(`accent ${accent} is too grey to act as an accent; pick a stronger colour`);
+  for (const [meaning, meaningHue] of Object.entries(THEME_MEANING_HUES)) {
+    if (hueDistance(hue, meaningHue) < SMALLEST_HUE_GAP) {
+      throw new Error(`accent ${accent} is too close in hue to the ${meaning} colour, so right, wrong or answer shown would blur; pick another colour, or use the default`);
+    }
+  }
+  const chroma = Math.min(seedChroma, 0.16);
+
+  // Work out each mode's tokens: greys tinted toward the accent, the accent itself, then the shade ramp
+  const tokens = {};
+  for (const mode of ["light", "dark"]) {
+    const isLight = mode === "light";
+    const neutral = (lightness, neutralChroma = 0.008) => oklchHex(lightness, neutralChroma, hue);
+    const modeTokens = {
+      "bg": neutral(isLight ? 0.975 : 0.17), "surface": neutral(isLight ? 0.995 : 0.21, 0.004),
+      "surface-2": neutral(isLight ? 0.945 : 0.25), "code-bg": neutral(isLight ? 0.955 : 0.145),
+      "ink": neutral(isLight ? 0.22 : 0.93, 0.012), "muted": neutral(isLight ? 0.48 : 0.74, 0.015),
+      "line": neutral(isLight ? 0.89 : 0.32), "line-strong": neutral(isLight ? 0.62 : 0.52, 0.012),
+      "dim": neutral(isLight ? 0.70 : 0.46, 0.01),
+    };
+    modeTokens["accent-soft"] = oklchHex(isLight ? 0.935 : 0.30, isLight ? 0.04 : 0.05, hue);
+    const backgrounds = [modeTokens["bg"], modeTokens["surface"], modeTokens["surface-2"], modeTokens["accent-soft"]];
+    const accentColour = isLight
+      ? lightestPassingColour(hue, chroma, Math.min(seedLightness, 0.58), -0.02, backgrounds, 4.5, 0.25)
+      : lightestPassingColour(hue, Math.min(chroma, 0.13), 0.74, 0.02, backgrounds, 4.5, 0.92);
+    if (accentColour === null) throw new Error(`no lightness of ${accent} reads well on the ${mode} background`);
+    modeTokens["accent"] = accentColour;
+    const darkTextOnAccent = isLight ? "#0d1117" : oklchHex(0.17, 0.02, hue);
+    const whiteContrast = contrastRatio("#ffffff", accentColour);
+    modeTokens["on-accent"] = whiteContrast >= contrastRatio(darkTextOnAccent, accentColour) ? "#ffffff" : darkTextOnAccent;
+
+    // The shade ramp skips the middle lightness band (about 0.56 to 0.68), where no text reaches 4.5:1 on the cell
+    const accentLightness = rgbToOklch(hexToRgb(accentColour))[0];
+    const rampLightness = isLight ? [0.955, 0.89, 0.82, 0.74, 0.52, Math.min(accentLightness, 0.44)] : [0.27, 0.33, 0.40, 0.47, 0.74, 0.84];
+    rampLightness.forEach((stepLightness, step) => {
+      const share = step / (THEME_RAMP_STEPS - 1);
+      const cell = oklchHex(stepLightness, chroma * (0.25 + 0.75 * share), hue);
+      modeTokens[`ramp-${step}`] = cell;
+      const inkContrast = contrastRatio(modeTokens["ink"], cell);
+      modeTokens[`ramp-text-${step}`] = inkContrast >= contrastRatio(modeTokens["surface"], cell) ? modeTokens["ink"] : modeTokens["surface"];
+    });
+    tokens[mode] = { ...modeTokens, ...THEME_MEANING[mode] };
+  }
+  return tokens;
+}
+
+// Every pair the page draws, with the ratio it needs: [text colour, background, ratio]
+function themeContrastPairs() {
+  const pairs = [];
+  for (const background of ["bg", "surface", "surface-2", "code-bg", "accent-soft", "mark-soft", "good-soft", "bad-soft"]) pairs.push(["ink", background, 4.5]);
+  for (const background of ["bg", "surface", "surface-2"]) pairs.push(["muted", background, 4.5]);
+  for (const colour of ["accent", "good", "bad"]) {
+    for (const background of ["bg", "surface"]) pairs.push([colour, background, 4.5]);
+  }
+  pairs.push(["mark", "mark-soft", 4.5], ["mark", "surface", 4.5], ["good", "good-soft", 4.5], ["bad", "bad-soft", 4.5],
+    ["on-accent", "accent", 4.5], ["accent", "accent-soft", 4.5]);
+  for (const background of ["bg", "surface", "code-bg"]) pairs.push(["line-strong", background, 3.0]);
+  pairs.push(["accent", "code-bg", 3.0]);
+  for (let step = 0; step < THEME_RAMP_STEPS; step += 1) pairs.push([`ramp-text-${step}`, `ramp-${step}`, 4.5]);
+  return pairs;
+}
+
+// Why a lesson's theme cannot be used, as readable lines; empty means it works
+function themeProblems(theme) {
+  if (theme === undefined || theme === null) return [];
+  if (typeof theme !== "object") return ["theme must be a mapping with accent (and optional name, fonts, why)"];
+  const problems = Object.keys(theme).filter((key) => !THEME_KEYS.includes(key)).map((key) => `theme has an unknown field '${key}'`);
+  if (!("accent" in theme)) problems.push("theme needs accent: one colour like #1d5ca8");
+  if (!(String(theme.fonts || "schibsted-source") in THEME_FONT_PAIRS)) problems.push(`theme fonts must be one of: ${Object.keys(THEME_FONT_PAIRS).join(", ")}`);
+  if (problems.length) return problems;
+  let tokens;
+  try {
+    tokens = deriveThemeTokens(theme);
+  } catch (reason) {
+    return [reason.message];
+  }
+
+  // Contrast-check every pair, and check the shade ramp gets stronger step by step
+  for (const [mode, modeTokens] of Object.entries(tokens)) {
+    for (const [text, background, ratio] of themeContrastPairs()) {
+      const measured = contrastRatio(modeTokens[text], modeTokens[background]);
+      if (measured < ratio) problems.push(`${mode}: ${text} on ${background} is ${measured.toFixed(2)}:1, needs ${ratio}:1`);
+    }
+    const ramp = Array.from({ length: THEME_RAMP_STEPS }, (unused, step) => rgbToOklch(hexToRgb(modeTokens[`ramp-${step}`]))[0]);
+    const isStrongerEachStep = ramp.slice(1).every((lightness, i) => (mode === "light" ? ramp[i] > lightness : ramp[i] < lightness));
+    if (!isStrongerEachStep) problems.push(`${mode}: the shade ramp does not get stronger step by step`);
+  }
+  return problems;
+}
+
+// Put the lesson's theme on the page: colour tokens for light and dark, and its font pair
+function applyLessonTheme(theme) {
+  if (theme === undefined || theme === null) return;
+  const problems = themeProblems(theme);
+  if (problems.length) {
+    console.warn(`[lesson] theme not used, the page keeps Ink blue: ${problems.join("; ")}`);
+    document.documentElement.dataset.themeProblem = problems.join("; ");
+    return;
+  }
+
+  // Write the colour tokens as CSS after the default theme, so they win
+  const tokens = deriveThemeTokens(theme);
+  const fonts = THEME_FONT_PAIRS[theme.fonts || "schibsted-source"];
+  const tokenLines = (mode) => Object.entries(tokens[mode]).map(([name, value]) => `  --${name}: ${value};`).join("\n");
+  const fontLines = `  --font-ui: "${fonts[0]}", "Helvetica Neue", Arial, sans-serif;\n  --font-read: "${fonts[1]}", Georgia, "Times New Roman", serif;`;
+  const darkLines = `${tokenLines("dark")}\n  color-scheme: dark;`;
+  const style = document.createElement("style");
+  style.textContent = `:root {\n${tokenLines("light")}\n${fontLines}\n}\n`
+    + `@media (prefers-color-scheme: dark) {\n  :root:not([data-theme="light"]) {\n${darkLines}\n  }\n}\n`
+    + `:root[data-theme="dark"] {\n${darkLines}\n}\n`;
+  document.head.appendChild(style);
+
+  // Load the font pair when it is not the default one
+  if (theme.fonts && theme.fonts !== "schibsted-source") {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?${fonts[2]}&display=swap`;
+    document.head.appendChild(link);
+  }
+}
+
+applyLessonTheme(LESSON.theme);
+document.title = LESSON.lesson.title;
+
 const MISCONCEPTIONS = Object.fromEntries((LESSON.misconceptions || []).map((m) => [m.id, m]));
 const KNOWN = Object.fromEntries((LESSON.known_ideas || []).map((k) => [k.id, k.idea]));
 const GLOSSARY = LESSON.glossary || [];
@@ -1335,7 +1685,7 @@ function animateBetween(fromLayer, toLayer) {
   toLayer.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: STEP_MILLISECONDS, easing: "ease-in-out" });
 }
 // ---------- Scenes: a picture written for one idea ----------
-// The scene's own script (put on the page by build_page.py, one <script> per scene) gets one object, `scene`, and sets
+// The scene's own script (put on the page when it is built, one <script> per scene) gets one object, `scene`, and sets
 // scene.show(step, from, settings), and scene.run(trials, settings) when it has a run control. Steps are learner-paced:
 // nothing plays by itself. Every number it shows comes from scene.data, which computed_by printed at build time.
 const SCENE_WIDTH = 340;
@@ -1404,7 +1754,7 @@ function sceneFigure(block) {
       });
     },
   };
-  // A scene may name a motion library (figure.library: anime or gsap). build_page.py loads it from jsDelivr only when
+  // A scene may name a motion library (figure.library: anime or gsap). the page loads it from jsDelivr only when
   // some scene asks for it. scene.play(timeline) plays a timeline from either library learner-paced: it jumps to the end
   // when motion is reduced (or on the first draw, or on Back), and the scene counts as busy until it finishes.
   const active = new Set();
@@ -2196,3 +2546,4 @@ render();
 connectToClaude();
 connectProgressStore();
 </script>
+````
