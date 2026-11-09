@@ -153,7 +153,7 @@ The full list of 24 principles, with the source of each, is in [VISION.md](VISIO
 
 ## Privacy
 
-A lesson page loads its fonts from Google Fonts. The tutor and the grader send your question and the lesson's context to Claude through your own account. In claude.ai, the page saves your answers to that lesson so you can come back. The plugin itself collects nothing and runs no server.
+A lesson page loads its fonts from Google Fonts, and a page with a moving scene that uses a motion library loads it (anime.js or GSAP) from jsDelivr. The tutor and the grader send your question and the lesson's context to Claude through your own account. In claude.ai, the page saves your answers to that lesson so you can come back. The plugin itself collects nothing and runs no server.
 
 ## Credits
 

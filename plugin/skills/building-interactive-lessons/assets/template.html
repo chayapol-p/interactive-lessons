@@ -1404,9 +1404,38 @@ function sceneFigure(block) {
       });
     },
   };
+  // A scene may name a motion library (figure.library: anime or gsap). build_page.py loads it from jsDelivr only when
+  // some scene asks for it. scene.play(timeline) plays a timeline from either library learner-paced: it jumps to the end
+  // when motion is reduced (or on the first draw, or on Back), and the scene counts as busy until it finishes.
+  const active = new Set();
+  if (figure.library === "gsap" && window.gsap) {
+    const plugins = [window.MotionPathPlugin, window.DrawSVGPlugin].filter(Boolean);
+    if (plugins.length) window.gsap.registerPlugin(...plugins);
+  }
+  api.anime = figure.library === "anime" ? window.anime || null : null;
+  api.gsap = figure.library === "gsap" ? window.gsap || null : null;
+  const isGsap = (timeline) => typeof timeline.eventCallback === "function" && typeof timeline.progress === "function";
+  function finish(timeline) {
+    if (isGsap(timeline)) timeline.progress(1); else { timeline.seek(timeline.duration); timeline.pause(); }
+  }
+  api.play = (timeline) => {
+    if (still()) { finish(timeline); return Promise.resolve(); }
+    settle(1);
+    active.add(timeline);
+    return new Promise((resolve) => {
+      let ended = false;
+      const done = () => { if (ended) return; ended = true; active.delete(timeline); settle(-1); resolve(); };
+      timeline.__done = done;
+      if (isGsap(timeline)) { timeline.eventCallback("onComplete", done); timeline.play(0); }
+      else { timeline.then(done); timeline.play(); }
+    });
+  };
+  // A new step finishes any timeline still running, so a fast tap never leaves a half-drawn picture
+  function finishActive() { active.forEach((timeline) => { finish(timeline); timeline.__done(); }); }
   // The scene's script runs once; a scene that fails shows its steps as words, so the lesson still teaches
   let failed = null;
   try {
+    if (figure.library && !api[figure.library]) throw new Error(`the motion library '${figure.library}' did not load`);
     const make = (window.LESSON_SCENES || {})[block.id];
     if (typeof make !== "function") throw new Error("the scene script is missing from the page");
     make(api);
@@ -1426,8 +1455,10 @@ function sceneFigure(block) {
   const where = h("p", { class: "scene-where" });
   const replay = h("button", { class: "btn quiet", type: "button", onclick: () => draw(step - 1) }, "Play again");
   function draw(from) {
-    // The first draw jumps straight to step 1: nothing moves until the learner does something
-    if (from === undefined) holder.dataset.instant = "1";
+    // The first draw jumps straight to step 1: nothing moves until the learner does something. Back jumps too:
+    // motion plays forwards, from the step before, the way the change happens
+    finishActive();
+    if (from === undefined || from > step) holder.dataset.instant = "1";
     try { api.show(step, from, Object.assign({}, settings)); } catch (error) { fail(error); return; } finally { delete holder.dataset.instant; }
     captions.forEach((caption, index) => caption.classList.toggle("current", index === step));
     root.setAttribute("aria-label", steps[step].caption);

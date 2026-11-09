@@ -47,10 +47,28 @@ def lesson_json(blueprint):
     return text.replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
 
 
+# Motion libraries a scene may name (figure.library), pinned, loaded from jsDelivr only when a scene uses them
+LIBRARY_SCRIPTS = {
+    "anime": ["https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.umd.min.js"],
+    "gsap": ["https://cdn.jsdelivr.net/npm/gsap@3.15.1/dist/gsap.min.js",
+             "https://cdn.jsdelivr.net/npm/gsap@3.15.1/dist/MotionPathPlugin.min.js",
+             "https://cdn.jsdelivr.net/npm/gsap@3.15.1/dist/DrawSVGPlugin.min.js"],
+}
+
+
 def scene_scripts(blueprint):
     """One <script> element per scene, so a scene with a bug cannot stop the page or another scene.
     Each registers a function that the page calls with the scene's `scene` object (references/visual-design.md section 6)."""
     parts = []
+    libraries = []
+    for chapter in blueprint.get("chapters") or []:
+        for block in chapter.get("blocks") or []:
+            figure = block.get("figure") if block.get("type") == "diagram" else None
+            if isinstance(figure, dict) and figure.get("kind") == "scene" and figure.get("library") in LIBRARY_SCRIPTS \
+                    and figure["library"] not in libraries:
+                libraries.append(figure["library"])
+    for library in libraries:
+        parts += [f'<script src="{url}"></script>' for url in LIBRARY_SCRIPTS[library]]
     for chapter in blueprint.get("chapters") or []:
         for block in chapter.get("blocks") or []:
             figure = block.get("figure") if block.get("type") == "diagram" else None

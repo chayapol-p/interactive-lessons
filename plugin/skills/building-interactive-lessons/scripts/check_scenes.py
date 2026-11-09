@@ -60,6 +60,22 @@ SNAPSHOT = """(host) => {
 }"""
 
 
+def serve_libraries_from(context, folder):
+    """Answer the page's jsDelivr requests from a local folder (npm package folders such as animejs/ and gsap/), for
+    machines that cannot reach the CDN. https://cdn.jsdelivr.net/npm/gsap@3.15.1/dist/gsap.min.js -> folder/gsap/dist/gsap.min.js"""
+    root = Path(folder).resolve()
+
+    def answer(route):
+        path = route.request.url.split("/npm/", 1)[-1]
+        package, _, rest = path.partition("/")
+        local = root / re.sub(r"@[^/]+$", "", package) / rest
+        if local.is_file():
+            route.fulfill(path=str(local), content_type="application/javascript")
+        else:
+            route.abort()
+    context.route("https://cdn.jsdelivr.net/npm/**", answer)
+
+
 def find_browser():
     """Playwright's own Chromium if installed, else a system Chrome."""
     for name in ["google-chrome", "chromium", "chromium-browser"]:
@@ -151,6 +167,7 @@ def main():
     parser = argparse.ArgumentParser(description="Check every scene on the built page, and save one image per step.")
     parser.add_argument("page", help="the built lesson.html")
     parser.add_argument("--scenes", nargs="+", metavar="ID", help="check only these scenes")
+    parser.add_argument("--libraries", metavar="FOLDER", help="serve motion libraries from this folder instead of jsDelivr (for machines without the CDN)")
     parser.add_argument("--out", default="shots", help="folder for the images (default: shots)")
     arguments = parser.parse_args()
 
@@ -168,7 +185,10 @@ def main():
             browser = playwright.chromium.launch(args=["--no-sandbox"])
         except Exception:
             browser = playwright.chromium.launch(executable_path=find_browser(), args=["--no-sandbox"])
-        probe = browser.new_page()
+        probe_context = browser.new_context()
+        if arguments.libraries:
+            serve_libraries_from(probe_context, arguments.libraries)
+        probe = probe_context.new_page()
         probe.goto(page_path.as_uri())
         scenes = probe.evaluate("""() => LESSON.chapters.flatMap((chapter) => chapter.blocks
             .filter((block) => block.type === 'diagram' && block.figure.kind === 'scene')
@@ -192,11 +212,15 @@ def main():
                 for motion in ["no-preference", "reduce"]:
                     context = browser.new_context(viewport={"width": PHONE_WIDTH, "height": PHONE_HEIGHT}, color_scheme=theme,
                                                   reduced_motion=motion, device_scale_factor=2)
+                    if arguments.libraries:
+                        serve_libraries_from(context, arguments.libraries)
                     tab = context.new_page()
                     tab.set_default_timeout(8000)
                     logged = []
                     tab.on("pageerror", lambda error, logged=logged: logged.append(str(error)))
-                    tab.on("console", lambda message, logged=logged: logged.append(message.text) if message.type == "error" and not message.text.startswith("Failed to load resource") else None)
+                    # Errors, and the warnings a motion library gives when it skips a move (a property it does not know)
+                    tab.on("console", lambda message, logged=logged: logged.append(message.text) if (message.type == "error" and not message.text.startswith("Failed to load resource"))
+                           or (message.type == "warning" and re.search(r"invalid property|not found|missing plugin|target .* not", message.text, re.I)) else None)
                     tab.goto(page_path.as_uri() + "#" + chapter)
                     host = tab.locator(f'[data-scene="{block["id"]}"]')
                     host.scroll_into_view_if_needed()

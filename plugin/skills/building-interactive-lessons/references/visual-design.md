@@ -128,6 +128,26 @@ What `scene` gives the script:
 - `scene.say(text)`: tells a screen reader what just changed
 - `scene.show(step, from, settings)` (you set it): draw the step; `from` is the step before (undefined on first draw); `settings` maps each control id to its chosen index
 - `scene.run(trials, settings)` (you set it, only with a `run` control): run trials and return one line that sums them up
+- `scene.anime` or `scene.gsap`: the motion library the scene named in `library`, or none
+- `scene.play(timeline)`: plays an anime.js or GSAP timeline the learner-paced way: it jumps to the end on the first draw, on Back and when motion is reduced, and the checks wait for it to finish
+
+Next and Play again move; Back jumps. Draw the whole state of a step in `scene.show`, then play only the move that leads into it, so any step can be reached directly.
+
+### Motion libraries
+
+`scene.move` eases numbers on one element at a time, with no dependency, so the page works offline. When the storyboard needs more, a scene names a library in `library`, and the page loads it from jsDelivr:
+- **`anime`** (anime.js 4, MIT licence): `createTimeline`, `svg.createMotionPath` (travel along a path), `svg.createDrawable` (a line that draws itself), `stagger`.
+- **`gsap`** (GSAP 3 with MotionPathPlugin and DrawSVGPlugin; free, not open source): `timeline`, `motionPath`, `drawSVG`, staggers and eases.
+
+Pick by what the scene needs and what the author prefers; both reach the same pictures. If the library cannot load, the scene shows its steps as words, and the rest of the lesson works.
+
+Motion patterns that carry ideas well:
+- **Travel along a path**: something read, sent or fed back moves along its route (tokens into a model, a packet through a network). Give each traveller its own path, and stagger them.
+- **Draw a line**: a connection or a way back appears as it is used. Draw it while the traveller moves along it.
+- **Pour**: a share leaves one place and fills another (a chance moving between doors, water between cups). Keep the total visible.
+- **Pull**: weights tug a point toward several places (attention, a weighted average). Make each pull's strength visible as width or length before the point moves.
+- **Stagger**: many similar moves start one after another, so each can be followed and their order shows.
+- **Hold**: after a move, nothing moves until the learner taps. The pause is where they read the change.
 
 Classes for colour (both themes work): `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-bar`, `svg-group`. Never set a colour by hand. A class also sets a stroke width, which beats a `stroke-width` attribute; to make a width carry data (a line as thick as a share), set `element.style.strokeWidth`.
 

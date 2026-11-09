@@ -1247,6 +1247,99 @@ chapters:
         extends:
           diagram: pipeline-layers
           adds: "odds for every token and the pick. The picked token goes back in, and the whole pipeline runs again."
+      - id: run-by-run
+        type: diagram
+        shape: change-over-time
+        brief:
+          understand: Each run reads every token so far, then one new token travels back and joins the end of the text.
+          how_it_helps: "Tokens in a row above the model; each run sends every token along its own curve into the model, and the new one rides a curve back."
+          clearer_than_text: Watching all the tokens travel again on the second run shows that nothing is written ahead; each run starts from the whole text.
+        motion:
+          changes: The tokens that travel into the model on each run, and the new token that travels back to the end of the row.
+          stays: The model in the middle, and every token already in the row, which never moves.
+          why_not_still: A still picture of the loop shows an arrow back, but not that every token is read again on every run, in order, before one new token joins.
+          learner_does: step
+          breaks: looks-up-answer
+        figure:
+          kind: scene
+          library: anime
+          height: 230
+          steps:
+            - label: Text so far
+              caption: Six tokens wait in a row above the model. The model reads only these.
+            - label: Run 1
+              caption: Every token travels into the model, and one new token, flooded, travels back to the end of the row.
+            - label: Run 2
+              caption: The next run reads all seven tokens again, flooded included, and adds one more.
+          computed_by:
+            language: python
+            code: |
+              import json
+              from toy_llm import RIVER
+              # The prompt the lesson follows, and the two tokens the next runs add
+              print(json.dumps({"data": {"prompt": RIVER[:6], "next": [RIVER[6], "."]}}))
+          data:
+            prompt:
+              - The
+              - bank
+              - by
+              - the
+              - river
+              - was
+            next:
+              - flooded
+              - .
+          script: |
+            // Layout: the text so far in a row at the top, the model below; each run reads every token and adds one
+            const { createTimeline, svg } = scene.anime;
+            const prompt = scene.data.prompt, next = scene.data.next;
+            const rowY = 32, model = { x: 120, y: 160, w: 100, h: 40 };
+            const chipWidth = (word) => Math.max(26, word.length * 6.6 + 12);
+            const centres = (words) => { const out = []; let x = 8; for (const w of words) { out.push(x + chipWidth(w) / 2); x += chipWidth(w) + 4; } return out; };
+            // A chip is drawn around (0, 0) inside a group, so it can travel by translate
+            function chip(word, isNew) {
+              const group = scene.add("g", {});
+              const width = chipWidth(word);
+              group.append(scene.add("rect", { x: -width / 2, y: -11, width, height: 22, rx: 5, class: isNew ? "svg-box hot" : "svg-box" }));
+              group.append(scene.add("text", { x: 0, y: 4, "text-anchor": "middle", class: "svg-text small" }, word));
+              return group;
+            }
+
+            scene.show = (step) => {
+              // The state after this step: the row holds the prompt plus one token per run so far
+              scene.root.replaceChildren();
+              scene.add("text", { x: 8, y: 12, class: "svg-text small" }, "Text so far");
+              scene.add("rect", { x: model.x, y: model.y, width: model.w, height: model.h, rx: 8, class: "svg-box" });
+              scene.add("text", { x: model.x + model.w / 2, y: model.y + 25, "text-anchor": "middle", class: "svg-text" }, "Model");
+              const words = prompt.concat(next.slice(0, step));
+              const read = words.slice(0, words.length - (step ? 1 : 0));
+              const xs = centres(words);
+              const target = { x: model.x + model.w / 2, y: model.y };
+              const routes = step ? read.map((word, i) => scene.add("path", { d: `M ${xs[i]} ${rowY + 11} C ${xs[i]} ${rowY + 80}, ${target.x} ${target.y - 70}, ${target.x} ${target.y}`, class: "svg-line dim" })) : [];
+              const chips = words.map((word, i) => scene.set(chip(word, step > 0 && i === words.length - 1), { transform: `translate(${xs[i]} ${rowY})` }));
+              if (!step) return;
+              // The last run, hidden until it plays: each token read travels its own curve in, then the new token rides back
+              const end = { x: xs[xs.length - 1], y: rowY };
+              const back = scene.add("path", { d: `M ${model.x + model.w} ${model.y + model.h / 2} C 330 ${model.y + model.h / 2}, ${end.x + 30} ${end.y + 70}, ${end.x} ${end.y}`, class: "svg-line hot", opacity: 0 });
+              const dots = read.map(() => scene.add("circle", { cx: 0, cy: 0, r: 4, class: "svg-dot hot", opacity: 0 }));
+              const newChip = scene.set(chips[chips.length - 1], { opacity: 0 });
+              scene.root.append(newChip);
+              // --- motion (anime.js) ---
+              const timeline = createTimeline({ autoplay: false, defaults: { ease: "inOutQuad" } });
+              dots.forEach((dot, i) => {
+                const { translateX, translateY } = svg.createMotionPath(routes[i]);
+                timeline.set(dot, { opacity: 1 }, i * 70);
+                timeline.add(dot, { translateX, translateY, duration: 700 }, i * 70);
+                timeline.add(dot, { opacity: 0, duration: 100 }, i * 70 + 600);
+              });
+              const way = svg.createMotionPath(back);
+              timeline.set(back, { opacity: 1 }, "+=200");
+              timeline.add(svg.createDrawable(back), { draw: ["0 0", "0 1"], duration: 900 }, "<<");
+              timeline.set(newChip, { opacity: 1 }, "<<");
+              timeline.add(newChip, { translateX: way.translateX, translateY: way.translateY, duration: 900 }, "<<");
+              scene.play(timeline);
+              // --- end motion ---
+            };
       - id: temperature-blank
         type: fill_blanks
         instructions:

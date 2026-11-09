@@ -92,6 +92,8 @@ case("scene-without-motion", WHY, "", expect="motion")
 case("scene-reason-thin", WHY, "          why_not_still: It looks nicer.\n", expect="at least 8 words")
 case("scene-role-unknown", "          learner_does: run\n", "          learner_does: watch\n", expect="must be one of")
 case("scene-no-show", "            scene.show = (step, from, settings) => {", "            scene.draw = (step, from, settings) => {", expect="must set scene.show")
+case("scene-library-unknown", "          library: anime\n", "          library: threejs\n", expect="library must be one of")
+case("scene-library-unused", "            const { createTimeline, svg } = scene.anime;", "            const { createTimeline, svg } = window.anime;", expect="never uses scene.anime")
 case("scene-data-typed", "            example_draw: 0.13", "            example_draw: 0.5", run_tests=True, expect="not what computed_by prints")
 
 # Picture ladder rules, broken in the Monty Hall example

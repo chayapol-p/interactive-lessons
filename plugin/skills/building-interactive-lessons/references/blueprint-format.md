@@ -112,6 +112,7 @@ Every block has `id` and `type`. `R` = required, `o` = optional.
   - `data` o: every number the scene shows, printed by `computed_by` as `{"data": {...}}`. Write `data: {}` before recording.
   - `controls` o: at most 2 items of `{id, kind, label, …}`. `kind: slider` (an ordered setting) or `buttons` (at most 3 separate cases, each at most 12 characters) need `values` (2 to 8 labels) and `start` o (an index, default 0); `kind: run` needs `trials` (whole numbers from 1 to 1000, one button each) and `unit` o ("words", "games"), shown as "Draw 100 words".
   - `height` o: a whole number from 120 to 480 (default 240); the scene is 340 wide.
+  - `library` o: `anime` or `gsap`, a motion library loaded from jsDelivr for this page; the script must use `scene.anime` or `scene.gsap`. See `visual-design.md` section 6.
   - A scene cannot grow across chapters; it needs `scene` in `lesson.agreed_extras` and a `motion` answer.
 - `figure.toy` o (`true`): the numbers are made up to show the idea. The page puts "Toy numbers." before the caption. Use it on every figure whose data is a sketch, not a measurement.
 - `figure.computed_by` (R for scatter, grid, frames, and a scene with `data`; o for bars, tokens and tiles): `{language: python, code, run_locally}`. The code prints the figure's data as one JSON object; `record_outputs.py` writes it in, and `--run-tests` proves it. `run_locally` skips a run that needs a file or service the lesson does not ship.

@@ -103,7 +103,7 @@ ALLOWED_KEYS = {
     "motion": {"changes", "stays", "why_not_still", "learner_does", "breaks"},
     "figure": {"kind", "parts", "links", "highlight", "bars", "max", "svg", "rows", "columns", "values", "highlight_row",
                "points", "x_label", "y_label", "frames", "control", "control_label", "computed_by", "label", "mark_below", "toy",
-               "tiles", "animate", "steps", "controls", "script", "data", "height"},
+               "tiles", "animate", "steps", "controls", "script", "data", "height", "library"},
     "scene_step": {"label", "caption"},
     "scene_control": {"id", "kind", "label", "values", "start", "trials", "unit"},
     "figure_tile": {"label", "state", "inside", "note", "group"},
@@ -683,6 +683,7 @@ LONGEST_STEP_LABEL = 24
 MOST_TRIALS = 1000
 # Why the picture moves: the answers to visual-design.md section 1, required on every moving picture
 LEARNER_ROLES = {"step", "bet", "drive", "run", "puzzle", "explore"}
+SCENE_LIBRARIES = {"anime", "gsap"}   # motion libraries a scene may name; build_page.py loads them from jsDelivr
 FEWEST_REASON_WORDS = 8
 PLAY_DEALS = {10, 100}
 PLAY_OUTCOME_RANGE = (2, 4)
@@ -884,8 +885,8 @@ def check_figures(blueprint, problems):
 
         if kind == "scene":
             check_scene(diagram_id, block, figure, problems)
-        elif any(key in figure for key in ("steps", "controls", "script", "data", "height")):
-            problems.error(diagram_id, "steps, controls, script, data and height belong to a scene figure (kind: scene)")
+        elif any(key in figure for key in ("steps", "controls", "script", "data", "height", "library")):
+            problems.error(diagram_id, "steps, controls, script, data, height and library belong to a scene figure (kind: scene)")
 
         if kind == "svg":
             if "extends" in block or block.get("grows_in"):
@@ -913,6 +914,11 @@ def check_scene(diagram_id, block, figure, problems):
         problems.error(diagram_id, "a scene needs script: JavaScript that sets scene.show(step, from, settings) to draw each step")
     elif "scene.show" not in script:
         problems.error(diagram_id, "the scene script must set scene.show(step, from, settings): it draws the state of a step")
+    library = figure.get("library")
+    if library is not None and library not in SCENE_LIBRARIES:
+        problems.error(diagram_id, f"library must be one of: {', '.join(sorted(SCENE_LIBRARIES))} (or left out, to use scene.move only)")
+    elif library and f"scene.{library}" not in script:
+        problems.error(diagram_id, f"the scene names library '{library}' but its script never uses scene.{library}; drop the library, or use it")
     if "</script" in script.lower():
         problems.error(diagram_id, "the scene script cannot contain '</script': it would end the script element early")
     controls = [control for control in figure.get("controls") or [] if isinstance(control, dict)]

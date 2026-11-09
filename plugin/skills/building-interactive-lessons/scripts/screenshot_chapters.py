@@ -14,12 +14,29 @@ error the page logged, so the agent looks at the images only for what a script c
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
 
 PHONE_WIDTH = 390
 PHONE_HEIGHT = 844
+
+
+def serve_libraries_from(context, folder):
+    """Answer the page's jsDelivr requests from a local folder (npm package folders such as animejs/ and gsap/), for
+    machines that cannot reach the CDN. https://cdn.jsdelivr.net/npm/gsap@3.15.1/dist/gsap.min.js -> folder/gsap/dist/gsap.min.js"""
+    root = Path(folder).resolve()
+
+    def answer(route):
+        path = route.request.url.split("/npm/", 1)[-1]
+        package, _, rest = path.partition("/")
+        local = root / re.sub(r"@[^/]+$", "", package) / rest
+        if local.is_file():
+            route.fulfill(path=str(local), content_type="application/javascript")
+        else:
+            route.abort()
+    context.route("https://cdn.jsdelivr.net/npm/**", answer)
 
 
 def find_browser():
@@ -36,6 +53,7 @@ def main():
     parser.add_argument("page", help="the built lesson.html")
     parser.add_argument("--chapters", nargs="+", metavar="ID", help="shoot these chapters instead of changed.json")
     parser.add_argument("--all", action="store_true", help="shoot every chapter and page")
+    parser.add_argument("--libraries", metavar="FOLDER", help="serve motion libraries from this folder instead of jsDelivr (for machines without the CDN)")
     parser.add_argument("--out", default="shots", help="folder for the images (default: shots)")
     arguments = parser.parse_args()
 
@@ -70,6 +88,8 @@ def main():
             browser = playwright.chromium.launch(executable_path=find_browser(), args=["--no-sandbox"])
         for theme in ["light", "dark"]:
             context = browser.new_context(viewport={"width": PHONE_WIDTH, "height": PHONE_HEIGHT}, color_scheme=theme, device_scale_factor=2)
+            if arguments.libraries:
+                serve_libraries_from(context, arguments.libraries)
             tab = context.new_page()
             logged = []
             tab.on("pageerror", lambda error, logged=logged: logged.append(str(error)))

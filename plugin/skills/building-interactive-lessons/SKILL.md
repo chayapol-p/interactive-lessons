@@ -103,7 +103,7 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
   2. Match the picture's structure to the idea's (order, amount, share, similarity, flow, feedback, choice, many cases).
   3. Apply the change test: before-and-after only → a still; the manner of change → steps that move; a setting and its outcome → let the learner drive; a number to believe → let them run trials.
   4. Storyboard it in words, one change per step, with a caption that says where to look.
-  5. Build it from a ready-made figure if one carries the storyboard (`references/diagrams.md`); otherwise write a scene (`visual-design.md` section 6). Write the `motion` answer on every moving picture.
+  5. Build it from a ready-made figure if one carries the storyboard (`references/diagrams.md`); otherwise write a scene (`visual-design.md` section 6), with `scene.move` or, for paths, line drawing and timelines, a motion library (anime.js or GSAP). Write the `motion` answer on every moving picture.
 - Write a brief for every diagram first, cut it to the fewest boxes, pick its pattern (growing pipeline, paired traces or sequence), then write its `figure`. Borrow from the diagram-design skill here if it is installed, never during a build.
 - Save the blueprint in the format in `references/blueprint-format.md`. `assets/example-blueprint.yaml` is a complete example.
 - Run the checker and fix every error:
@@ -135,7 +135,7 @@ If a step runs over, stop. Write one line in the work log: which step, how long,
   ```bash
   python scripts/check_scenes.py lesson.html --out shots
   ```
-  It taps through every step and control of every scene, light and dark, with and without motion. It fails a scene that throws, draws outside its box, shows a number its data does not hold, has a step that changes nothing, or lands in a different picture with motion than without. It saves one image per step.
+  It taps through every step and control of every scene, light and dark, with and without motion. On a machine that cannot reach jsDelivr, add `--libraries <folder of npm packages>` to serve anime.js or GSAP locally. It fails a scene that throws, draws outside its box, shows a number its data does not hold, has a step that changes nothing, or lands in a different picture with motion than without. It saves one image per step.
 - **Look at the screenshots** for what a script cannot judge: a diagram that reads well, contrast, crowded text. Read each scene's step images in order, like a comic strip: one change per step, and a caption that says where to look.
 - **Judgement calls:** read the list in `references/checks-and-quizzes.md` against the blueprint.
 - **Grader:** try each explain exercise with a right, a wrong and a half-right answer; the verdicts must match. If the build environment cannot reach the AI, publish first, run this test on the live page, and report it.

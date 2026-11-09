@@ -14,7 +14,24 @@ here = Path(tempfile.mkdtemp())
 example = (K / "assets/example-concepts-blueprint.yaml").read_text()
 SHOW = "            scene.show = (step, from, settings) => {\n"
 missed = []
+GSAP = """              // --- motion (GSAP) ---
+              const gsap = scene.gsap;
+              const timeline = gsap.timeline({ paused: true, defaults: { ease: "power2.inOut" } });
+              dots.forEach((dot, i) => {
+                timeline.set(dot, { opacity: 1 }, i * 0.07);
+                timeline.to(dot, { duration: 0.7, motionPath: { path: routes[i] } }, i * 0.07);
+                timeline.to(dot, { opacity: 0, duration: 0.1 }, i * 0.07 + 0.6);
+              });
+              timeline.set(back, { opacity: 1 }, "+=0.2");
+              timeline.fromTo(back, { drawSVG: "0%" }, { drawSVG: "100%", duration: 0.9 }, "<");
+              timeline.set(newChip, { opacity: 1 }, "<");
+              timeline.to(newChip, { duration: 0.9, motionPath: { path: back } }, "<");
+              scene.play(timeline);
+              // --- end motion ---
+"""
 ONLY = os.environ.get("ONLY")   # ONLY=<case name> runs one case
+LIBRARIES = os.environ.get("LIBRARIES")   # a folder of npm packages (animejs/, gsap/) for machines without jsDelivr
+passed_wrongly = []
 
 
 def case(name, old, new, expect):
@@ -27,9 +44,16 @@ def case(name, old, new, expect):
     (folder / "lesson-blueprint.yaml").write_text(example.replace(old, new))
     subprocess.run([sys.executable, str(K / "scripts/build_page.py"), str(folder / "lesson-blueprint.yaml"), "--out", str(folder / "lesson.html")],
                    check=True, capture_output=True)
-    output = subprocess.run([sys.executable, str(K / "scripts/check_scenes.py"), str(folder / "lesson.html"), "--out", str(folder / "shots")],
-                            capture_output=True, text=True).stdout
+    command = [sys.executable, str(K / "scripts/check_scenes.py"), str(folder / "lesson.html"), "--out", str(folder / "shots")]
+    output = subprocess.run(command + (["--libraries", LIBRARIES] if LIBRARIES else []), capture_output=True, text=True).stdout
     problems = [line for line in output.splitlines() if line.startswith("PROBLEM")]
+    if expect is None:   # a variant that must pass: no problems at all
+        print(f"{'PASSED ' if not problems else 'FAILED '} {name}: {len(problems)} problems")
+        for line in problems[:3]:
+            print("        ", line[:180])
+        if problems:
+            passed_wrongly.append(name)
+        return
     caught = any(expect in line for line in problems)
     print(f"{'CAUGHT ' if caught else 'MISSED '} {name}: {len(problems)} problems")
     if not caught:
@@ -51,6 +75,13 @@ case("script-throws", SHOW, '            throw new Error("a bug in the scene");\
 case("run-says-nothing", "              return words.map((word, i) => `${word} ${counts[i]}`).join(\" · \") + ` (of ${trials} draws)`;",
      "              return \"\";", expect="gives no summary line")
 
-if missed:
-    sys.exit(f"Missed {len(missed)} scene breaks: {', '.join(missed)}")
+# The same scene with its motion written in the other library must pass every check
+start = example.index("              // --- motion (anime.js) ---")
+end = example.index("              // --- end motion ---") + len("              // --- end motion ---")
+example = example[:start] + GSAP.strip("\n") + example[end:]
+example = example.replace("            const { createTimeline, svg } = scene.anime;\n", "")
+case("gsap-variant-passes", "          library: anime\n", "          library: gsap\n", expect=None)
+
+if missed or passed_wrongly:
+    sys.exit(f"Missed {len(missed)} scene breaks: {', '.join(missed)}; variants with problems: {', '.join(passed_wrongly)}")
 print("Every scene break was caught.")

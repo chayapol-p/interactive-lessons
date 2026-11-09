@@ -305,6 +305,11 @@ with sync_playwright() as playwright:
     expect("a phone lays the page out at its own width", phone.evaluate("document.documentElement.clientWidth") == 390,
            str(phone.evaluate("document.documentElement.clientWidth")))
 
+    # ---- Offline, a scene whose motion library cannot load shows its steps as words, and the page still works
+    fallback = block(new_tab(concepts + "#next-token"), "run-by-run")
+    expect("a scene without its library falls back to its steps as words", "could not be drawn" in fallback.inner_text() and fallback.locator("ol li").count() == 3,
+           fallback.inner_text()[:160])
+
     # ---- Every view of every example loads with no page error
     for example in ["example-blueprint", "example-concepts-blueprint", "example-monty-blueprint"]:
         url = build(example)
