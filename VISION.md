@@ -118,9 +118,9 @@ Each principle has a rule, the reason for it, and where it comes from.
 - **Why:** a page that feels like theirs invites the learner in; a "right" that changes colour between lessons teaches nothing but confusion.
 - **From:** a six-seat design review of the template, led by the author.
 
-### 4.19 The picture ladder
-- **Rule:** each moment gets the lowest step of picture that carries it: words, a still picture, a stepped picture the learner taps through (the default for any change), an animated one (when the motion is the idea), or play (the learner makes the evidence). Animation and play are offered for named moments, with their build cost, and built only on a yes. Every number in any step is computed.
-- **Why:** in testing, the picture a tester named as the best part was a stepped one: one door's bar dropping to zero while another's doubles. An animation where nothing moves is only decoration, so asking first keeps the expensive steps for the moments that need them.
+### 4.19 Design each picture from the idea
+- **Rule:** the skill designs a picture by reasoning about the idea, not by picking from a menu. For each key idea it answers five questions (what is hidden, what changes and what stays, why a still picture would fail, which wrong belief the picture breaks, what the learner does), matches the picture's structure to the idea's, and moves it only where the manner of change is what must be learned. Ready-made figures are cheap parts; when none carries the storyboard, it writes a scene for that idea: learner-paced steps, optional controls and trials, every number from computed data. Moving pictures cost tokens, so each is proposed with its reason and cost and built only once the author agrees.
+- **Why:** a fixed set of picture types made every lesson look alike: a deal of cards built for Monty Hall came back for a model choosing its next word. Research is sober about motion (three meta-analyses find a small average gain, about g = 0.23) but clear about when it pays: when the learner must learn how something changes, its order, path or amount. In testing, the picture a tester named as the best part was one where a share visibly moved from one door to another.
 - **From:** Mayer's multimedia and signalling principles; the author's test rounds.
 
 ### 4.20 One story, with milestones
@@ -162,8 +162,8 @@ Time budget: plan in 15 minutes, first build in 20, a revise round in 10. A step
 - A bridge from the last chapter
 - **Predict**, with a confidence rating
 - **Idea**, in at most 2 sentences, folded until the guess is made
-- **Picture**, only when its purpose is written down, at the lowest step of the ladder that carries it
-- **Play** (when agreed): deal games and count them
+- **Picture**, only when its purpose is written down, designed from the idea: still, stepped, moving, driven or run by the learner
+- **Play or a scene with trials** (when agreed): make the evidence and count it
 - **Real material:** a code slice with line comments and its recorded output, or a real sentence, rule or formula
 - **Compare choices**, when the chapter has options to compare
 - **Fill the blanks** on the words that carry the idea, with Hint and Show solution

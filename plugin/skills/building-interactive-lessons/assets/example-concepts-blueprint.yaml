@@ -20,6 +20,7 @@ lesson:
       text: After this, you can predict how temperature changes which next token a model picks.
     - id: explain-limits
       text: After this, you can explain why a model can hallucinate, and why it cannot see text outside its context window.
+  agreed_extras: [scene]
   source: "Vaswani et al. 2017; Mikolov et al. 2013; Ouyang et al. 2022; OpenAI 2025; Hugging Face text-generation guide; Claude context-window docs; a real tokenizer run"
 
 theme:
@@ -1104,88 +1105,129 @@ chapters:
         more: "The last layer's embedding for the final position becomes a score for every token, and the scores become odds that add up to 1. As temperature gets close to 0, the model always takes the top token. The odds below come from the toy model's made-up scores for the word after \"The bank by the river was\"."
       - id: odds-bars
         type: diagram
-        shape: quantity
+        shape: change-over-time
         brief:
-          understand: Temperature changes how the same odds are shared out, from one clear winner to a spread.
-          how_it_helps: "Bars for 5 candidate next words, with a temperature slider from 0.2 to 1.5."
-          clearer_than_text: Dragging the slider shows flooded's bar shrink and the others grow, with no new word appearing.
+          understand: The odds are one strip shared out between words; a draw lands somewhere on it, and temperature only reshapes the slices.
+          how_it_helps: "A strip split into one slice per word, a dot that drops onto it, and bins that fill as you draw 10 or 100 words."
+          clearer_than_text: Seeing draws pile up in proportion to slice width, while the slider reshapes the slices and no new word appears.
+        motion:
+          changes: The width of each word's slice as the temperature moves, and where each draw lands.
+          stays: The five words, their order, and the strip's full width, which always stands for all the odds.
+          why_not_still: A still picture shows the odds, but not that a reply is a draw that can land in any slice, nor how draws pile up in proportion to width.
+          learner_does: run
+          breaks: looks-up-answer
         figure:
-          kind: frames
+          kind: scene
           toy: true
-          control: slider
-          control_label: Temperature
+          height: 250
+          steps:
+            - label: The strip
+              caption: All the odds form one strip. Each word owns a slice as wide as its chance.
+            - label: One draw
+              caption: A random point lands on the strip, and the word whose slice it hits becomes the next token.
+            - label: Many draws
+              caption: Press Draw 100. Each draw lands in a slice, and the bars fill toward the marks that show each word's share.
+          controls:
+            - {id: temperature, kind: slider, label: Temperature, values: ["0.2", "0.7", "1.0", "1.5"], start: 2}
+            - {id: draw, kind: run, label: Draw, trials: [10, 100], unit: words}
           computed_by:
             language: python
             code: |
-              import json
+              import json, random
               from toy_llm import NEXT_SCORES, softmax
-              frames = []
-              for temperature in [0.2, 0.7, 1.0, 1.5]:
-                  odds = softmax(list(NEXT_SCORES.values()), temperature)
-                  frames.append({"label": str(temperature), "figure": {"kind": "bars", "max": 1,
-                                 "bars": [{"label": word, "value": round(share, 3)} for word, share in zip(NEXT_SCORES, odds)]}})
-              print(json.dumps({"frames": frames}))
-          frames:
-            - label: '0.2'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.997
-                  - label: closed
-                    value: 0.002
-                  - label: muddy
-                    value: 0.0
-                  - label: open
-                    value: 0.0
-                  - label: robbed
-                    value: 0.0
-            - label: '0.7'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.744
-                  - label: closed
-                    value: 0.134
-                  - label: muddy
-                    value: 0.076
-                  - label: open
-                    value: 0.032
-                  - label: robbed
-                    value: 0.014
-            - label: '1.0'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.597
-                  - label: closed
-                    value: 0.18
-                  - label: muddy
-                    value: 0.121
-                  - label: open
-                    value: 0.066
-                  - label: robbed
-                    value: 0.036
-            - label: '1.5'
-              figure:
-                kind: bars
-                max: 1
-                bars:
-                  - label: flooded
-                    value: 0.459
-                  - label: closed
-                    value: 0.206
-                  - label: muddy
-                    value: 0.158
-                  - label: open
-                    value: 0.106
-                  - label: robbed
-                    value: 0.071
+              temperatures = ["0.2", "0.7", "1.0", "1.5"]
+              odds = {t: [round(share, 4) for share in softmax(list(NEXT_SCORES.values()), float(t))] for t in temperatures}
+              # One example draw, low enough on the strip to land in the top word's slice at every temperature
+              example_draw = round(random.Random(7).random() * 0.4, 3)
+              print(json.dumps({"data": {"words": list(NEXT_SCORES), "temperatures": temperatures, "odds": odds, "example_draw": example_draw}}))
+          data:
+            words:
+              - flooded
+              - closed
+              - muddy
+              - open
+              - robbed
+            temperatures:
+              - '0.2'
+              - '0.7'
+              - '1.0'
+              - '1.5'
+            odds:
+              '0.2':
+                - 0.9972
+                - 0.0025
+                - 0.0003
+                - 0.0
+                - 0.0
+              '0.7':
+                - 0.7445
+                - 0.1341
+                - 0.0757
+                - 0.0321
+                - 0.0136
+              '1.0':
+                - 0.5971
+                - 0.1798
+                - 0.1206
+                - 0.0662
+                - 0.0363
+              '1.5':
+                - 0.459
+                - 0.2062
+                - 0.158
+                - 0.1059
+                - 0.071
+            example_draw: 0.13
+          script: |
+            // Layout: the strip on top, then one row per word with its share and a bin that fills with draws
+            const words = scene.data.words, temperatures = scene.data.temperatures;
+            const left = 20, right = 320, stripTop = 46, stripHeight = 34;
+            const rowsTop = 136, rowGap = 22, binLeft = 150, binWidth = 165;
+            const oddsAt = (settings) => scene.data.odds[temperatures[settings.temperature]];
+            // Which slice a point from 0 to 1 lands in
+            const sliceAt = (point, shares) => { let edge = 0; for (let i = 0; i < shares.length; i += 1) { edge += shares[i]; if (point < edge) return i; } return shares.length - 1; };
+
+            // The strip: one slice per word; a label only where the slice is wide enough to hold it
+            scene.add("text", { x: left, y: stripTop - 10, class: "svg-text small" }, "All the odds, as one strip");
+            const slices = words.map((word, i) => scene.add("rect", { x: left, y: stripTop, width: 0, height: stripHeight, class: i === 0 ? "svg-box hot" : "svg-box" }));
+            const sliceLabels = words.map((word) => scene.add("text", { x: left, y: stripTop + 21, "text-anchor": "middle", class: "svg-text small", opacity: 0 }, word));
+            // The draw: a dot that drops onto the strip
+            const dot = scene.add("circle", { cx: left + (right - left) * scene.data.example_draw, cy: 14, r: 6, class: "svg-dot hot", opacity: 0 });
+
+            // One row per word: its name, its share, a bin for draws, and a mark where its share says draws should reach
+            const names = words.map((word, i) => scene.add("text", { x: left, y: rowsTop + i * rowGap, class: "svg-text" }, word));
+            const shareTexts = words.map((word, i) => scene.add("text", { x: 130, y: rowsTop + i * rowGap, "text-anchor": "end", class: "svg-text small" }, ""));
+            const bins = words.map((word, i) => scene.add("rect", { x: binLeft, y: rowsTop + i * rowGap - 11, width: 0, height: 12, class: "svg-bar" }));
+            const marks = words.map((word, i) => scene.add("line", { x1: binLeft, x2: binLeft, y1: rowsTop + i * rowGap - 14, y2: rowsTop + i * rowGap + 4, class: "svg-line hot", opacity: 0 }));
+
+            scene.show = (step, from, settings) => {
+              const shares = oddsAt(settings);
+              // The slices take their widths at this temperature; no word appears or disappears
+              let x = left;
+              shares.forEach((share, i) => {
+                const width = (right - left) * share;
+                scene.move(slices[i], { x, width });
+                scene.move(sliceLabels[i], { x: x + width / 2, opacity: width >= 48 ? 1 : 0 });
+                scene.write(shareTexts[i], `${Math.round(share * 100)}%`);
+                x += width;
+              });
+              // Step 2: one draw lands in a slice, and that word lights up
+              const hit = sliceAt(scene.data.example_draw, shares);
+              scene.move(dot, { cy: step >= 1 ? stripTop + stripHeight / 2 : 14, opacity: step >= 1 ? 1 : 0 });
+              names.forEach((name, i) => name.setAttribute("class", step >= 1 && i === hit ? "svg-text hot" : "svg-text"));
+              // Step 3: the marks show where many draws should pile up; the bins empty for a fresh run
+              marks.forEach((mark, i) => { const at = binLeft + binWidth * shares[i]; scene.move(mark, { x1: at, x2: at, opacity: step >= 2 ? 1 : 0 }); });
+              bins.forEach((bin) => scene.move(bin, { width: 0 }, { duration: 300 }));
+            };
+
+            // Draw words: each draw is a random point on the strip; the bins fill with the share each word got
+            scene.run = (trials, settings) => {
+              const shares = oddsAt(settings);
+              const counts = words.map(() => 0);
+              for (let t = 0; t < trials; t += 1) counts[sliceAt(scene.random(), shares)] += 1;
+              counts.forEach((count, i) => scene.move(bins[i], { width: binWidth * count / trials }, { delay: i * 120 }));
+              return words.map((word, i) => `${word} ${counts[i]}`).join(" · ") + ` (of ${trials} draws)`;
+            };
       - id: pipeline-next
         type: diagram
         shape: flow
@@ -1205,10 +1247,103 @@ chapters:
         extends:
           diagram: pipeline-layers
           adds: "odds for every token and the pick. The picked token goes back in, and the whole pipeline runs again."
+      - id: run-by-run
+        type: diagram
+        shape: change-over-time
+        brief:
+          understand: Each run reads every token so far, then one new token travels back and joins the end of the text.
+          how_it_helps: "Tokens in a row above the model; each run sends every token along its own curve into the model, and the new one rides a curve back."
+          clearer_than_text: Watching all the tokens travel again on the second run shows that nothing is written ahead; each run starts from the whole text.
+        motion:
+          changes: The tokens that travel into the model on each run, and the new token that travels back to the end of the row.
+          stays: The model in the middle, and every token already in the row, which never moves.
+          why_not_still: A still picture of the loop shows an arrow back, but not that every token is read again on every run, in order, before one new token joins.
+          learner_does: step
+          breaks: looks-up-answer
+        figure:
+          kind: scene
+          library: anime
+          height: 230
+          steps:
+            - label: Text so far
+              caption: Six tokens wait in a row above the model. The model reads only these.
+            - label: Run 1
+              caption: Every token travels into the model, and one new token, flooded, travels back to the end of the row.
+            - label: Run 2
+              caption: The next run reads all seven tokens again, flooded included, and adds one more.
+          computed_by:
+            language: python
+            code: |
+              import json
+              from toy_llm import RIVER
+              # The prompt the lesson follows, and the two tokens the next runs add
+              print(json.dumps({"data": {"prompt": RIVER[:6], "next": [RIVER[6], "."]}}))
+          data:
+            prompt:
+              - The
+              - bank
+              - by
+              - the
+              - river
+              - was
+            next:
+              - flooded
+              - .
+          script: |
+            // Layout: the text so far in a row at the top, the model below; each run reads every token and adds one
+            const { createTimeline, svg } = scene.anime;
+            const prompt = scene.data.prompt, next = scene.data.next;
+            const rowY = 32, model = { x: 120, y: 160, w: 100, h: 40 };
+            const chipWidth = (word) => Math.max(26, word.length * 6.6 + 12);
+            const centres = (words) => { const out = []; let x = 8; for (const w of words) { out.push(x + chipWidth(w) / 2); x += chipWidth(w) + 4; } return out; };
+            // A chip is drawn around (0, 0) inside a group, so it can travel by translate
+            function chip(word, isNew) {
+              const group = scene.add("g", {});
+              const width = chipWidth(word);
+              group.append(scene.add("rect", { x: -width / 2, y: -11, width, height: 22, rx: 5, class: isNew ? "svg-box hot" : "svg-box" }));
+              group.append(scene.add("text", { x: 0, y: 4, "text-anchor": "middle", class: "svg-text small" }, word));
+              return group;
+            }
+
+            scene.show = (step) => {
+              // The state after this step: the row holds the prompt plus one token per run so far
+              scene.root.replaceChildren();
+              scene.add("text", { x: 8, y: 12, class: "svg-text small" }, "Text so far");
+              scene.add("rect", { x: model.x, y: model.y, width: model.w, height: model.h, rx: 8, class: "svg-box" });
+              scene.add("text", { x: model.x + model.w / 2, y: model.y + 25, "text-anchor": "middle", class: "svg-text" }, "Model");
+              const words = prompt.concat(next.slice(0, step));
+              const read = words.slice(0, words.length - (step ? 1 : 0));
+              const xs = centres(words);
+              const target = { x: model.x + model.w / 2, y: model.y };
+              const routes = step ? read.map((word, i) => scene.add("path", { d: `M ${xs[i]} ${rowY + 11} C ${xs[i]} ${rowY + 80}, ${target.x} ${target.y - 70}, ${target.x} ${target.y}`, class: "svg-line dim" })) : [];
+              const chips = words.map((word, i) => scene.set(chip(word, step > 0 && i === words.length - 1), { transform: `translate(${xs[i]} ${rowY})` }));
+              if (!step) return;
+              // The last run, hidden until it plays: each token read travels its own curve in, then the new token rides back
+              const end = { x: xs[xs.length - 1], y: rowY };
+              const back = scene.add("path", { d: `M ${model.x + model.w} ${model.y + model.h / 2} C 330 ${model.y + model.h / 2}, ${end.x + 30} ${end.y + 70}, ${end.x} ${end.y}`, class: "svg-line hot", opacity: 0 });
+              const dots = read.map(() => scene.add("circle", { cx: 0, cy: 0, r: 4, class: "svg-dot hot", opacity: 0 }));
+              const newChip = scene.set(chips[chips.length - 1], { opacity: 0 });
+              scene.root.append(newChip);
+              // --- motion (anime.js) ---
+              const timeline = createTimeline({ autoplay: false, defaults: { ease: "inOutQuad" } });
+              dots.forEach((dot, i) => {
+                const { translateX, translateY } = svg.createMotionPath(routes[i]);
+                timeline.set(dot, { opacity: 1 }, i * 70);
+                timeline.add(dot, { translateX, translateY, duration: 700 }, i * 70);
+                timeline.add(dot, { opacity: 0, duration: 100 }, i * 70 + 600);
+              });
+              const way = svg.createMotionPath(back);
+              timeline.set(back, { opacity: 1 }, "+=200");
+              timeline.add(svg.createDrawable(back), { draw: ["0 0", "0 1"], duration: 900 }, "<<");
+              timeline.set(newChip, { opacity: 1 }, "<<");
+              timeline.add(newChip, { translateX: way.translateX, translateY: way.translateY, duration: 900 }, "<<");
+              scene.play(timeline);
+              // --- end motion ---
+            };
       - id: temperature-blank
         type: fill_blanks
         instructions:
-          - Fill the blank using the temperature slider.
+          - Fill the blank using the temperature slider and the strip.
         language: text
         source: the toy next-token odds
         context_note: The odds for the word after "The bank by the river was".
@@ -1237,7 +1372,7 @@ chapters:
                 output_from: worked
                 output_source: worked out with the toy model behind this chapter's pictures
         hints:
-          - Slide to 0.2 and read flooded's bar.
+          - Slide to 0.2 and read flooded's share.
       - id: sampling-key-check
         type: check
         purpose: key

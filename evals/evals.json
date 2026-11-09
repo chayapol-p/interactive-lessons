@@ -1,6 +1,6 @@
 {
  "skill": "building-interactive-lessons",
- "version": "0.4.1",
+ "version": "0.5.0",
  "notes": "Trigger cases test the description. Functional cases test behaviour; exact checks first (free), judge checks second. Run each functional case 3 times and compare with a run without the skill. Regression cases come from the first real test (a 7-chapter RAG lesson).",
  "trigger_cases": {
   "should_trigger": [
@@ -232,12 +232,14 @@
    "id": "ask-before-animating",
    "prompt": "Make a short lesson on why the Monty Hall switch wins, for a sceptical friend.",
    "exact_checks": [
-    "Before any blueprint is written, the Discover questions offer an animated picture or a play block for a named moment, with its extra build time.",
-    "If the answers say no, the blueprint has no figure with animate: true and no play block, and lesson.agreed_extras is absent or empty.",
-    "If the answers say yes, lesson.agreed_extras lists each extra, and check_blueprint.py --run-tests reports 0 errors."
+    "Discover asks how much motion the author wants, with a recommended answer first and the extra token cost of a scene named in it.",
+    "The chapter map lists each proposed moving picture under its chapter with the moment, why a still would fail, what the learner does, and its cost.",
+    "If the author declines, the blueprint has no figure with animate: true, no play block and no scene, and lesson.agreed_extras is absent or empty.",
+    "If the author agrees, lesson.agreed_extras lists each kind used, every moving picture has a motion answer, and check_blueprint.py --run-tests reports 0 errors."
    ],
    "judge_checks": [
-    "Each offered extra names the moment it is for, not 'animations' in general."
+    "Each proposed moving picture names the moment it is for and the change a still picture would hide, not 'animations' in general.",
+    "Pictures follow the idea's structure (order, share, flow, feedback, many cases), not one picture type reused for every chapter."
    ]
   },
   {
@@ -298,6 +300,19 @@
    ],
    "judge_checks": [
     "Each reported bug was confirmed on screen before it was fixed, and tool artifacts were fixed in the tool, not the page."
+   ]
+  },
+  {
+   "id": "design-a-scene-from-the-idea",
+   "prompt": "Teach how a ball's speed changes as it rolls down a curved ramp, for a curious 15-year-old. Moving pictures where they help are fine.",
+   "exact_checks": [
+    "At least one key idea gets a picture whose motion answer names what changes, what stays, and why a still would fail.",
+    "Any scene passes scripts/check_scenes.py with 0 problems, and every number it shows comes from its data.",
+    "check_blueprint.py --run-tests reports 0 errors."
+   ],
+   "judge_checks": [
+    "The picture for the speed idea shows the manner of change (speed growing as the slope steepens), not only a start and an end.",
+    "The learner does something with the picture that answers a question (drives the slope, bets where the ball is fastest, or steps through), not a sandbox with no question."
    ]
   }
  ]

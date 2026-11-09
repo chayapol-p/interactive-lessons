@@ -1,7 +1,7 @@
 {
   "name": "interactive-lessons",
-  "version": "0.4.1",
-  "description": "Turns any subject, docs or a code repo into an interactive lesson page told as one story: predictions, pictures that step, move or let you play, fill-in-the-blank exercises, an AI tutor and grading, every result real.",
+  "version": "0.5.0",
+  "description": "Turns any subject, docs or a code repo into an interactive lesson page told as one story: predictions, pictures designed for each idea that step, move or let you drive and run them, fill-in-the-blank exercises, an AI tutor and grading, every result real.",
   "author": {
     "name": "chayapol.par"
   },

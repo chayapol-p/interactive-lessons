@@ -56,7 +56,7 @@ You ask your agent for a lesson on a topic, some docs or a repo. The skill guess
 
 ## What a lesson gives you
 
-- **Pictures that move, or that you play.** Where the motion is the idea, a tap plays it: the host opens 8 goat doors one at a time, and one door is left. Where a number is hard to believe, you deal 100 games yourself and count the wins.
+- **Pictures designed for the idea.** The skill asks what each idea hides and what about it changes, then builds the picture for it: a tap plays the host opening 8 goat doors one at a time; a slider reshapes a strip of odds and you draw 100 words to see where they land. Moving pictures are proposed with their token cost, and built only when you agree.
 - **A tutor that knows the lesson.** Every question you ask carries the chapter's goal, the block you are on, the code around it and the mistakes people often make there. When the answer is not in the lesson and it is unsure, it says so.
 - **Checks that test the idea.** Each key idea and each common mistake gets a quiz, and a mistake's card opens only after you answer it. When you explain something in your own words, an AI grader checks it against a rubric and names the first problem.
 - **A field guide at the end.** The big idea, one line per chapter with a link back, the questions you got wrong while sure, and where each fact comes from.
@@ -77,6 +77,8 @@ You ask your agent for a lesson on a topic, some docs or a repo. The skill guess
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/strip-dark.png"><img src="docs/images/strip.png" width="100%" alt=""></picture>
 
 ## Install
+
+> **This branch is the scripted edition.** Scripts record, build and check each lesson. The edition on `main`, listed in Anthropic's plugin directory, makes the same lessons and has them checked by agents instead. Install one edition only.
 
 **Claude Code:** type these in your agent's chat.
 
@@ -153,7 +155,7 @@ The full list of 24 principles, with the source of each, is in [VISION.md](VISIO
 
 ## Privacy
 
-A lesson page loads its fonts from Google Fonts. The tutor and the grader send your question and the lesson's context to Claude through your own account. In claude.ai, the page saves your answers to that lesson so you can come back. The plugin itself collects nothing and runs no server.
+A lesson page loads its fonts from Google Fonts, and a page with a moving scene that uses a motion library loads it (anime.js or GSAP) from jsDelivr. The tutor and the grader send your question and the lesson's context to Claude through your own account. In claude.ai, the page saves your answers to that lesson so you can come back. The plugin itself collects nothing and runs no server.
 
 ## Credits
 

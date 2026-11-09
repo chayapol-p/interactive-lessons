@@ -24,6 +24,14 @@ jobs:
       - name: The example pages behave when clicked
         timeout-minutes: 5
         run: python3 tests/check_page_clicks.py
+      - name: The example scene passes every scene check
+        timeout-minutes: 5
+        run: |
+          python3 plugin/skills/building-interactive-lessons/scripts/build_page.py plugin/skills/building-interactive-lessons/assets/example-concepts-blueprint.yaml --out /tmp/concepts/lesson.html
+          python3 plugin/skills/building-interactive-lessons/scripts/check_scenes.py /tmp/concepts/lesson.html --out /tmp/concepts/shots
+      - name: The scene checks catch every deliberate break
+        timeout-minutes: 15
+        run: python3 tests/check_scene_breaks.py
       - name: Skill and plugin versions match
         run: |
           python3 - <<'PY'

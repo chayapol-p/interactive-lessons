@@ -98,11 +98,14 @@ ALLOWED_KEYS = {
     "wrong_answer": {"answer", "misconception", "hint"},
     "predict": {"id", "type", "question", "options", "answer", "hold"},
     "idea": {"id", "type", "text", "key", "more"},
-    "diagram": {"id", "type", "shape", "brief", "figure", "grows_in", "extends"},
+    "diagram": {"id", "type", "shape", "brief", "figure", "grows_in", "extends", "motion"},
     "diagram_extends": {"diagram", "adds"},
+    "motion": {"changes", "stays", "why_not_still", "learner_does", "breaks"},
     "figure": {"kind", "parts", "links", "highlight", "bars", "max", "svg", "rows", "columns", "values", "highlight_row",
                "points", "x_label", "y_label", "frames", "control", "control_label", "computed_by", "label", "mark_below", "toy",
-               "tiles", "animate"},
+               "tiles", "animate", "steps", "controls", "script", "data", "height", "library"},
+    "scene_step": {"label", "caption"},
+    "scene_control": {"id", "kind", "label", "values", "start", "trials", "unit"},
     "figure_tile": {"label", "state", "inside", "note", "group"},
     "figure_token_row": {"label", "tokens"},
     "figure_token": {"text", "id", "hot"},
@@ -121,7 +124,7 @@ ALLOWED_KEYS = {
     "pitfall": {"id", "type", "misconception"},
     "check": {"id", "type", "purpose", "tests", "question", "options"},
     "recap": {"id", "type", "text", "sums_up"},
-    "play": {"id", "type", "prompt", "deals", "outcomes", "computed_by", "cases", "sample"},
+    "play": {"id", "type", "prompt", "deals", "outcomes", "computed_by", "cases", "sample", "unit"},
     "play_outcome": {"id", "label", "short", "hot"},
     "play_case": {"label", "weight", "outcome"},
     "play_sample": {"games", "seed", "counts"},
@@ -155,7 +158,10 @@ REQUIRED_KEYS = {
     "idea": {"id", "type", "text"},
     "diagram": {"id", "type", "shape", "brief", "figure"},
     "diagram_extends": {"diagram", "adds"},
+    "motion": {"changes", "stays", "why_not_still", "learner_does"},
     "figure": {"kind"},
+    "scene_step": {"label", "caption"},
+    "scene_control": {"id", "kind", "label"},
     "figure_token_row": {"tokens"},
     "figure_token": {"text"},
     "figure_point": {"label", "x", "y"},
@@ -342,7 +348,11 @@ def check_blueprint_shape(blueprint, problems):
                     check_item_shape(block["extends"] or {}, "diagram_extends", f"{block_id}.extends", problems)
                 figure = block.get("figure") or {}
                 check_item_shape(figure, "figure", f"{block_id}.figure", problems)
+                if "motion" in block:
+                    check_item_shape(block["motion"] or {}, "motion", f"{block_id}.motion", problems)
                 if isinstance(figure, dict):
+                    check_list_shape(figure.get("steps"), "scene_step", f"{block_id}.figure.steps", problems)
+                    check_list_shape(figure.get("controls"), "scene_control", f"{block_id}.figure.controls", problems)
                     check_list_shape(figure.get("parts"), "figure_part", f"{block_id}.figure.parts", problems)
                     check_list_shape(figure.get("links"), "figure_link", f"{block_id}.figure.links", problems)
                     check_list_shape(figure.get("bars"), "figure_bar", f"{block_id}.figure.bars", problems)
@@ -654,15 +664,27 @@ def check_bridges_and_recaps(blueprint, problems):
                 problems.error(block.get("id"), f"names '{name}', but the blocks it sums up never show it")
 
 
-FIGURE_KINDS = {"flow", "bars", "svg", "tokens", "scatter", "grid", "frames", "tiles"}
+FIGURE_KINDS = {"flow", "bars", "svg", "tokens", "scatter", "grid", "frames", "tiles", "scene"}
 DATA_FIGURE_KINDS = {"bars", "tokens", "scatter", "grid", "tiles"}   # kinds a frames figure can step through
 # The data fields of each kind: computed_by must print exactly these, as JSON
 FIGURE_DATA_FIELDS = {"bars": ["bars"], "tokens": ["rows"], "scatter": ["points"], "grid": ["rows", "columns", "values"],
-                      "frames": ["frames"], "tiles": ["tiles"]}
+                      "frames": ["frames"], "tiles": ["tiles"], "scene": ["data"]}
 TILE_STATES = {"closed", "open", "picked", "hot"}
 MOST_TILES = 12
 MOST_TILE_LABEL = 10        # characters: a tile is about 50 px wide at phone width
-EXTRAS = {"animation", "play"}  # picture-ladder steps 3 and 4: built only after the author says yes in Discover
+EXTRAS = {"animation", "play", "scene"}  # moving pictures cost tokens and time: built only after the author agrees
+# A scene: a picture written for one idea (references/visual-design.md section 6)
+SCENE_STEP_RANGE = (1, 8)
+SCENE_HEIGHT_RANGE = (120, 480)
+SCENE_CONTROL_KINDS = {"slider", "buttons", "run"}
+SCENE_VALUE_RANGE = (2, 8)
+MOST_SCENE_CONTROLS = 2
+LONGEST_STEP_LABEL = 24
+MOST_TRIALS = 1000
+# Why the picture moves: the answers to visual-design.md section 1, required on every moving picture
+LEARNER_ROLES = {"step", "bet", "drive", "run", "puzzle", "explore"}
+SCENE_LIBRARIES = {"anime", "gsap"}   # motion libraries a scene may name; build_page.py loads them from jsDelivr
+FEWEST_REASON_WORDS = 8
 PLAY_DEALS = {10, 100}
 PLAY_OUTCOME_RANGE = (2, 4)
 PLAY_CASE_RANGE = (2, 12)
@@ -861,11 +883,123 @@ def check_figures(blueprint, problems):
         if "animate" in figure and kind != "frames":
             problems.error(diagram_id, "animate works only on a frames figure: it moves between the computed steps")
 
+        if kind == "scene":
+            check_scene(diagram_id, block, figure, problems)
+        elif any(key in figure for key in ("steps", "controls", "script", "data", "height", "library")):
+            problems.error(diagram_id, "steps, controls, script, data, height and library belong to a scene figure (kind: scene)")
+
         if kind == "svg":
             if "extends" in block or block.get("grows_in"):
                 problems.error(diagram_id, "an svg figure cannot grow; use a flow figure for a diagram that grows")
             if not str(figure.get("svg", "")).strip().startswith("<svg"):
                 problems.error(diagram_id, "an svg figure needs svg: the full <svg ...> markup")
+
+
+def check_scene(diagram_id, block, figure, problems):
+    """A scene is a picture written for one idea: steps the learner taps through, optional controls, a script that draws
+    each step, and every number it shows in data printed by computed_by (references/visual-design.md section 6)."""
+    if "extends" in block or block.get("grows_in"):
+        problems.error(diagram_id, "a scene cannot grow across chapters; give the later chapter its own scene, or use a flow figure")
+    steps = [step for step in figure.get("steps") or [] if isinstance(step, dict)]
+    if not SCENE_STEP_RANGE[0] <= len(steps) <= SCENE_STEP_RANGE[1]:
+        problems.error(diagram_id, f"a scene needs {SCENE_STEP_RANGE[0]} to {SCENE_STEP_RANGE[1]} steps (its storyboard: a label and a caption each); it has {len(steps)}")
+    for step in steps:
+        if len(str(step.get("label", ""))) > LONGEST_STEP_LABEL:
+            problems.error(diagram_id, f"step label '{step.get('label')}' is longer than {LONGEST_STEP_LABEL} characters; it sits between Back and Next on a phone")
+    height = figure.get("height", 240)
+    if not isinstance(height, int) or isinstance(height, bool) or not SCENE_HEIGHT_RANGE[0] <= height <= SCENE_HEIGHT_RANGE[1]:
+        problems.error(diagram_id, f"height must be a whole number from {SCENE_HEIGHT_RANGE[0]} to {SCENE_HEIGHT_RANGE[1]} (the scene is {340} wide)")
+    script = str(figure.get("script") or "")
+    if not script.strip():
+        problems.error(diagram_id, "a scene needs script: JavaScript that sets scene.show(step, from, settings) to draw each step")
+    elif "scene.show" not in script:
+        problems.error(diagram_id, "the scene script must set scene.show(step, from, settings): it draws the state of a step")
+    library = figure.get("library")
+    if library is not None and library not in SCENE_LIBRARIES:
+        problems.error(diagram_id, f"library must be one of: {', '.join(sorted(SCENE_LIBRARIES))} (or left out, to use scene.move only)")
+    elif library and f"scene.{library}" not in script:
+        problems.error(diagram_id, f"the scene names library '{library}' but its script never uses scene.{library}; drop the library, or use it")
+    if "</script" in script.lower():
+        problems.error(diagram_id, "the scene script cannot contain '</script': it would end the script element early")
+    controls = [control for control in figure.get("controls") or [] if isinstance(control, dict)]
+    if len(controls) > MOST_SCENE_CONTROLS:
+        problems.error(diagram_id, f"a scene has at most {MOST_SCENE_CONTROLS} controls; more turns a picture into a control panel")
+    control_ids = [control.get("id") for control in controls]
+    if len(set(control_ids)) != len(control_ids):
+        problems.error(diagram_id, "control ids must be unique")
+    for control in controls:
+        control_id, kind = control.get("id"), control.get("kind")
+        if kind not in SCENE_CONTROL_KINDS:
+            problems.error(diagram_id, f"control '{control_id}' needs kind: slider (an ordered setting), buttons (separate cases) or run (trials)")
+            continue
+        if kind == "run":
+            trials = control.get("trials")
+            if not isinstance(trials, list) or not trials or any(not isinstance(t, int) or isinstance(t, bool) or not 1 <= t <= MOST_TRIALS for t in trials):
+                problems.error(diagram_id, f"run control '{control_id}' needs trials: one or more whole numbers from 1 to {MOST_TRIALS}, one button each")
+            if "scene.run" not in script:
+                problems.error(diagram_id, f"run control '{control_id}' needs the script to set scene.run(trials, settings), which runs them and returns one line that sums them up")
+            continue
+        values = control.get("values")
+        if not isinstance(values, list) or not SCENE_VALUE_RANGE[0] <= len(values) <= SCENE_VALUE_RANGE[1]:
+            problems.error(diagram_id, f"{kind} control '{control_id}' needs values: {SCENE_VALUE_RANGE[0]} to {SCENE_VALUE_RANGE[1]} labels, one per setting")
+            continue
+        start = control.get("start", 0)
+        if not isinstance(start, int) or isinstance(start, bool) or not 0 <= start < len(values):
+            problems.error(diagram_id, f"control '{control_id}' start must be the index of one of its values")
+        if kind == "buttons":
+            if len(values) > 3:
+                problems.error(diagram_id, f"buttons control '{control_id}' has more than 3 values; they will not fit on a phone, so use a slider")
+            for value in values:
+                if len(str(value)) > LONGEST_FRAME_BUTTON:
+                    problems.error(diagram_id, f"button '{value}' is longer than {LONGEST_FRAME_BUTTON} characters, so the buttons cannot share one row on a phone")
+    if isinstance(figure.get("computed_by"), dict) and figure["computed_by"].get("language") != "python":
+        problems.error(diagram_id, "computed_by runs python")
+    if "data" in figure and not isinstance(figure.get("computed_by"), dict):
+        problems.error(diagram_id, "a scene's data needs computed_by: python that prints {\"data\": ...} as JSON, so every number it shows comes from code")
+    if isinstance(figure.get("computed_by"), dict) and not isinstance(figure.get("data"), dict):
+        problems.error(diagram_id, "data must be an object (the JSON computed_by prints under \"data\"); write data: {} and run record_outputs.py")
+
+
+def check_motion(blueprint, problems):
+    """Every moving picture says why it moves: what changes, what stays, why a still picture would fail, and what the
+    learner does (references/visual-design.md sections 1 to 4). The role must fit the picture's controls."""
+    misconception_ids = {item.get("id") for item in blueprint.get("misconceptions") or []}
+    for chapter in blueprint.get("chapters") or []:
+        for block in chapter.get("blocks") or []:
+            if block.get("type") != "diagram":
+                continue
+            figure = block.get("figure") if isinstance(block.get("figure"), dict) else {}
+            block_id = block.get("id")
+            moving = figure.get("kind") == "scene" or figure.get("animate") is True
+            motion = block.get("motion")
+            if not moving:
+                if motion is not None:
+                    problems.error(block_id, "motion belongs to a picture that moves: a scene, or frames with animate: true")
+                continue
+            if not isinstance(motion, dict):
+                problems.error(block_id, "a moving picture needs motion: what changes, what stays, why_not_still and learner_does "
+                               "(the answers to the five questions in references/visual-design.md section 1)")
+                continue
+            for field in ("changes", "stays", "why_not_still"):
+                if field in motion and words_in(motion.get(field)) < 3:
+                    problems.error(block_id, f"motion.{field} is too thin to guide the picture; say it in a full phrase")
+            if "why_not_still" in motion and words_in(motion.get("why_not_still")) < FEWEST_REASON_WORDS:
+                problems.error(block_id, f"motion.why_not_still needs at least {FEWEST_REASON_WORDS} words: what about the change "
+                               "(its order, path, timing or amount) would a still picture hide? If nothing, use a still picture")
+            role = motion.get("learner_does")
+            if role not in LEARNER_ROLES:
+                problems.error(block_id, f"motion.learner_does must be one of: {', '.join(sorted(LEARNER_ROLES))}")
+            if motion.get("breaks") is not None and motion.get("breaks") not in misconception_ids:
+                problems.error(block_id, f"motion.breaks '{motion.get('breaks')}' is not a defined misconception")
+            controls = [c for c in figure.get("controls") or [] if isinstance(c, dict)]
+            kinds = {c.get("kind") for c in controls}
+            steps = figure.get("steps") or figure.get("frames") or []
+            if role == "drive" and not ({"slider", "buttons"} & kinds or figure.get("kind") == "frames"):
+                problems.error(block_id, "learner_does: drive needs a slider or buttons the learner sets")
+            if role == "run" and "run" not in kinds:
+                problems.error(block_id, "learner_does: run needs a run control, so the learner makes the trials")
+            if role == "step" and len(steps) < 2:
+                problems.error(block_id, "learner_does: step needs at least 2 steps to tap through")
 
 
 def check_growing_diagrams(blueprint, problems):
@@ -1097,7 +1231,8 @@ def check_text_lists(value, where, problems, key=None):
             check_text_lists(child, f"{where}.{child_key}" if where else str(child_key), problems, child_key)
     elif isinstance(value, list):
         for index, item in enumerate(value):
-            if key in TEXT_LIST_KEYS and not isinstance(item, (str, int, float)):
+            # A scene's steps are its storyboard items ({label, caption}); a compare block's steps are plain text
+            if key in TEXT_LIST_KEYS and not isinstance(item, (str, int, float)) and not where.endswith(".figure.steps"):
                 problems.error(where, f"item {index + 1} should be plain text, got {type(item).__name__}. "
                                "A YAML line with an unquoted ': ' split it; put the line in quotes")
             else:
@@ -1271,6 +1406,9 @@ def check_play(block, problems):
     expected share. The cases and the seeded sample deal come from computed_by, so no chance is typed by hand."""
     block_id = block.get("id", "play")
     deals = block.get("deals") or []
+    unit = block.get("unit", "games")
+    if not isinstance(unit, str) or not re.fullmatch(r"[a-z][a-z ]{1,15}", unit):
+        problems.error(block_id, "unit names what one deal makes, plural and lower case, such as 'games', 'replies' or 'draws'")
     if not deals or not set(deals) <= PLAY_DEALS or len(set(deals)) != len(deals):
         problems.error(block_id, f"deals lists how many games a tap deals: 10, 100 or both")
     outcomes = [outcome for outcome in block.get("outcomes") or [] if isinstance(outcome, dict)]
@@ -1310,7 +1448,7 @@ def check_play(block, problems):
 
 
 def check_extras(blueprint, problems):
-    """Picture-ladder steps 3 and 4 (animation, play) cost build time, so they are built only after the author agreed in Discover."""
+    """Moving pictures (animation, play, scene) cost tokens and time, so they are built only after the author agreed."""
     agreed = (blueprint.get("lesson") or {}).get("agreed_extras") or []
     for extra in agreed:
         if extra not in EXTRAS:
@@ -1320,6 +1458,8 @@ def check_extras(blueprint, problems):
             figure = block.get("figure") if isinstance(block.get("figure"), dict) else {}
             if figure.get("animate") is True and "animation" not in agreed:
                 problems.error(block.get("id"), "an animated picture is built only after a yes in Discover: ask, then add 'animation' to lesson.agreed_extras")
+            if figure.get("kind") == "scene" and "scene" not in agreed:
+                problems.error(block.get("id"), "a scene is built only after the author agrees (it costs about 10-25k tokens): propose it with its reason and cost, then add 'scene' to lesson.agreed_extras")
             if block.get("type") == "play" and "play" not in agreed:
                 problems.error(block.get("id"), "a play block is built only after a yes in Discover: ask, then add 'play' to lesson.agreed_extras")
 
@@ -1377,6 +1517,7 @@ def picture_text(block):
         pieces += [str(tile.get("inside", "")) + " " + str(tile.get("note", "")) for tile in inner.get("tiles") or []]
     pieces += [str(tile.get("inside", "")) + " " + str(tile.get("note", "")) for tile in figure.get("tiles") or []]
     pieces += re.findall(r">([^<>]+)<", str(figure.get("svg", "")))
+    pieces += [str(step.get("caption", "")) for step in figure.get("steps") or [] if isinstance(step, dict)]
     return " \n ".join(pieces)
 
 
@@ -1406,6 +1547,7 @@ def check_text_budget(blueprint, problems):
             if block.get("type") == "diagram":
                 captions = [("caption", (block.get("brief") or {}).get("understand"))]
                 captions += [(f"step '{frame.get('label')}' caption", frame.get("caption")) for frame in (block.get("figure") or {}).get("frames") or []]
+                captions += [(f"step '{step.get('label')}' caption", step.get("caption")) for step in (block.get("figure") or {}).get("steps") or [] if isinstance(step, dict)]
                 for name, caption in captions:
                     if caption and words_in(caption) > MOST_CAPTION_WORDS:
                         problems.error(block_id, f"the {name} has {words_in(caption)} words; keep it to about {MOST_CAPTION_WORDS}, so the picture does the talking")
@@ -1633,6 +1775,7 @@ def check_blueprint(blueprint, run_code=False):
     check_figures(blueprint, problems)
     check_example_details(blueprint, problems)
     check_extras(blueprint, problems)
+    check_motion(blueprint, problems)
     check_arc(blueprint, problems)
     check_text_budget(blueprint, problems)
     check_no_early_answers(blueprint, problems)

@@ -85,6 +85,17 @@ case("theme-clash-green", 'accent: "#5b3cc4"', 'accent: "#2a9d4a"', expect="too 
 case("theme-too-grey", 'accent: "#5b3cc4"', 'accent: "#777777"', expect="grey")
 case("frame-label-long", "            - label: Before\n", "            - label: Before attention runs\n", expect="12")
 
+# Moving pictures: a scene says why it moves, is agreed, and draws from computed data
+WHY = "          why_not_still: A still picture shows the odds, but not that a reply is a draw that can land in any slice, nor how draws pile up in proportion to width.\n"
+case("scene-not-agreed", "  agreed_extras: [scene]\n", "", expect="a scene is built only after the author agrees")
+case("scene-without-motion", WHY, "", expect="motion")
+case("scene-reason-thin", WHY, "          why_not_still: It looks nicer.\n", expect="at least 8 words")
+case("scene-role-unknown", "          learner_does: run\n", "          learner_does: watch\n", expect="must be one of")
+case("scene-no-show", "            scene.show = (step, from, settings) => {", "            scene.draw = (step, from, settings) => {", expect="must set scene.show")
+case("scene-library-unknown", "          library: anime\n", "          library: threejs\n", expect="library must be one of")
+case("scene-library-unused", "            const { createTimeline, svg } = scene.anime;", "            const { createTimeline, svg } = window.anime;", expect="never uses scene.anime")
+case("scene-data-typed", "            example_draw: 0.13", "            example_draw: 0.5", run_tests=True, expect="not what computed_by prints")
+
 # Picture ladder rules, broken in the Monty Hall example
 example = (K / "assets/example-monty-blueprint.yaml").read_text()
 LAST_CASE = "weight: 0.3333333333333333\n            outcome: switch-wins\n        sample:\n          games: 100\n          seed: 7\n"

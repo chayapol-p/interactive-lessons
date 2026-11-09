@@ -4,7 +4,7 @@ A diagram earns its place only when it makes something clearer than words can. D
 
 ## Contents
 
-0. The picture ladder: how much picture a moment needs
+0. Decide the picture first: `visual-design.md`
 1. Write the brief first
 2. Shapes that suit a diagram
 3. Skip the diagram for
@@ -16,23 +16,17 @@ A diagram earns its place only when it makes something clearer than words can. D
 
 ---
 
-## 0. The picture ladder
+## 0. Decide the picture first: `visual-design.md`
 
-Pick the lowest step that carries the idea. Each step up costs build time and the learner's attention, so it must buy understanding that the step below cannot.
+This file is about the ready-made figures: how to brief, cut and draw them. **Which** picture an idea needs, whether it should move, and what the learner does with it are decided first, with the five questions and the change test in `visual-design.md`. The figure kinds below are the cheap parts; a `scene` (`visual-design.md` section 6) is the picture made for one idea when none of them carries it.
 
-| Step | Use it when |
-|---|---|
-| 0. Words | a definition or a single rule: a `glossary` entry or an `idea` |
-| 1. Still | a structure or a list of cases: `flow`, `grid`, `svg`, `tiles` |
-| 2. Stepped | a change the learner taps through: `frames`. **The default for any change.** |
-| 3. Animated | the motion itself is the idea (a share sliding onto one door): `frames` with `animate: true` |
-| 4. Play | the learner must believe a number, and only evidence they make will do: a `play` block |
+- **Still** (flow, grid, svg, tiles, tokens, scatter, bars): when only the before and the after matter.
+- **Stepped** (`frames`): a change the learner taps through, when a few computed states tell it.
+- **Animated** (`frames` with `animate: true`): a tap moves between two computed steps. Bars with the same label grow or shrink (0.7 s); tiles that change state change one after another, left to right, within 2 s; anything else fades out, then in. "Play again" replays the last move; with reduced motion the picture simply steps.
+- **Play** (a `play` block): the learner deals trials from a computed case table and sees their counts beside the expected share. A ready-made "run trials" role; when a trial has a shape worth seeing (a token dropping into its bin, a ball rolling to a slot), write a scene with a `run` control instead.
+- **Scene**: anything the ready-made figures cannot carry.
 
-**Steps 3 and 4 are asked for, never assumed.** In Discover (SKILL.md step 1), offer them for the named moments that need them, with the extra build time, and build them only on a yes. Record each yes in `lesson.agreed_extras` (`animation`, `play`); the checker refuses an animated picture or a play block without it.
-
-- **Animated** (`animate: true` on a `frames` figure): a tap on a step moves from the last step to the new one: bars with the same label grow or shrink (0.7 s); tiles that change state change one after another, left to right, all within 2 s, so the eye can follow each door opening; anything else fades out, then in. Nothing plays by itself, "Play again" replays the last move, and with reduced motion the picture simply steps. Every number shown is a computed step's; only the motion between steps is drawn.
-- **Play** (a `play` block): the learner deals 10 or 100 games from a case table that `computed_by` worked out, and sees their counts beside the expected share ("you: 64 of 100 · expected about 67"). Every deal is fresh and random, so the evidence is theirs; a seeded sample deal from the same code is kept for read-along, screenshots and tests. See `blueprint-format.md` section 3.
-- Why ask first: an animation or a game that is not needed is decoration that costs the learner's time. When it is needed (a sceptic who will not believe 2 in 3 until they see it), nothing else will do.
+Animated pictures, play blocks and scenes cost tokens and time, so they are proposed with a reason and a cost and built only when agreed (`visual-design.md` section 7, `lesson.agreed_extras`).
 
 ## 1. Write the brief first
 
@@ -222,7 +216,7 @@ figure:
 ```
 
 **`kind: svg`** (sequence, paired traces, change over time, space): full `<svg viewBox=...>` markup written in the blueprint.
-- Use the template's classes so both themes work: `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-arrowhead`, `svg-bar`, `svg-grid`, `svg-overlap`, `svg-group` (a dashed frame, for a sequence's loop). For a dashed reply or lifeline, add `stroke-dasharray="5 4"` to the line.
+- Use the template's classes so both themes work: `svg-box` (with `hot`, `dim`, `ghost`), `svg-text` (with `small`, `big`, `dim`, `hot`), `svg-line` (with `hot`, `dim`), `svg-dot` (with `hot`, `dim`), `svg-arrowhead`, `svg-bar`, `svg-grid`, `svg-overlap`, `svg-group` (a dashed frame, for a sequence's loop). For a dashed reply or lifeline, add `stroke-dasharray="5 4"` to the line.
 - Give the `<svg>` a `role="img"` and an `aria-label` that says what it shows. Keep the `viewBox` about 340 wide. An svg figure cannot grow; use a flow figure for a diagram that grows.
 
 Check every figure in the phone screenshots, light and dark (SKILL.md step 5).
